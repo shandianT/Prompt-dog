@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PromptDog 提示词牧羊犬 — 把说不清的需求，牧成能上岗的 Agent</title>
+<style>
+  :root{
+    --bg:#faf9f7; --card:#ffffff; --ink:#1f2328; --sub:#57606a;
+    --accent:#d97706; --accent-soft:#fef3e2; --line:#e8e4de;
+    --good:#1a7f37; --code:#f5f2ec;
+    --hi:#dc2626; --mid:#d97706; --lo:#2563eb; --ok:#16a34a;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#14161a; --card:#1d2025; --ink:#e8eaed; --sub:#9aa4af;
+      --accent:#f0a24b; --accent-soft:#3a2c17; --line:#31353c; --code:#23262c; }
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    line-height:1.7}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  section{padding:56px 0}
+  h2{font-size:1.7rem;margin-bottom:8px}
+  .kicker{color:var(--accent);font-weight:700;font-size:.85rem;letter-spacing:.12em;text-transform:uppercase}
+  .lead{color:var(--sub);margin-bottom:32px;max-width:720px}
+  .hero{padding:80px 0 56px;text-align:center;background:radial-gradient(ellipse 70% 60% at 50% 0%, var(--accent-soft), transparent)}
+  .hero .dog{font-size:4rem;line-height:1}
+  .hero h1{font-size:2.6rem;margin:12px 0 4px}
+  .hero h1 em{font-style:normal;color:var(--accent)}
+  .hero .tagline{font-size:1.25rem;font-weight:600;margin:10px 0 6px}
+  .hero .sub{color:var(--sub);max-width:640px;margin:0 auto 28px}
+  .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .btn{display:inline-block;padding:10px 22px;border-radius:10px;text-decoration:none;font-weight:600;
+    border:1.5px solid var(--accent);transition:transform .15s}
+  .btn:hover{transform:translateY(-2px)}
+  .btn.primary{background:var(--accent);color:#fff}
+  .btn.ghost{color:var(--accent)}
+  .grid{display:grid;gap:18px}
+  .g3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px}
+  .card h3{font-size:1.05rem;margin-bottom:8px}
+  .card p{color:var(--sub);font-size:.93rem}
+  .card .n{display:inline-flex;width:30px;height:30px;border-radius:8px;background:var(--accent-soft);
+    color:var(--accent);font-weight:800;align-items:center;justify-content:center;margin-bottom:10px}
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+  table{border-collapse:collapse;width:100%;min-width:640px;font-size:.92rem}
+  th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  thead th{background:var(--accent-soft);color:var(--ink);font-size:.9rem}
+  tbody tr:last-child td{border-bottom:none}
+  td.old{color:var(--sub)} td.new{font-weight:550} td.new b{color:var(--accent)}
+  .pipe{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+  .lv{font-size:.72rem;font-weight:800;color:var(--accent);letter-spacing:.08em}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:12px;padding:18px;
+    overflow-x:auto;font-size:.82rem;line-height:1.6;font-family:var(--mono)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chip{background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:4px 14px;font-size:.82rem;font-weight:600}
+  .stepline{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:.85rem}
+  .arrow{color:var(--accent);font-weight:700}
+  ul.clean{list-style:none}
+  ul.clean li{padding-left:1.4em;position:relative;margin-bottom:8px;font-size:.93rem}
+  ul.clean li::before{content:"✓";position:absolute;left:0;color:var(--good);font-weight:700}
+  ul.redline li::before{content:"✕";color:#c93c37}
+  footer{border-top:1px solid var(--line);padding:36px 0;text-align:center;color:var(--sub);font-size:.9rem}
+  footer a{color:var(--accent)}
+  .center{text-align:center}
+
+  /* ============ 内嵌工作台（固定浅色，像产品实拍） ============ */
+  .appframe{max-width:1200px;margin:0 auto;border-radius:16px;overflow:hidden;
+    box-shadow:0 24px 64px rgba(0,0,0,.18);border:1px solid #d8dbe2;background:#fff}
+  .app{display:grid;grid-template-columns:200px 1fr 430px;grid-template-rows:auto 1fr;height:660px;
+    grid-template-areas:"side top top" "side chat out";color:#1e232b}
+  @media(max-width:980px){.app{grid-template-columns:0 1fr 0;grid-template-areas:"side top top" "side chat chat"}}
+  .d-top{grid-area:top;background:#fff;border-bottom:1px solid #e5e8ee;display:flex;align-items:center;
+    gap:8px;padding:9px 14px;flex-wrap:wrap}
+  .d-top .title{font-weight:700;font-size:.9rem}
+  .badge-demo{font-size:.68rem;background:#d97706;color:#fff;border-radius:5px;padding:2px 8px;font-weight:700}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tab{border:1px solid #e5e8ee;background:#f7f8fa;border-radius:8px;padding:4px 11px;font-size:.78rem;
+    cursor:pointer;color:#68707c;transition:.2s;font-family:inherit}
+  .tab.on{background:#fdf0dd;border-color:#d97706;color:#d97706;font-weight:700}
+  .replay{margin-left:auto;border:1px solid #d97706;color:#d97706;background:none;border-radius:8px;
+    padding:4px 14px;font-size:.78rem;cursor:pointer;font-weight:600;font-family:inherit}
+  .replay:hover{background:#fdf0dd}
+  .side{grid-area:side;background:#1b1f27;color:#c8cdd6;padding:14px 8px;overflow:hidden}
+  .logo{display:flex;align-items:center;gap:8px;padding:2px 8px 12px;color:#fff;font-weight:800;font-size:.9rem}
+  .ag{display:flex;gap:9px;align-items:center;padding:8px 9px;border-radius:10px;font-size:.78rem;margin-bottom:2px}
+  .ag .av{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+    font-size:.95rem;background:#2a303c;flex-shrink:0}
+  .ag.on{background:#2e3542;color:#fff}
+  .ag small{display:block;font-size:.64rem;color:#7b8494;margin-top:1px}
+  .side .sec{font-size:.64rem;letter-spacing:.1em;color:#5d6572;padding:10px 9px 5px}
+  .d-chat{grid-area:chat;display:flex;flex-direction:column;background:#f7f8fa;min-width:0}
+  .stream{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+  .inputbar{padding:10px 18px;background:#fff;border-top:1px solid #e5e8ee;display:flex;gap:10px}
+  .inputbar .box{flex:1;border:1px solid #e5e8ee;border-radius:10px;padding:8px 13px;color:#68707c;font-size:.8rem;background:#f7f8fa}
+  .inputbar .send{width:34px;height:34px;border-radius:10px;background:#d97706;border:none;color:#fff;font-size:.95rem}
+  .msg{max-width:84%;padding:10px 14px;border-radius:14px;font-size:.84rem;line-height:1.6;animation:pop .3s ease;word-break:break-word}
+  @keyframes pop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .u{align-self:flex-end;background:#d97706;color:#fff;border-bottom-right-radius:4px}
+  .b{align-self:flex-start;background:#fff;border:1px solid #e5e8ee;border-bottom-left-radius:4px}
+  .b .who{font-size:.7rem;font-weight:800;color:#d97706;margin-bottom:3px}
+  .b small{color:#68707c}
+  .filechip{display:inline-flex;gap:8px;align-items:center;background:rgba(255,255,255,.18);border-radius:8px;
+    padding:5px 11px;margin-bottom:5px;font-size:.78rem}
+  .typing{align-self:flex-start;background:#fff;border:1px solid #e5e8ee;border-radius:14px;padding:11px 16px;display:flex;gap:5px}
+  .typing i{width:6px;height:6px;border-radius:50%;background:#68707c;animation:blink 1s infinite}
+  .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
+  .stages{align-self:stretch;background:#fff;border:1px solid #e5e8ee;border-radius:14px;padding:14px 16px;animation:pop .3s ease}
+  .stages h4{font-size:.78rem;margin-bottom:8px;color:#68707c;font-weight:600}
+  .st{display:flex;gap:9px;align-items:baseline;padding:4px 0;font-size:.82rem;opacity:.32;transition:.3s}
+  .st.run,.st.done{opacity:1}
+  .st .ic{width:18px;flex-shrink:0;text-align:center}
+  .st.run .ic{animation:spin 1s linear infinite;display:inline-block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .st .detail{color:#68707c;font-size:.73rem;margin-left:auto;text-align:right;opacity:0;transition:.4s}
+  .st.done .detail{opacity:1}
+  .st.done .ic{color:#16a34a}
+  .ccard{align-self:stretch;background:#fff;border:1.5px solid #d97706;border-radius:14px;padding:14px 16px;animation:pop .3s ease}
+  .ccard .h{font-size:.75rem;color:#d97706;font-weight:800;margin-bottom:7px}
+  .q{margin-bottom:9px;font-size:.82rem}
+  .q b{display:block;margin-bottom:4px}
+  .opt{display:flex;gap:8px;align-items:center;padding:3px 8px;border-radius:8px;font-size:.79rem;color:#68707c;transition:.3s}
+  .opt .dot{width:13px;height:13px;border-radius:50%;border:1.5px solid #e5e8ee;flex-shrink:0;transition:.3s}
+  .opt.pick{background:#fdf0dd;color:#1e232b}
+  .opt.pick .dot{border-color:#d97706;background:#d97706;box-shadow:inset 0 0 0 3px #fff}
+  .opt .star{color:#d97706;font-weight:700}
+  .d-out{grid-area:out;background:#fff;border-left:1px solid #e5e8ee;display:flex;flex-direction:column;min-width:0}
+  @media(max-width:980px){.d-out{display:none}}
+  .d-out .head{padding:11px 18px;border-bottom:1px solid #e5e8ee;display:flex;align-items:center;gap:8px}
+  .d-out .head .t{font-weight:700;font-size:.82rem}
+  .d-out .head .live{margin-left:auto;font-size:.66rem;color:#16a34a;font-weight:700}
+  .d-out .head .live::before{content:"●";margin-right:4px;animation:blink 1.2s infinite}
+  .outbody{flex:1;overflow-y:auto;padding:16px 18px;scroll-behavior:smooth}
+  .placeholder{color:#9aa4af;font-size:.82rem;text-align:center;margin-top:45%}
+  .rep-h{animation:pop .4s ease;margin-bottom:12px}
+  .rep-h .name{font-weight:800;font-size:.95rem}
+  .rep-h .meta{color:#68707c;font-size:.72rem;margin-top:2px}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+  .tile{border:1px solid #e5e8ee;border-radius:10px;padding:8px 5px;text-align:center;animation:pop .4s ease}
+  .tile .v{font-weight:800;font-size:1.05rem}
+  .tile .k{font-size:.63rem;color:#68707c}
+  .tile.hi .v{color:#dc2626}.tile.mid .v{color:#d97706}.tile.lo .v{color:#2563eb}.tile.ok .v{color:#16a34a}
+  .risk{border:1px solid #e5e8ee;border-left:4px solid #e5e8ee;border-radius:10px;padding:11px 13px;
+    margin-bottom:11px;animation:pop .4s ease;font-size:.79rem}
+  .risk.hi{border-left-color:#dc2626}.risk.mid{border-left-color:#d97706}
+  .risk.lo{border-left-color:#2563eb}.risk.ok{border-left-color:#16a34a}
+  .risk .rh{display:flex;gap:7px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+  .risk .rid{font-family:var(--mono);font-weight:700;font-size:.74rem}
+  .risk .lvl{font-size:.64rem;border-radius:5px;padding:1px 7px;color:#fff;font-weight:700}
+  .risk.hi .lvl{background:#dc2626}.risk.mid .lvl{background:#d97706}
+  .risk.lo .lvl{background:#2563eb}.risk.ok .lvl{background:#16a34a}
+  .risk .loc{margin-left:auto;color:#68707c;font-size:.68rem;font-family:var(--mono)}
+  .risk .quote{background:#f7f8fa;border-radius:8px;padding:7px 9px;color:#68707c;font-size:.75rem;
+    margin:5px 0;border-left:3px solid #e5e8ee}
+  .risk .fix{background:#f0faf2;border-radius:8px;padding:7px 9px;font-size:.75rem;margin-top:5px;border-left:3px solid #16a34a}
+  .risk .fix b{color:#16a34a;font-size:.68rem}
+  .risk .why{color:#68707c}
+  .risk .tag-check{display:inline-block;font-size:.64rem;background:#fdf0dd;color:#d97706;border-radius:5px;
+    padding:1px 7px;font-weight:700;margin-top:5px}
+  .ft{font-family:var(--mono);font-size:.75rem;line-height:1.9;color:#1e232b}
+  .ft div{opacity:0;transform:translateX(-6px);transition:.35s}
+  .ft div.show{opacity:1;transform:none}
+  .ft .dir{color:#d97706;font-weight:700}
+  .ft .cm{color:#68707c;font-size:.68rem}
+  .score{display:grid;grid-template-columns:5.2em 1fr 2em;gap:5px 9px;align-items:center;font-size:.75rem;
+    margin-bottom:14px;animation:pop .4s ease;color:#1e232b}
+  .sbar{height:7px;background:#f0f1f4;border-radius:4px;overflow:hidden}
+  .sbar i{display:block;height:100%;width:0;background:#16a34a;border-radius:4px;transition:width .8s ease}
+  .sbar.low i{background:#dc2626}
+  .sbar.md i{background:#d97706}
+  .imp{background:#f7f8fa;border-radius:10px;padding:11px 13px;font-size:.77rem;line-height:1.85;
+    animation:pop .4s ease;margin-bottom:11px;color:#1e232b}
+  .imp mark{background:#fdf0dd;color:#b45309;font-weight:700;padding:0 3px;border-radius:3px}
+  .chart{display:flex;gap:9px;align-items:flex-end;height:110px;padding:8px 6px 22px;border:1px solid #e5e8ee;
+    border-radius:10px;margin-bottom:12px;animation:pop .4s ease}
+  .bar{flex:1;background:#fde8c8;border-radius:4px 4px 0 0;position:relative;height:0;transition:height .7s ease}
+  .bar.hl{background:#d97706}
+  .bar span{position:absolute;bottom:-19px;left:0;right:0;text-align:center;font-size:.6rem;color:#68707c}
+  .bar em{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:.58rem;color:#68707c;font-style:normal}
+  .punch{align-self:center;background:linear-gradient(100deg,#d97706,#f59e0b);color:#fff;border-radius:14px;
+    padding:12px 24px;text-align:center;font-weight:700;animation:pop .5s ease;box-shadow:0 8px 24px rgba(217,119,6,.35);font-size:.9rem}
+  .punch small{display:block;font-weight:500;opacity:.9;font-size:.73rem;margin-top:3px}
+  .stream::-webkit-scrollbar,.outbody::-webkit-scrollbar{width:8px}
+  .stream::-webkit-scrollbar-thumb,.outbody::-webkit-scrollbar-thumb{background:#e5e8ee;border-radius:4px}
+  .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;max-width:920px;margin:0 auto 14px}
+  .role{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;text-align:left}
+  .role .rt{font-weight:800;margin-bottom:4px}
+  .role .rt .em{color:var(--accent)}
+  .role p{color:var(--sub);font-size:.88rem}
+  .genflow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;margin:6px auto 10px;font-size:.85rem}
+  .genflow .gstep{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 14px}
+  .genflow .ga{color:var(--accent);font-weight:700}
+  .qualbar{max-width:880px;margin:0 auto 26px;text-align:center;font-size:.86rem;color:var(--sub);
+    background:var(--accent-soft);border-radius:12px;padding:10px 18px}
+  .qualbar b{color:var(--accent)}
+  .tgroup{font-size:.68rem;font-weight:800;color:#68707c;align-self:center;padding:0 2px;letter-spacing:.05em}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="dog">🐕</div>
+    <h1>Prompt<em>Dog</em> · 提示词牧羊犬</h1>
+    <div class="tagline">把说不清的需求，牧成能上岗的 Agent。</div>
+    <p class="sub">一个「设计提示词的提示词专家」——装进 Codex、Claude Code、WorkBuddy、SoWork 或任意对话窗口，你说一句模糊需求，它交付能直接使用的提示词、SOP，或带质检闭环的 Agent 资产包。</p>
+    <div class="btns">
+      <a class="btn primary" href="#demo">▶ 观看工作台演示</a>
+      <a class="btn ghost" href="https://github.com/shandianT/Prompt-dog" target="_blank" rel="noopener">GitHub 仓库</a>
+      <a class="btn ghost" href="#start">快速开始</a>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">问题</div>
+    <h2>普通人用 AI 最大的障碍，是说不清需求</h2>
+    <p class="lead">尤其是行业 know-how 和工作流程。传统提示词工具在这里有三宗罪：</p>
+    <div class="grid g3">
+      <div class="card"><span class="n">1</span><h3>连环开放式提问</h3><p>「你们的质检标准是什么？」——用户答不上来。表述负担被丢回给最不擅长表述的人。</p></div>
+      <div class="card"><span class="n">2</span><h3>不分复杂度一刀切</h3><p>不管什么任务都回你「一段更好的提示词」。复杂任务被糊弄，简单任务被过度设计。</p></div>
+      <div class="card"><span class="n">3</span><h3>交付即结束</h3><p>没有验收标准、没有验证环节、没有迭代沉淀——效果靠运气，用完资产归零。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="demo" style="padding-top:24px">
+  <div class="wrap" style="max-width:1240px">
+    <div class="center" style="margin-bottom:16px">
+      <div class="kicker">LIVE DEMO</div>
+      <h2>一只牧羊犬，一群工作犬</h2>
+      <p class="lead" style="margin:8px auto 18px">先看懂两个角色，再看它们各自上场干活——自动播放 · 可切换场景与重播。</p>
+    </div>
+    <div class="roles">
+      <div class="role"><div class="rt">🐕 牧羊犬 <span class="em">PromptDog</span> —— 造 Agent 的 Agent</div>
+        <p>你说一句模糊需求，它出选择题替你确认行业细节，然后生成完整的 Agent 资产包。<b>演示 ①② 就是它本尊在干活。</b></p></div>
+      <div class="role"><div class="rt">🐾 工作犬 —— 牧羊犬产出的场景专用 Agent</div>
+        <p>资产包拖进工作台就上岗，专职一个场景，住在犬舍（kennel/）里，越用越准。<b>演示 ③④⑤ 是三只已上岗的工作犬。</b></p></div>
+    </div>
+    <div class="genflow">
+      <span class="gstep">你的一句话</span><span class="ga">→</span>
+      <span class="gstep">🐕 选择题确认</span><span class="ga">→</span>
+      <span class="gstep">生成资产包</span><span class="ga">→</span>
+      <span class="gstep">拖进工作台</span><span class="ga">→</span>
+      <span class="gstep">🐾 工作犬上岗</span>
+    </div>
+    <div class="qualbar">同样的大模型，工作犬为什么比普通 Agent 强？普通 Agent 是一段提示词一口气输出、看运气；工作犬<b>分环节执行、验收标准先行、对抗审查找茬、复盘回归越用越准</b>——质量是设计出来的。</div>
+    <div class="appframe">
+      <div class="app">
+        <aside class="side">
+          <div class="logo">🐕 PromptDog</div>
+          <div class="sec">我的数字员工</div>
+          <div class="ag" id="ag-dog"><span class="av">🐕</span><span>提示狗<small>提示词 · SOP · 工作流</small></span></div>
+          <div class="ag" id="ag-law"><span class="av">⚖️</span><span>合同审查助手<small>粘贴合同，自动初审</small></span></div>
+          <div class="ag" id="ag-hr"><span class="av">🧑‍💼</span><span>招聘筛选官<small>简历包 → 必面名单</small></span></div>
+          <div class="ag" id="ag-data"><span class="av">📊</span><span>数据看板<small>Excel → 经营分析</small></span></div>
+          <div class="ag"><span class="av">📑</span><span>投标方案<small>30 年投标老兵</small></span></div>
+        </aside>
+        <header class="d-top">
+          <span class="title">PromptDog 工作台</span><span class="badge-demo">DEMO</span>
+          <div class="tabs">
+            <span class="tgroup">🐕 牧羊犬</span>
+            <button class="tab" id="tabA" onclick="play('A')">① 一句话造工作犬</button>
+            <button class="tab" id="tabB" onclick="play('B')">② 提示词体检</button>
+            <span class="tgroup">🐾 工作犬</span>
+            <button class="tab" id="tabC" onclick="play('C')">③ 合同审查</button>
+            <button class="tab" id="tabD" onclick="play('D')">④ 招聘筛选</button>
+            <button class="tab" id="tabE" onclick="play('E')">⑤ 数据看板</button>
+          </div>
+          <button class="replay" onclick="replay()">↻ 重播</button>
+        </header>
+        <main class="d-chat">
+          <div class="stream" id="stream"></div>
+          <div class="inputbar"><div class="box">观看自动演示中…（可切换场景 / 重播）</div><button class="send">↑</button></div>
+        </main>
+        <aside class="d-out">
+          <div class="head"><span class="t" id="outtitle">交付物预览</span><span class="live" id="live" style="display:none">实时生成</span></div>
+          <div class="outbody" id="outbody"></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section>
+  <div class="wrap">
+    <div class="kicker">不同之处</div>
+    <h2>PromptDog vs 传统提示词优化</h2>
+    <p class="lead">核心翻转：永远提案让用户挑，不提问让用户答。</p>
+    <div class="tblwrap"><table>
+      <thead><tr><th style="width:110px"></th><th>传统提示词优化</th><th>PromptDog</th></tr></thead>
+      <tbody>
+        <tr><td>需求澄清</td><td class="old">开放式提问，用户从零描述</td><td class="new"><b>选择题 + ★推荐默认值</b>，行业做法由它先猜、你来挑，回「都按推荐」即放行</td></tr>
+        <tr><td>复杂度</td><td class="old">一律输出一段提示词</td><td class="new"><b>六信号判级</b>：L1 提示词 / L2 SOP / L3 提示链 / L4 多智能体，能简单绝不复杂</td></tr>
+        <tr><td>质量</td><td class="old">「看起来更好了」</td><td class="new"><b>验收标准先行</b>，按错误代价配验证（自我一致性 / 交叉核查 / 来源强制 / 对抗审查 / 人工确认点）</td></tr>
+        <tr><td>迭代</td><td class="old">无限改稿</td><td class="new"><b>闭环有终点</b>：最大轮数 + 可度量止损，绝不空转</td></tr>
+        <tr><td>交付</td><td class="old">一段文字，用完即散</td><td class="new"><b>资产包文件夹</b>：路由 + 渐进式加载 + 启动指令 + 复盘 + 回归测试</td></tr>
+        <tr><td>改现有提示词</td><td class="old">凭感觉给意见</td><td class="new"><b>十维评分诊断</b>：零提问打分 → 一张卡片确认 → 改进版全文 + 回归对照</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">机制</div>
+    <h2>六信号判级，产出形态自适应</h2>
+    <p class="lead">按步骤数、领域知识、准确性风险、外部依赖、角色协作、产出结构六个信号打分定级——能简单绝不复杂。</p>
+    <div class="pipe">
+      <div class="card"><div class="lv">L1</div><h3>优化提示词</h3><p>人设 / 背景 / 任务 / 输出要求 / 自查，零提问直接交付</p></div>
+      <div class="card"><div class="lv">L2</div><h3>步骤化 SOP</h3><p>每步含目的、动作、提示词片段、检查点</p></div>
+      <div class="card"><div class="lv">L3</div><h3>提示链</h3><p>环节表 + 数据契约 + 验证点 + 内嵌闭环与终止条件</p></div>
+      <div class="card"><div class="lv">L4</div><h3>多智能体编排</h3><p>子 Agent 分配表 + 技能与工具清单 + 主控循环</p></div>
+    </div>
+    <div class="chips">
+      <span class="chip">验收标准先行</span><span class="chip">自我一致性投票</span><span class="chip">交叉核查</span>
+      <span class="chip">来源引用强制</span><span class="chip">对抗审查</span><span class="chip">人工确认点</span>
+      <span class="chip">最大 3 轮止损</span>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">交付形态</div>
+    <h2>产出不是一段话，是能上岗的资产包</h2>
+    <p class="lead">理念：skill 是资产的存放形态，agent 是资产的上岗形态。文件夹平台无关，拖进任意 Agent 工作区就是一个专职数字员工。</p>
+    <pre>&lt;场景名&gt;Agent/
+├── AGENTS.md        路由 + 渐进式加载（执行到环节 N 才读环节 N）
+├── 主控.md           系统提示词 / 验收标准 / 环节表 / 闭环终止
+├── prompts/         每环节一个提示词文件，按需加载
+├── templates/       交付模板，交付环节才读
+├── 启动指令.md       固定触发话术，复制改参数即用
+├── 复盘/            四指标回填：漏审 / 误报 / 定位失败 / 虚构来源
+├── 回归测试/         改版必跑，「漏审=0、虚构来源=0」才许发布
+└── 输入/ 输出/       工作目录，交付物统一落盘</pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">犬舍案例</div>
+    <h2>首只工作犬：律所合同审查 🐾</h2>
+    <p class="lead">律所最高频场景——商事合同风险审查。由 PromptDog 两轮选择题生成，工程化沉淀为完整资产包。</p>
+    <div class="stepline">
+      <span class="step">1 文件解析</span><span class="arrow">→</span>
+      <span class="step">2 事实提取</span><span class="arrow">→</span>
+      <span class="step">3 风险扫描</span><span class="arrow">→</span>
+      <span class="step">4 法律核查</span><span class="arrow">→</span>
+      <span class="step">5 条款建议</span><span class="arrow">→</span>
+      <span class="step">6 对抗审查</span><span class="arrow">→</span>
+      <span class="step">7 三件套交付</span>
+    </div>
+    <div class="grid g3" style="margin-top:18px">
+      <div class="card"><h3>三件套交付</h3>
+        <ul class="clean"><li>风险审查报告（优先级排序）</li><li>原文逐条批注（定位到条款）</li><li>结构化 JSON 风险清单</li></ul></div>
+      <div class="card"><h3>律所级红线</h3>
+        <ul class="clean redline"><li>禁止虚构法条、判例与来源</li><li>无联网一律标【待律师核查】</li><li>不出最终法律意见、不建议签署</li></ul></div>
+      <div class="card"><h3>自带飞轮</h3>
+        <ul class="clean"><li>固定启动指令，一句话开审</li><li>每周复盘四指标回填</li><li>改版必跑回归，达标才发布</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <div class="kicker">快速开始</div>
+    <h2>三种环境，三种用法</h2>
+    <div class="grid g3" style="margin-top:24px">
+      <div class="card"><span class="n">A</span><h3>编程 Agent（效果最好）</h3>
+        <p>Codex / Claude Code：把仓库放进工作区，AGENTS.md 加三行路由。行业候选库与渐进式加载全量保留。</p></div>
+      <div class="card"><span class="n">B</span><h3>任意对话 AI</h3>
+        <p>复制 assets/system-prompt.md 的单文件版，贴进系统提示词框或对话第一条。SoWork 等单人设平台用 persona 版。</p></div>
+      <div class="card"><span class="n">C</span><h3>直接用现成工作犬</h3>
+        <p>把 kennel/合同审查Agent/ 整个文件夹拖进 WorkBuddy / Codex 工作区，按启动指令发一句话即可开审。</p></div>
+    </div>
+    <div class="center" style="margin-top:32px">
+      <a class="btn primary" href="https://github.com/shandianT/Prompt-dog" target="_blank" rel="noopener">获取 PromptDog →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>PromptDog 🐕 提示词牧羊犬 — 把说不清的需求，牧成能上岗的 Agent。</p>
+    <p style="margin-top:6px">理念来源：五阶段提示词工程流程 × 二十余个策略的信号化路由 ·
+      <a href="https://github.com/shandianT/Prompt-dog" target="_blank" rel="noopener">GitHub</a></p>
+  </div>
+</footer>
+
+<script>
+const $=s=>document.querySelector(s);
+const stream=$('#stream'), out=$('#outbody');
+let token=0;
+const sleep=(ms,t)=>new Promise(r=>setTimeout(()=>r(t===token),ms));
+function scrollChat(){stream.scrollTop=stream.scrollHeight}
+function scrollOut(){out.scrollTop=out.scrollHeight}
+function userMsg(html){const d=document.createElement('div');d.className='msg u';d.innerHTML=html;stream.appendChild(d);scrollChat()}
+async function botMsg(t,html,who='提示狗 🐕'){
+  const ty=document.createElement('div');ty.className='typing';ty.innerHTML='<i></i><i></i><i></i>';
+  stream.appendChild(ty);scrollChat();
+  const ok=await sleep(850,t); ty.remove();
+  if(!ok)return false;
+  const d=document.createElement('div');d.className='msg b';d.innerHTML=`<div class="who">${who}</div>`+html;
+  stream.appendChild(d);scrollChat();return true;
+}
+function el(cls,html,parent){const d=document.createElement('div');d.className=cls;d.innerHTML=html;(parent||stream).appendChild(d);return d}
+function liveOn(){$('#live').style.display='';const p=$('#ph');if(p)p.remove()}
+async function runStages(t,title,defs,hook){
+  const sc=el('stages',`<h4>⚙️ ${title}</h4>`);
+  const rows=defs.map(s=>{const r=document.createElement('div');r.className='st';
+    r.innerHTML=`<span class="ic">◌</span><span>${s[0]}</span><span class="detail">${s[1]}</span>`;sc.appendChild(r);return r});
+  scrollChat();
+  for(let i=0;i<defs.length;i++){
+    rows[i].className='st run';rows[i].querySelector('.ic').textContent='⟳';
+    if(!await sleep(defs[i][2],t))return false;
+    rows[i].className='st done';rows[i].querySelector('.ic').textContent='✓';scrollChat();
+    if(hook)hook(i);
+  }
+  return true;
+}
+function setAgent(id){document.querySelectorAll('.ag').forEach(a=>a.classList.remove('on'));
+  const a=$('#'+id);if(a)a.classList.add('on')}
+
+/* ===== ① 造 Agent ===== */
+const TREE=[
+ ['dir','竞品分析Agent/'],
+ ['','├── AGENTS.md <span class="cm">路由 + 渐进式加载</span>'],
+ ['','├── 分析流程.md <span class="cm">主控：验收标准 + 环节表</span>'],
+ ['','├── prompts/ <span class="cm">环节1 采集 … 环节5 成稿</span>'],
+ ['','├── templates/ <span class="cm">周报模板 + JSON 契约</span>'],
+ ['','├── 启动指令.md <span class="cm">每周一句话触发</span>'],
+ ['','├── 复盘/ <span class="cm">四指标回填 → 越用越准</span>'],
+ ['','├── 回归测试/ <span class="cm">改版必跑，达标才发布</span>'],
+ ['','└── 输出/ <span class="cm">周报自动落盘</span>']
+];
+async function scnA(t){
+  setAgent('ag-dog');$('#outtitle').textContent='交付物预览 · Agent 资产包';
+  userMsg('我想要一个每周自动做竞品分析报告的工作流');
+  if(!await sleep(900,t))return;
+  if(!await botMsg(t,'这是个定时、多来源采集的任务，我按<b>提示链方案</b>设计。确认 4 件事——回「都按推荐」可直接通过：'))return;
+  if(!await sleep(400,t))return;
+  const card=el('ccard',`<div class="h">确认卡片（仅 1 轮）</div>
+   <div class="q"><b>Q1 竞品范围？</b>
+     <div class="opt" data-s="1"><span class="dot"></span>A. 固定 3–5 家核心竞品 <span class="star">★ 范围稳定才能做周环比</span></div>
+     <div class="opt"><span class="dot"></span>B. 每周自动发现新玩家</div></div>
+   <div class="q"><b>Q2 报告受众？</b>
+     <div class="opt" data-s="1"><span class="dot"></span>A. 高管摘要 + 团队附录 <span class="star">★ 一份两用</span></div>
+     <div class="opt"><span class="dot"></span>B. 仅内部参考</div></div>
+   <div class="q"><b>Q3 信息来源？</b>（可多选）
+     <div class="opt" data-s="1"><span class="dot"></span>A. 官网/公告 ＋ B. 行业媒体 <span class="star">★ 公开信息可溯源</span></div>
+     <div class="opt"><span class="dot"></span>C. 应用商店评价</div></div>
+   <div class="q"><b>Q4 在哪里运行？</b>
+     <div class="opt" data-s="1"><span class="dot"></span>B. 带工具的 Agent 工作台 <span class="star">★ 你提到了"自动"</span></div>
+     <div class="opt"><span class="dot"></span>A. 普通对话窗口</div></div>`);
+  scrollChat();
+  if(!await sleep(1300,t))return;
+  card.querySelectorAll('.opt[data-s]').forEach((o,i)=>setTimeout(()=>o.classList.add('pick'),i*260));
+  if(!await sleep(1400,t))return;
+  userMsg('都按推荐');
+  if(!await sleep(700,t))return;
+  if(!await botMsg(t,'生效：全部 ★。开始构建<b>资产包</b>——右侧实时生成。'))return;
+  liveOn();
+  el('rep-h',`<div class="name">📦 竞品分析Agent · 资产包</div>
+   <div class="meta">L3 提示链 · 5 环节 · 含复盘飞轮与回归门槛 · v1.0</div>`,out);
+  const ft=el('ft','',out);
+  for(const [c,txt] of TREE){
+    const d=document.createElement('div');d.className=c;d.innerHTML=txt;ft.appendChild(d);
+    if(!await sleep(230,t))return;
+    d.classList.add('show');scrollOut();
+  }
+  if(!await sleep(450,t))return;
+  el('tiles',`<div class="tile ok"><div class="v">✓</div><div class="k">验收标准先行</div></div>
+   <div class="tile ok"><div class="v">✓</div><div class="k">来源强制引用</div></div>
+   <div class="tile ok"><div class="v">✓</div><div class="k">闭环有终点</div></div>
+   <div class="tile ok"><div class="v">✓</div><div class="k">拖入即上岗</div></div>`,out);scrollOut();
+  if(!await sleep(550,t))return;
+  if(!await botMsg(t,`资产包就绪 📦 一只新的「竞品分析工作犬」已入犬舍——文件夹拖进工作台即上岗，每周一说一句「跑竞品周报」。<br>
+  <small>想调整任何环节，说编号就行（如「环节 2 加个价格监控」）。</small>`))return;
+  if(!await sleep(650,t))return;
+  el('punch',`🐕 一句话，牧出一只能上岗的工作犬<small>42 秒 · 只答了一次选择题 · 资产入犬舍，可复用、可迭代、可迁移</small>`);
+  scrollChat();
+}
+
+/* ===== ② 优化提示词 ===== */
+const DIMS=[['明确性',6],['相关性',8],['完整性',3],['中立性',7],['创造性',5],['结构',4],['语法',8],['流畅性',7],['目标对齐',6],['可测试性',3]];
+async function scnB(t){
+  setAgent('ag-dog');$('#outtitle').textContent='交付物预览 · 诊断与改进';
+  userMsg('帮我看看这个提示词写得怎么样：<br><small>「你是一个翻译，把我给你的英文翻译成中文，要求准确。」</small>');
+  if(!await sleep(900,t))return;
+  if(!await botMsg(t,'先体检，不问问题——十维评分在右侧。'))return;
+  liveOn();
+  el('rep-h',`<div class="name">🩺 提示词诊断报告</div><div class="meta">十维评分 · 1–10 分制</div>`,out);
+  const sc=el('score','',out);
+  DIMS.forEach(d=>{
+    const cls=d[1]<=4?'low':(d[1]<=6?'md':'');
+    sc.innerHTML+=`<span>${d[0]}</span><div class="sbar ${cls}"><i data-w="${d[1]*10}"></i></div><b>${d[1]}</b>`;
+  });
+  scrollOut();
+  setTimeout(()=>sc.querySelectorAll('i').forEach(i=>i.style.width=i.dataset.w+'%'),80);
+  if(!await sleep(1600,t))return;
+  if(!await botMsg(t,`总分 <b>57 / 100</b>。最大的问题：<b>缺人设与输出边界</b>（完整性 3）、<b>好坏无法判定</b>（可测试性 3）。<br>只确认两件事，回「都按推荐」即可：`))return;
+  const card=el('ccard',`<div class="h">确认卡片（仅 1 轮）</div>
+   <div class="q"><b>Q1 「完整性」3 分——它该是谁？</b>
+     <div class="opt" data-s="1"><span class="dot"></span>A. 商务领域资深译者 <span class="star">★ 据"要求准确"推测为商务场景</span></div>
+     <div class="opt"><span class="dot"></span>B. 文学翻译</div><div class="opt"><span class="dot"></span>C. 保持现状</div></div>
+   <div class="q"><b>Q2 「可测试性」3 分——好坏怎么判？</b>
+     <div class="opt" data-s="1"><span class="dot"></span>A. 术语一致 + 数字逐项核对 + 抽句回译验证 <span class="star">★ 商务翻译的标配验收</span></div>
+     <div class="opt"><span class="dot"></span>B. 凭语感</div></div>`);
+  scrollChat();
+  if(!await sleep(1300,t))return;
+  card.querySelectorAll('.opt[data-s]').forEach((o,i)=>setTimeout(()=>o.classList.add('pick'),i*260));
+  if(!await sleep(1200,t))return;
+  userMsg('都按推荐');
+  if(!await sleep(700,t))return;
+  if(!await botMsg(t,'生效：1A 2A★。改进版生成——高亮处为新增（右侧）。'))return;
+  el('rep-h',`<div class="name">✨ 改进版提示词</div><div class="meta">改动加粗高亮 · 原始意图不变</div>`,out);
+  el('imp',`你是<mark>一名商务领域资深译者</mark>。把我提供的英文翻译成中文：<mark>专有名词保留原文并在首次出现时括注</mark>；语气正式、面向客户；<mark>数字、日期、金额逐项核对</mark>。<mark>完成前自查：术语是否一致？有无漏译？抽 2 句回译验证语义</mark>。仅输出译文。`,out);
+  el('tiles',`<div class="tile ok"><div class="v">92</div><div class="k">改进后总分</div></div>
+   <div class="tile hi"><div class="v">57</div><div class="k">原版总分</div></div>
+   <div class="tile ok"><div class="v">3</div><div class="k">建议条目</div></div>
+   <div class="tile ok"><div class="v">✓</div><div class="k">附回归对照</div></div>`,out);scrollOut();
+  if(!await sleep(900,t))return;
+  if(!await botMsg(t,`附<b>回归对照</b>：同一段含金额的英文——原版数字错译无法发现；改进版被「逐项核对 + 回译抽查」拦截。<br><small>建议用你的真实输入各跑一次验证。</small>`))return;
+  if(!await sleep(650,t))return;
+  el('punch',`🩺 57 分 → 92 分<small>30 秒完成一次专业提示词体检 · 改进可验证，不靠感觉</small>`);
+  scrollChat();
+}
+
+/* ===== ③ 合同审查 ===== */
+const LAWSTAGES=[
+ ['1 文件解析','28 页 · 识别 142 个条款',900],
+ ['2 事实提取','事实卡 14 项 · 3 项标【合同未约定】',1000],
+ ['3 风险扫描','发现 7 个风险（高 2 · 中 3 · 低 2）',1500],
+ ['4 法律核查','官方来源 2 条 · 1 项标【待律师核查】',1100],
+ ['5 条款建议','生成 5 条示范修改文本',950],
+ ['6 对抗审查','复核修正 2 处风险等级',950],
+ ['7 交付生成','三件套已输出 → 右侧',650]
+];
+const RISKS=[
+ {lv:'hi',id:'R-001',loc:'§7.2 · 第 11 页',t:'逾期付款违约金畸高（责任失衡）',
+  q:'「甲方逾期付款的，每逾期一日按合同金额的 5% 向乙方支付违约金。」',
+  w:'日 5% 年化超 1800%。虽可请求法院调减，但谈判与诉讼中我方全程被动。',
+  f:'按逾期<b>金额</b>的 0.05%/日 计付，且累计不超过合同总额的 10%。'},
+ {lv:'hi',id:'R-002',loc:'§5.3 · 第 8 页',t:'乙方逾期交付完全免责（救济被架空）',
+  q:'「乙方逾期交付的，不承担任何责任。」',
+  w:'对方违约零成本，我方核心救济条款形同虚设。',
+  f:'删除免责表述；增加对等违约金【待填写比例】及逾期 30 日我方单方解除权。'},
+ {lv:'mid',id:'R-003',loc:'验收条款 · 缺失',t:'未约定验收标准与异议期',
+  q:'【合同未约定】全文无验收标准、验收程序及异议期条款。',
+  w:'交付质量争议时我方举证困难，付款条件也失去抓手。',
+  f:'补充：验收清单、到货后 7 日书面异议期、逾期未异议视为验收通过。'},
+ {lv:'mid',id:'R-004',loc:'§12.1 · 第 19 页',t:'争议管辖约定在对方所在地仲裁',
+  q:'「因本合同发生的争议，提交乙方所在地仲裁委员会仲裁。」',
+  w:'异地仲裁维权成本高、程序不可上诉。',check:1,
+  f:'谈判改为我方所在地或标的物所在地法院管辖【待律师确认策略】。'}
+];
+async function scnC(t){
+  setAgent('ag-law');$('#outtitle').textContent='交付物预览 · 合同风险审查报告';
+  userMsg(`<div class="filechip">📄 设备采购合同.pdf · 2.4 MB</div>审查这份合同。立场：<b>甲方风险优先</b>，委托方：华南智造。`);
+  if(!await sleep(900,t))return;
+  if(!await botMsg(t,'收到。多步骤、高错误代价的审查任务，按<b>七环节提示链</b>执行——交付物在右侧实时生成。','合同审查工作犬 ⚖️'))return;
+  if(!await sleep(400,t))return;
+  liveOn();
+  const ok=await runStages(t,'审查流水线',LAWSTAGES,i=>{
+    if(i===1)el('rep-h',`<div class="name">合同风险审查报告 <span style="font-size:.68rem;color:#68707c">v1.0</span></div>
+      <div class="meta">设备采购合同 · 立场：甲方风险优先 · 委托方：华南智造</div>`,out),scrollOut();
+    if(i===2)el('tiles',`<div class="tile hi"><div class="v">2</div><div class="k">高风险</div></div>
+      <div class="tile mid"><div class="v">3</div><div class="k">中风险</div></div>
+      <div class="tile lo"><div class="v">2</div><div class="k">低风险</div></div>
+      <div class="tile ok"><div class="v">3</div><div class="k">待律师确认</div></div>`,out),scrollOut();
+    if(i>=2&&i<=5){const r=RISKS[i-2];if(r){
+      el('risk '+r.lv,`<div class="rh"><span class="rid">${r.id}</span><span class="lvl">${r.lv==='hi'?'高风险':'中风险'}</span>
+      <span class="loc">${r.loc}</span></div><b>${r.t}</b>
+      <div class="quote">${r.q}</div><div class="why">${r.w}</div>
+      <div class="fix"><b>示范修改</b>　${r.f}</div>${r.check?'<span class="tag-check">待律师核查</span>':''}`,out);scrollOut();}}
+  });
+  if(!ok)return;
+  if(!await sleep(450,t))return;
+  if(!await botMsg(t,`审查完成 ✅ 三件套已生成：<b>审查报告</b>（右侧）、<b>原文逐条批注</b>、<b>JSON 风险清单</b>。3 项已列入待律师确认清单。<br><small>本报告为律师初审工作底稿，不构成最终法律意见。</small>`,'合同审查工作犬 ⚖️'))return;
+  if(!await sleep(650,t))return;
+  el('punch',`⚡ 全流程 3 分钟（演示已加速）<small>相当于人工初审 2–3 小时 · 风险定位到页码条款 · 修改文本直接可用</small>`);
+  scrollChat();
+}
+
+/* ===== ④ 招聘筛选 ===== */
+const HRSTAGES=[
+ ['1 JD 解析','硬性条件 4 项 · 加分项 3 项',850],
+ ['2 简历解析','86 份 · 提取年限/技术栈/稳定性',1300],
+ ['3 硬性初筛','淘汰 65 份，每份附可追溯理由',1200],
+ ['4 加分排序','评分模型：技能 50% + 经验 30% + 稳定性 20%',1100],
+ ['5 交付','A/B 分级名单 + 每人定制面试题',700]
+];
+const CANDS=[
+ {lv:'ok',id:'A 级',n:'张某',s:'92',t:'8 年 Java · Spring Cloud 微服务 · 千万级并发订单系统 · 带过 6 人小组',
+  w:'与 JD 的高并发 + 带队要求双匹配，近三年技术栈无断档。',
+  f:'定制面试题：请他拆解一次线上高并发事故的处置链路（简历第 2 段项目）。',check:'建议深挖：近 2 年 2 次跳槽原因'},
+ {lv:'ok',id:'A 级',n:'李某',s:'88',t:'6 年 · 双一流硕士 · 开源中间件贡献者 · 亿级日志系统',
+  w:'技术深度突出；管理经验为 0，与「带小团队优先」部分错配。',
+  f:'定制面试题：如何看待从 IC 转 TL——考察管理意愿而非经验。'},
+ {lv:'mid',id:'B 级',n:'王某',s:'76',t:'4 年经验 · 技术栈完全匹配 · 曾获公司年度技术之星',
+  w:'年限不满硬性 5 年，但其余项全绿。',
+  f:'【待 HR 确认】是否放宽年限；若放宽则升 A 级。',check:'需人工决策'}
+];
+async function scnD(t){
+  setAgent('ag-hr');$('#outtitle').textContent='交付物预览 · 简历筛选报告';
+  userMsg(`<div class="filechip">🗂️ 简历包.zip · 86 份</div>筛选「高级 Java 工程师」：5 年以上、微服务、高并发经验，能带小团队优先。`);
+  if(!await sleep(900,t))return;
+  if(!await botMsg(t,'收到。按 JD 拆<b>硬性条件 / 加分项</b>两层筛选，每条淘汰理由可追溯——名单在右侧实时生成。','招聘筛选工作犬 🧑‍💼'))return;
+  if(!await sleep(400,t))return;
+  liveOn();
+  const ok=await runStages(t,'筛选流水线',HRSTAGES,i=>{
+    if(i===0)el('rep-h',`<div class="name">简历筛选报告 · 高级 Java 工程师</div>
+      <div class="meta">硬性：5 年+ / 微服务 / 高并发 / 本科+ · 加分：带队 / 开源 / 大厂背景</div>`,out),scrollOut();
+    if(i===2)el('tiles',`<div class="tile"><div class="v">86</div><div class="k">收到简历</div></div>
+      <div class="tile ok"><div class="v">7</div><div class="k">A 级必面</div></div>
+      <div class="tile mid"><div class="v">14</div><div class="k">B 级待定</div></div>
+      <div class="tile hi"><div class="v">65</div><div class="k">淘汰(附理由)</div></div>`,out),scrollOut();
+    if(i>=2&&i<=4){const c=CANDS[i-2];if(c){
+      el('risk '+c.lv,`<div class="rh"><span class="rid">${c.id} · ${c.n}</span><span class="lvl">匹配 ${c.s} 分</span></div>
+      <b>${c.t}</b><div class="why">${c.w}</div>
+      <div class="fix"><b>面试准备</b>　${c.f}</div>${c.check?`<span class="tag-check">${c.check}</span>`:''}`,out);scrollOut();}}
+  });
+  if(!ok)return;
+  if(!await sleep(450,t))return;
+  if(!await botMsg(t,`筛选完成 ✅ A 级 7 人（右侧为前 2）+ B 级 14 人待定。<br>每条淘汰理由均可追溯到 JD 条款，<b>未使用性别 / 年龄 / 地域等歧视性因素</b>。<br><small>B 级中 3 人涉硬性条件放宽，已标注待 HR 决策。</small>`,'招聘筛选工作犬 🧑‍💼'))return;
+  if(!await sleep(650,t))return;
+  el('punch',`🧑‍💼 86 份简历 → 7 个必面的人<small>3 分钟 · 每人自带定制面试题 · 淘汰理由全部可追溯</small>`);
+  scrollChat();
+}
+
+/* ===== ⑤ 数据看板 ===== */
+const DATASTAGES=[
+ ['1 数据清洗','12 列 × 3,400 行 · 修复缺失 47 处',1000],
+ ['2 指标计算','营收 / 客单价 / 复购 / 区域拆解',1000],
+ ['3 归因分析','定位 3 条核心洞察',1200],
+ ['4 报告成稿','结论先行 + 图表 + 建议',800]
+];
+const BARS=[[290,'1月'],[310,'2月'],[350,'3月'],[420,'4月'],[460,'5月'],[510,'6月',1]];
+const INSIGHTS=[
+ {lv:'ok',id:'洞察 1',t:'增长主引擎：华东大客户放量',w:'贡献上半年营收增量的 61%。建议 Q3 将华东的大客户打法复制到华南（客群画像相似度 0.82）。'},
+ {lv:'mid',id:'洞察 2',t:'客单价下滑预警',w:'低价 SKU 销量占比 22% → 31%，拉低客单价 6%。建议调整推荐位权重，将连带率高的组合装前置。'},
+ {lv:'hi',id:'洞察 3',t:'新客复购是最大短板',w:'整体复购 31%（↑4pt）但新客 30 日复购仅 11%。建议立项新客二单激励，预估可拉回月营收 3–5%。'}
+];
+async function scnE(t){
+  setAgent('ag-data');$('#outtitle').textContent='交付物预览 · 经营分析报告';
+  userMsg(`<div class="filechip">📊 上半年销售数据.xlsx · 3,400 行</div>给我一份能直接拿去开月度经营会的分析报告。`);
+  if(!await sleep(900,t))return;
+  if(!await botMsg(t,'收到。先清洗再算账，<b>每条结论都带数据依据</b>——报告在右侧实时生成。','数据看板工作犬 📊'))return;
+  if(!await sleep(400,t))return;
+  liveOn();
+  const ok=await runStages(t,'分析流水线',DATASTAGES,i=>{
+    if(i===0)el('rep-h',`<div class="name">上半年经营分析报告</div>
+      <div class="meta">数据区间 2026.01–06 · 已清洗 · 结论先行</div>`,out),scrollOut();
+    if(i===1){
+      el('tiles',`<div class="tile ok"><div class="v">2,340<span style="font-size:.6rem">万</span></div><div class="k">营收 ↑18%</div></div>
+      <div class="tile hi"><div class="v">¥486</div><div class="k">客单价 ↓6%</div></div>
+      <div class="tile ok"><div class="v">31%</div><div class="k">复购 ↑4pt</div></div>
+      <div class="tile"><div class="v">42%</div><div class="k">华东占比</div></div>`,out);
+      const ch=el('chart','',out);
+      BARS.forEach(b=>{ch.innerHTML+=`<div class="bar${b[2]?' hl':''}" data-h="${Math.round(b[0]/510*100)}"><em>${b[0]}</em><span>${b[1]}</span></div>`});
+      scrollOut();
+      setTimeout(()=>ch.querySelectorAll('.bar').forEach(b=>b.style.height=b.dataset.h+'%'),80);
+    }
+    if(i===2)INSIGHTS.forEach((s,j)=>setTimeout(()=>{
+      el('risk '+s.lv,`<div class="rh"><span class="rid">${s.id}</span></div><b>${s.t}</b><div class="why">${s.w}</div>`,out);scrollOut();
+    },j*350));
+  });
+  if(!ok)return;
+  if(!await sleep(700,t))return;
+  if(!await botMsg(t,`报告完成 ✅ 一页结论 + 三条带依据的洞察 + 行动建议，<b>直接投屏可用</b>。<br><small>附录含指标口径说明与异常数据处理记录，经得起会上追问。</small>`,'数据看板工作犬 📊'))return;
+  if(!await sleep(650,t))return;
+  el('punch',`📊 从 Excel 到会议室 · 3 分钟<small>每条结论带数据依据 · 口径可追溯 · 建议可执行</small>`);
+  scrollChat();
+}
+
+/* ===== 控制 ===== */
+const SCN={A:scnA,B:scnB,C:scnC,D:scnD,E:scnE};
+let current='A';
+function reset(){stream.innerHTML='';out.innerHTML='<div class="placeholder" id="ph">交付物将在这里实时生成</div>';
+  $('#live').style.display='none'}
+function play(s){current=s;token++;const t=token;reset();
+  ['A','B','C','D','E'].forEach(k=>$('#tab'+k).classList.toggle('on',k===s));
+  SCN[s](t)}
+function replay(){play(current)}
+/* 进入视口才开播 */
+let started=false;
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&!started){started=true;play('A');io.disconnect()}})},{threshold:.25});
+io.observe($('#demo'));
+</script>
+</body>
+</html>
