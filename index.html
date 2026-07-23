@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PromptDog 提示词牧羊犬 — 把说不清的需求，牧成能上岗的 Agent</title>
+<title>PromptDog 提示词提示狗 — 把说不清的需求，变成能上岗的 Agent</title>
 <style>
   :root{
     --bg:#faf9f7; --card:#ffffff; --ink:#1f2328; --sub:#57606a;
@@ -205,13 +205,14 @@
 <div class="hero">
   <div class="wrap">
     <div class="dog">🐕</div>
-    <h1>Prompt<em>Dog</em> · 提示词牧羊犬</h1>
-    <div class="tagline">把说不清的需求，牧成能上岗的 Agent。</div>
+    <h1>Prompt<em>Dog</em> · 提示词提示狗</h1>
+    <div class="tagline">把说不清的需求，变成能上岗的 Agent。</div>
     <p class="sub">一个「设计提示词的提示词专家」——装进 Codex、Claude Code、WorkBuddy、SoWork 或任意对话窗口，你说一句模糊需求，它交付能直接使用的提示词、SOP，或带质检闭环的 Agent 资产包。</p>
     <div class="btns">
       <a class="btn primary" href="#demo">▶ 观看工作台演示</a>
       <a class="btn ghost" href="https://github.com/shandianT/Prompt-dog" target="_blank" rel="noopener">GitHub 仓库</a>
       <a class="btn ghost" href="#start">快速开始</a>
+      <a class="btn ghost" href="en.html">EN</a>
     </div>
   </div>
 </div>
@@ -233,23 +234,23 @@
   <div class="wrap" style="max-width:1240px">
     <div class="center" style="margin-bottom:16px">
       <div class="kicker">LIVE DEMO</div>
-      <h2>一只牧羊犬，一群工作犬</h2>
+      <h2>一只提示狗，一群工作狗</h2>
       <p class="lead" style="margin:8px auto 18px">先看懂两个角色，再看它们各自上场干活——自动播放 · 可切换场景与重播。</p>
     </div>
     <div class="roles">
-      <div class="role"><div class="rt">🐕 牧羊犬 <span class="em">PromptDog</span> —— 造 Agent 的 Agent</div>
+      <div class="role"><div class="rt">🐕 提示狗 <span class="em">PromptDog</span> —— 造 Agent 的 Agent</div>
         <p>你说一句模糊需求，它出选择题替你确认行业细节，然后生成完整的 Agent 资产包。<b>演示 ①② 就是它本尊在干活。</b></p></div>
-      <div class="role"><div class="rt">🐾 工作犬 —— 牧羊犬产出的场景专用 Agent</div>
-        <p>资产包拖进工作台就上岗，专职一个场景，住在犬舍（kennel/）里，越用越准。<b>演示 ③④⑤ 是三只已上岗的工作犬。</b></p></div>
+      <div class="role"><div class="rt">🐾 工作狗 —— 提示狗产出的场景专用 Agent</div>
+        <p>资产包拖进工作台就上岗，专职一个场景，住在犬舍（kennel/）里，越用越准。<b>演示 ③④⑤ 是三只已上岗的工作狗。</b></p></div>
     </div>
     <div class="genflow">
       <span class="gstep">你的一句话</span><span class="ga">→</span>
       <span class="gstep">🐕 选择题确认</span><span class="ga">→</span>
       <span class="gstep">生成资产包</span><span class="ga">→</span>
       <span class="gstep">拖进工作台</span><span class="ga">→</span>
-      <span class="gstep">🐾 工作犬上岗</span>
+      <span class="gstep">🐾 工作狗上岗</span>
     </div>
-    <div class="qualbar">同样的大模型，工作犬为什么比普通 Agent 强？普通 Agent 是一段提示词一口气输出、看运气；工作犬<b>分环节执行、验收标准先行、对抗审查找茬、复盘回归越用越准</b>——质量是设计出来的。</div>
+    <div class="qualbar">同样的大模型，工作狗为什么比普通 Agent 强？普通 Agent 是一段提示词一口气输出、看运气；工作狗<b>分环节执行、验收标准先行、对抗审查找茬、复盘回归越用越准</b>——质量是设计出来的。</div>
     <div class="appframe">
       <div class="app">
         <aside class="side">
@@ -264,10 +265,10 @@
         <header class="d-top">
           <span class="title">PromptDog 工作台</span><span class="badge-demo">DEMO</span>
           <div class="tabs">
-            <span class="tgroup">🐕 牧羊犬</span>
-            <button class="tab" id="tabA" onclick="play('A')">① 一句话造工作犬</button>
+            <span class="tgroup">🐕 提示狗</span>
+            <button class="tab" id="tabA" onclick="play('A')">① 一句话造工作狗</button>
             <button class="tab" id="tabB" onclick="play('B')">② 提示词体检</button>
-            <span class="tgroup">🐾 工作犬</span>
+            <span class="tgroup">🐾 工作狗</span>
             <button class="tab" id="tabC" onclick="play('C')">③ 合同审查</button>
             <button class="tab" id="tabD" onclick="play('D')">④ 招聘筛选</button>
             <button class="tab" id="tabE" onclick="play('E')">⑤ 数据看板</button>
@@ -310,19 +311,19 @@
 <section>
   <div class="wrap">
     <div class="kicker">机制</div>
-    <h2>六信号判级，产出形态自适应</h2>
-    <p class="lead">按步骤数、领域知识、准确性风险、外部依赖、角色协作、产出结构六个信号打分定级——能简单绝不复杂。</p>
+    <h2>先量活儿，再干活儿</h2>
+    <p class="lead">收到需求，它先掂量这活儿有多复杂，再决定给你什么——小事不小题大做，大事不敷衍了事。</p>
     <div class="pipe">
-      <div class="card"><div class="lv">L1</div><h3>优化提示词</h3><p>人设 / 背景 / 任务 / 输出要求 / 自查，零提问直接交付</p></div>
-      <div class="card"><div class="lv">L2</div><h3>步骤化 SOP</h3><p>每步含目的、动作、提示词片段、检查点</p></div>
-      <div class="card"><div class="lv">L3</div><h3>提示链</h3><p>环节表 + 数据契约 + 验证点 + 内嵌闭环与终止条件</p></div>
-      <div class="card"><div class="lv">L4</div><h3>多智能体编排</h3><p>子 Agent 分配表 + 技能与工具清单 + 主控循环</p></div>
+      <div class="card"><div class="lv">小事</div><h3>一段好提示词</h3><p>复制粘贴就能用，一句都不多问</p></div>
+      <div class="card"><div class="lv">多步的事</div><h3>一份操作手册</h3><p>照着一步一步做，每步都有检查点</p></div>
+      <div class="card"><div class="lv">复杂的事</div><h3>一条流水线</h3><p>多环节接力干活，环环有质检</p></div>
+      <div class="card"><div class="lv">大工程</div><h3>一支 AI 团队</h3><p>多个角色分工协作，互相把关</p></div>
     </div>
     <div class="chips">
-      <span class="chip">验收标准先行</span><span class="chip">自我一致性投票</span><span class="chip">交叉核查</span>
-      <span class="chip">来源引用强制</span><span class="chip">对抗审查</span><span class="chip">人工确认点</span>
-      <span class="chip">最大 3 轮止损</span>
+      <span class="chip">动手前先说清「什么算好」</span><span class="chip">关键结论多方核对</span>
+      <span class="chip">交付前有人专门找茬</span><span class="chip">改三轮不行就止损，绝不空转</span>
     </div>
+    <p style="color:var(--sub);font-size:.82rem;margin-top:14px">背后是一套「六信号判级」模型，对原理感兴趣可看仓库里的方法论文档。</p>
   </div>
 </section>
 
@@ -346,25 +347,26 @@
 <section>
   <div class="wrap">
     <div class="kicker">犬舍案例</div>
-    <h2>首只工作犬：律所合同审查 🐾</h2>
-    <p class="lead">律所最高频场景——商事合同风险审查。由 PromptDog 两轮选择题生成，工程化沉淀为完整资产包。</p>
+    <h2>明星工作狗：标书撰写 📑</h2>
+    <p class="lead">B2B 世界最熬人的活——通宵赶标书。让工作狗先干八成：拆评分标准、对着评分点写、废标项逐条核对，人只做判断和润色。</p>
     <div class="stepline">
-      <span class="step">1 文件解析</span><span class="arrow">→</span>
-      <span class="step">2 事实提取</span><span class="arrow">→</span>
-      <span class="step">3 风险扫描</span><span class="arrow">→</span>
-      <span class="step">4 法律核查</span><span class="arrow">→</span>
-      <span class="step">5 条款建议</span><span class="arrow">→</span>
-      <span class="step">6 对抗审查</span><span class="arrow">→</span>
-      <span class="step">7 三件套交付</span>
+      <span class="step">1 招标文件解析</span><span class="arrow">→</span>
+      <span class="step">2 评分标准拆解</span><span class="arrow">→</span>
+      <span class="step">3 应答矩阵</span><span class="arrow">→</span>
+      <span class="step">4 分章撰写</span><span class="arrow">→</span>
+      <span class="step">5 合规自查</span><span class="arrow">→</span>
+      <span class="step">6 模拟评审</span><span class="arrow">→</span>
+      <span class="step">7 整装交付</span>
     </div>
     <div class="grid g3" style="margin-top:18px">
       <div class="card"><h3>三件套交付</h3>
-        <ul class="clean"><li>风险审查报告（优先级排序）</li><li>原文逐条批注（定位到条款）</li><li>结构化 JSON 风险清单</li></ul></div>
-      <div class="card"><h3>律所级红线</h3>
-        <ul class="clean redline"><li>禁止虚构法条、判例与来源</li><li>无联网一律标【待律师核查】</li><li>不出最终法律意见、不建议签署</li></ul></div>
+        <ul class="clean"><li>标书初稿（按评分点组织章节）</li><li>应答偏离表（逐条对应招标要求）</li><li>评分点自查清单（含扣分风险）</li></ul></div>
+      <div class="card"><h3>投标级红线</h3>
+        <ul class="clean redline"><li>资质、业绩数据只用素材库真实材料</li><li>硬性废标项逐条核对打钩</li><li>引用招标文件原文可追溯到页码</li></ul></div>
       <div class="card"><h3>自带飞轮</h3>
-        <ul class="clean"><li>固定启动指令，一句话开审</li><li>每周复盘四指标回填</li><li>改版必跑回归，达标才发布</li></ul></div>
+        <ul class="clean"><li>中标 / 落标复盘回填</li><li>评审意见入库变成下次弹药</li><li>历史标书模块化复用</li></ul></div>
     </div>
+    <p style="color:var(--sub);font-size:.85rem;margin-top:14px">犬舍同款还有：合同审查（见演示场景③）、招聘筛选、数据看板、内容营销——每只都是同一套方法造出来的资产包。</p>
   </div>
 </section>
 
@@ -377,8 +379,8 @@
         <p>Codex / Claude Code：把仓库放进工作区，AGENTS.md 加三行路由。行业候选库与渐进式加载全量保留。</p></div>
       <div class="card"><span class="n">B</span><h3>任意对话 AI</h3>
         <p>复制 assets/system-prompt.md 的单文件版，贴进系统提示词框或对话第一条。SoWork 等单人设平台用 persona 版。</p></div>
-      <div class="card"><span class="n">C</span><h3>直接用现成工作犬</h3>
-        <p>把 kennel/合同审查Agent/ 整个文件夹拖进 WorkBuddy / Codex 工作区，按启动指令发一句话即可开审。</p></div>
+      <div class="card"><span class="n">C</span><h3>直接用现成工作狗</h3>
+        <p>把 kennel/ 里的现成工作狗（标书撰写、合同审查…）整个文件夹拖进 WorkBuddy / Codex 工作区，按启动指令发一句话即可上岗。</p></div>
     </div>
     <div class="center" style="margin-top:32px">
       <a class="btn primary" href="https://github.com/shandianT/Prompt-dog" target="_blank" rel="noopener">获取 PromptDog →</a>
@@ -388,7 +390,7 @@
 
 <footer>
   <div class="wrap">
-    <p>PromptDog 🐕 提示词牧羊犬 — 把说不清的需求，牧成能上岗的 Agent。</p>
+    <p>PromptDog 🐕 提示词提示狗 — 把说不清的需求，变成能上岗的 Agent。</p>
     <p style="margin-top:6px">理念来源：五阶段提示词工程流程 × 二十余个策略的信号化路由 ·
       <a href="https://github.com/shandianT/Prompt-dog" target="_blank" rel="noopener">GitHub</a></p>
   </div>
@@ -481,10 +483,10 @@ async function scnA(t){
    <div class="tile ok"><div class="v">✓</div><div class="k">闭环有终点</div></div>
    <div class="tile ok"><div class="v">✓</div><div class="k">拖入即上岗</div></div>`,out);scrollOut();
   if(!await sleep(550,t))return;
-  if(!await botMsg(t,`资产包就绪 📦 一只新的「竞品分析工作犬」已入犬舍——文件夹拖进工作台即上岗，每周一说一句「跑竞品周报」。<br>
+  if(!await botMsg(t,`资产包就绪 📦 一只新的「竞品分析工作狗」已入犬舍——文件夹拖进工作台即上岗，每周一说一句「跑竞品周报」。<br>
   <small>想调整任何环节，说编号就行（如「环节 2 加个价格监控」）。</small>`))return;
   if(!await sleep(650,t))return;
-  el('punch',`🐕 一句话，牧出一只能上岗的工作犬<small>42 秒 · 只答了一次选择题 · 资产入犬舍，可复用、可迭代、可迁移</small>`);
+  el('punch',`🐕 一句话，养出一只能上岗的工作狗<small>42 秒 · 只答了一次选择题 · 资产入犬舍，可复用、可迭代、可迁移</small>`);
   scrollChat();
 }
 
@@ -565,7 +567,7 @@ async function scnC(t){
   setAgent('ag-law');$('#outtitle').textContent='交付物预览 · 合同风险审查报告';
   userMsg(`<div class="filechip">📄 设备采购合同.pdf · 2.4 MB</div>审查这份合同。立场：<b>甲方风险优先</b>，委托方：华南智造。`);
   if(!await sleep(900,t))return;
-  if(!await botMsg(t,'收到。多步骤、高错误代价的审查任务，按<b>七环节提示链</b>执行——交付物在右侧实时生成。','合同审查工作犬 ⚖️'))return;
+  if(!await botMsg(t,'收到。多步骤、高错误代价的审查任务，按<b>七环节提示链</b>执行——交付物在右侧实时生成。','合同审查工作狗 ⚖️'))return;
   if(!await sleep(400,t))return;
   liveOn();
   const ok=await runStages(t,'审查流水线',LAWSTAGES,i=>{
@@ -583,7 +585,7 @@ async function scnC(t){
   });
   if(!ok)return;
   if(!await sleep(450,t))return;
-  if(!await botMsg(t,`审查完成 ✅ 三件套已生成：<b>审查报告</b>（右侧）、<b>原文逐条批注</b>、<b>JSON 风险清单</b>。3 项已列入待律师确认清单。<br><small>本报告为律师初审工作底稿，不构成最终法律意见。</small>`,'合同审查工作犬 ⚖️'))return;
+  if(!await botMsg(t,`审查完成 ✅ 三件套已生成：<b>审查报告</b>（右侧）、<b>原文逐条批注</b>、<b>JSON 风险清单</b>。3 项已列入待律师确认清单。<br><small>本报告为律师初审工作底稿，不构成最终法律意见。</small>`,'合同审查工作狗 ⚖️'))return;
   if(!await sleep(650,t))return;
   el('punch',`⚡ 全流程 3 分钟（演示已加速）<small>相当于人工初审 2–3 小时 · 风险定位到页码条款 · 修改文本直接可用</small>`);
   scrollChat();
@@ -612,7 +614,7 @@ async function scnD(t){
   setAgent('ag-hr');$('#outtitle').textContent='交付物预览 · 简历筛选报告';
   userMsg(`<div class="filechip">🗂️ 简历包.zip · 86 份</div>筛选「高级 Java 工程师」：5 年以上、微服务、高并发经验，能带小团队优先。`);
   if(!await sleep(900,t))return;
-  if(!await botMsg(t,'收到。按 JD 拆<b>硬性条件 / 加分项</b>两层筛选，每条淘汰理由可追溯——名单在右侧实时生成。','招聘筛选工作犬 🧑‍💼'))return;
+  if(!await botMsg(t,'收到。按 JD 拆<b>硬性条件 / 加分项</b>两层筛选，每条淘汰理由可追溯——名单在右侧实时生成。','招聘筛选工作狗 🧑‍💼'))return;
   if(!await sleep(400,t))return;
   liveOn();
   const ok=await runStages(t,'筛选流水线',HRSTAGES,i=>{
@@ -629,7 +631,7 @@ async function scnD(t){
   });
   if(!ok)return;
   if(!await sleep(450,t))return;
-  if(!await botMsg(t,`筛选完成 ✅ A 级 7 人（右侧为前 2）+ B 级 14 人待定。<br>每条淘汰理由均可追溯到 JD 条款，<b>未使用性别 / 年龄 / 地域等歧视性因素</b>。<br><small>B 级中 3 人涉硬性条件放宽，已标注待 HR 决策。</small>`,'招聘筛选工作犬 🧑‍💼'))return;
+  if(!await botMsg(t,`筛选完成 ✅ A 级 7 人（右侧为前 2）+ B 级 14 人待定。<br>每条淘汰理由均可追溯到 JD 条款，<b>未使用性别 / 年龄 / 地域等歧视性因素</b>。<br><small>B 级中 3 人涉硬性条件放宽，已标注待 HR 决策。</small>`,'招聘筛选工作狗 🧑‍💼'))return;
   if(!await sleep(650,t))return;
   el('punch',`🧑‍💼 86 份简历 → 7 个必面的人<small>3 分钟 · 每人自带定制面试题 · 淘汰理由全部可追溯</small>`);
   scrollChat();
@@ -652,7 +654,7 @@ async function scnE(t){
   setAgent('ag-data');$('#outtitle').textContent='交付物预览 · 经营分析报告';
   userMsg(`<div class="filechip">📊 上半年销售数据.xlsx · 3,400 行</div>给我一份能直接拿去开月度经营会的分析报告。`);
   if(!await sleep(900,t))return;
-  if(!await botMsg(t,'收到。先清洗再算账，<b>每条结论都带数据依据</b>——报告在右侧实时生成。','数据看板工作犬 📊'))return;
+  if(!await botMsg(t,'收到。先清洗再算账，<b>每条结论都带数据依据</b>——报告在右侧实时生成。','数据看板工作狗 📊'))return;
   if(!await sleep(400,t))return;
   liveOn();
   const ok=await runStages(t,'分析流水线',DATASTAGES,i=>{
@@ -674,7 +676,7 @@ async function scnE(t){
   });
   if(!ok)return;
   if(!await sleep(700,t))return;
-  if(!await botMsg(t,`报告完成 ✅ 一页结论 + 三条带依据的洞察 + 行动建议，<b>直接投屏可用</b>。<br><small>附录含指标口径说明与异常数据处理记录，经得起会上追问。</small>`,'数据看板工作犬 📊'))return;
+  if(!await botMsg(t,`报告完成 ✅ 一页结论 + 三条带依据的洞察 + 行动建议，<b>直接投屏可用</b>。<br><small>附录含指标口径说明与异常数据处理记录，经得起会上追问。</small>`,'数据看板工作狗 📊'))return;
   if(!await sleep(650,t))return;
   el('punch',`📊 从 Excel 到会议室 · 3 分钟<small>每条结论带数据依据 · 口径可追溯 · 建议可执行</small>`);
   scrollChat();
