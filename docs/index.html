@@ -199,9 +199,13 @@
   .qualbar b{color:var(--accent)}
   .tgroup{font-size:.68rem;font-weight:800;color:#68707c;align-self:center;padding:0 2px;letter-spacing:.05em}
 </style>
+
+<style>
+  [data-lang-page][hidden]{display:none!important}
+</style>
 </head>
 <body>
-
+<div id="zhPage" data-lang-page="zh">
 <div class="hero">
   <div class="wrap">
     <div class="dog">🐕</div>
@@ -212,7 +216,7 @@
       <a class="btn primary" href="#demo">▶ 观看工作台演示</a>
       <a class="btn ghost" href="https://github.com/shandianT/Prompt-dog" target="_blank" rel="noopener">GitHub 仓库</a>
       <a class="btn ghost" href="#start">快速开始</a>
-      <a class="btn ghost" href="en.html">EN</a>
+      <a class="btn ghost" href="#en" onclick="setLang('en');return false;">EN</a>
     </div>
   </div>
 </div>
@@ -695,6 +699,106 @@ function replay(){play(current)}
 let started=false;
 const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting&&!started){started=true;play('A');io.disconnect()}})},{threshold:.25});
 io.observe($('#demo'));
+</script>
+</div>
+
+<div id="enPage" data-lang-page="en" hidden>
+<div class="hero"><div class="wrap">
+  <div class="dog">🐕</div>
+  <h1>Prompt<em>Dog</em></h1>
+  <div class="tagline">Turns what you can't articulate into agents that work.</div>
+  <p class="sub">A meta-agent that designs agents. Say one vague sentence — it confirms the details with multiple-choice cards, then delivers a ready-to-use prompt, SOP, or a full agent asset package with built-in QA.</p>
+  <div class="btns">
+    <a class="btn primary" href="https://github.com/shandianT/Prompt-dog" target="_blank" rel="noopener">GitHub</a>
+    <a class="btn ghost" href="#zh" onclick="setLang('zh');return false;">🐕 Live Demo (中文)</a>
+    <a class="btn ghost" href="#zh" onclick="setLang('zh');return false;">中文</a>
+  </div>
+  <div class="shot"><a href="#zh" onclick="setLang('zh');return false;"><img src="/docs/screenshot.png" alt="PromptDog workbench: contract-review WorkDog generating a clause-level risk report in real time"></a></div>
+  <p class="cap">A WorkDog on duty: one sentence + one contract → a clause-level risk report, generated live. Click to watch the animated demo.</p>
+</div></div>
+
+<section><div class="wrap">
+  <div class="kicker">The problem</div>
+  <h2>The barrier isn't prompting skill — it's articulation</h2>
+  <p class="lead">Every AI tool asks users open-ended questions they can't answer. Three sins of traditional prompt tools:</p>
+  <div class="grid">
+    <div class="card"><span class="n">1</span><h3>Interrogation</h3><p>"What are your QA standards?" — users don't know. The articulation burden lands on the people least equipped to carry it.</p></div>
+    <div class="card"><span class="n">2</span><h3>One-size-fits-all</h3><p>Every task gets "a better prompt". Complex work is underserved; simple work is over-engineered.</p></div>
+    <div class="card"><span class="n">3</span><h3>Deliver and vanish</h3><p>No acceptance criteria, no verification, no iteration loop. Quality is luck; nothing compounds.</p></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">How it works</div>
+  <h2>One PromptDog, many WorkDogs</h2>
+  <p class="lead"><b>PromptDog</b> is the agent that designs agents: it proposes, you pick. <b>WorkDogs</b> are the scenario-specific agents it produces — asset folders that go on duty the moment you drop them into a workspace.</p>
+  <div class="chat">
+    <div class="msg user">I run a cross-border e-commerce store. I want AI to QA my customer-service chats.</div>
+    <div class="msg bot"><div class="tag">PromptDog</div>Medium-complexity task needing industry know-how — I'll design an SOP. One thing to confirm, reply <b>"all recommended"</b> to pass:<br><br><b>Q1 QA dimensions?</b> (multi-select)<br>A. Response time ★　B. Script compliance ★　C. Resolution rate ★　D. Empathy　E. Other</div>
+    <div class="msg user">all recommended</div>
+    <div class="msg bot"><div class="tag">PromptDog</div>Effective: all ★. (Delivers the full SOP + assumption list + beginner's guide.)</div>
+  </div>
+  <p class="center" style="color:var(--sub);margin-top:18px">Zero open-ended questions. You typed fewer than ten words.</p>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">Quality by design</div>
+  <h2>It sizes the job before doing the job</h2>
+  <div class="grid" style="margin-top:20px">
+    <div class="card"><h3>Small ask</h3><p>One great prompt — copy, paste, done. No questions asked.</p></div>
+    <div class="card"><h3>Multi-step</h3><p>An SOP with a checkpoint at every step.</p></div>
+    <div class="card"><h3>Complex</h3><p>A staged pipeline — clean context per stage, checks between stages.</p></div>
+    <div class="card"><h3>Heavy</h3><p>An AI team with divided roles that review each other.</p></div>
+  </div>
+  <p class="lead" style="margin-top:22px">Four safeguards on every delivery: acceptance criteria agreed up front · critical claims cross-checked · an adversarial reviewer before shipping · a hard stop-loss after three rounds. Quality is designed, not lucked into.</p>
+</div></section>
+
+<section><div class="wrap">
+  <div class="kicker">The kennel</div>
+  <h2>Ready-to-work WorkDogs</h2>
+  <div class="tblwrap"><table>
+    <thead><tr><th>WorkDog</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td>📑 <b>Bid Writing</b></td><td>Parses the tender, builds a scoring matrix, drafts per scoring point, checks every knockout clause, runs a mock evaluation.</td></tr>
+      <tr><td>⚖️ <b>Contract Review</b></td><td>7-stage first-pass review with law-firm red lines; delivers report + clause annotations + structured JSON.</td></tr>
+      <tr><td>✍️ <b>Content Marketing</b></td><td>"Trust through transparency" methodology; corpus-grounded — it never fabricates a number; tri-cut per platform.</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lead" style="margin-top:18px">Every WorkDog ships with launch commands, a retro flywheel and regression gates — the more you use it, the sharper it gets.</p>
+  <div class="center" style="margin-top:26px"><a class="btn primary" href="https://github.com/shandianT/Prompt-dog" target="_blank" rel="noopener">Get PromptDog →</a></div>
+</div></section>
+
+<footer><div class="wrap">
+  <p>PromptDog 🐕 — Turns what you can't articulate into agents that work.</p>
+  <p style="margin-top:6px"><a href="https://github.com/shandianT/Prompt-dog" target="_blank" rel="noopener">GitHub</a> · <a href="#zh" onclick="setLang('zh');return false;">中文版</a></p>
+</div></footer>
+</div>
+
+<script>
+(function(){
+  function applyLang(lang, shouldScroll){
+    var zh=document.getElementById('zhPage');
+    var en=document.getElementById('enPage');
+    if(!zh || !en) return;
+    var isEn=lang==='en';
+    zh.hidden=isEn;
+    en.hidden=!isEn;
+    document.documentElement.lang=isEn?'en':'zh-CN';
+    document.title=isEn
+      ? 'PromptDog — Turns what you cannot articulate into agents that work'
+      : 'PromptDog 提示词提示狗 — 把说不清的需求，变成能上岗的 Agent';
+    if(location.hash !== (isEn ? '#en' : '#zh')) history.replaceState(null,'',isEn?'#en':'#zh');
+    try{localStorage.setItem('promptdog_lang', isEn?'en':'zh');}catch(e){}
+    if(shouldScroll !== false) window.scrollTo({top:0,behavior:'smooth'});
+  }
+  window.setLang=applyLang;
+  document.addEventListener('DOMContentLoaded', function(){
+    var saved='zh';
+    try{saved=localStorage.getItem('promptdog_lang') || 'zh';}catch(e){}
+    var lang=location.hash==='#en'?'en':(location.hash==='#zh'?'zh':saved);
+    applyLang(lang,false);
+  });
+})();
 </script>
 </body>
 </html>

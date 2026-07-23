@@ -4,7 +4,7 @@
 
 **把说不清的需求，变成能上岗的 Agent。**
 
-[🌐 在线演示](https://prompt-dog.vercel.app/) · [⚡ 30 秒上手](#-30-秒上手) · [🏠 犬舍](#-犬舍现成的工作狗) · [English](README.en.md)
+[🌐 在线演示 / EN 本页切换](https://prompt-dog.vercel.app/) · [⚡ 30 秒上手](#-30-秒上手) · [🏠 犬舍](#-犬舍现成的工作狗) · [English README](README.en.md)
 
 <img src="docs/screenshot.png" width="880" alt="PromptDog 首页：提示词提示狗，把说不清的需求变成能上岗的 Agent">
 
