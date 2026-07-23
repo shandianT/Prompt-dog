@@ -1,4 +1,4 @@
-# Skill Architect（终极技能架构师）
+# Prompt-dog / Skill Architect（终极技能架构师）
 
 一个「设计提示词的提示词专家」Agent Skill：把模糊需求变成可被证明有效的提示词、SOP 或完整 Agent 工作流。
 
@@ -36,3 +36,7 @@ skill-architect/
 - 「帮我设计一个每周自动 XX 的工作流」→ 得到完整流程设计（提示链/子 agent/验证/循环）
 
 设计理念源自五阶段提示词工程流程（规划架构 → 基础构建 → 执行评估 → 诊断精调 → 工程化管理）与提示词策略分类体系。
+
+## License
+
+MIT License. See [LICENSE](LICENSE).
