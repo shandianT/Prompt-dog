@@ -67,6 +67,9 @@ prompt-dog/
 
 **直接用现成工作犬**：把 `kennel/合同审查Agent/` 整个文件夹拖进 WorkBuddy/Codex 工作区，按其 `启动指令.md` 发一句话即可开审。
 
+
+**直观介绍页**：打开 [docs/index.html](docs/index.html) 查看 PromptDog 的可视化 demo 页面；开启 GitHub Pages 后可作为在线展示页访问。
+
 详细步骤见 [QUICKSTART.md](QUICKSTART.md)。
 
 ## 案例：合同审查工作犬（kennel 首发）
