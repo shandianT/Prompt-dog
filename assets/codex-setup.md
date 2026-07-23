@@ -4,14 +4,14 @@ Codex、Claude Code 这类编程 Agent 有文件系统和工具，不需要单�
 
 ## 配置步骤
 
-1. 把 `skill-architect/` 完整目录放进 Agent 工作的仓库。
+1. 把 `prompt-dog/` 完整目录放进 Agent 工作的仓库。
 2. 在仓库根目录 `AGENTS.md`（Codex 每次会话自动读取）加入：
 
 ```markdown
 ## 提示词架构师
 
 当用户要求：写/优化提示词、诊断现有提示词、设计 SOP 或 AI 工作流时——
-读取 skill-architect/SKILL.md 并严格按其流程执行（它会指引你按需读取
+读取 prompt-dog/SKILL.md 并严格按其流程执行（它会指引你按需读取
 references/ 下的对应文件）。不要凭默认习惯直接回答这类请求。
 ```
 
