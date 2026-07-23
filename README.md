@@ -1,5 +1,7 @@
 # PromptDog 🐕 提示词牧羊犬
 
+在线体验：[https://prompt-dog.vercel.app/](https://prompt-dog.vercel.app/)
+
 > **把说不清的需求，牧成能上岗的 Agent。**
 
 PromptDog 是一个「设计提示词的提示词专家」——装进你的 AI（Codex、Claude Code、WorkBuddy、任意对话窗口）之后，你只需要说一句模糊的需求，它负责把需求牧成能直接使用的提示词、SOP，或者一个完整的、带质检闭环的 Agent 资产包。
@@ -68,7 +70,7 @@ prompt-dog/
 **直接用现成工作犬**：把 `kennel/合同审查Agent/` 整个文件夹拖进 WorkBuddy/Codex 工作区，按其 `启动指令.md` 发一句话即可开审。
 
 
-**直观介绍页**：仓库根目录已提供 [index.html](index.html)，可直接部署到 Vercel；也可打开 [docs/index.html](docs/index.html) 查看同款页面。
+**直观介绍页**：在线体验 [https://prompt-dog.vercel.app/](https://prompt-dog.vercel.app/)；仓库内也提供 [index.html](index.html) 和 [docs/index.html](docs/index.html)。
 
 详细步骤见 [QUICKSTART.md](QUICKSTART.md)。
 
