@@ -4,16 +4,11 @@
 
 **把说不清的需求，变成能上岗的 Agent。**
 
-[🌐 在线演示](https://prompt-dog.vercel.app/) · [⚡ 30 秒上手](#-30-秒上手) · [🏠 犬舍](#-犬舍现成的工作狗) · [English site](https://prompt-dog.vercel.app/#en)
+[🌐 在线演示](https://prompt-dog.vercel.app/) · [⚡ 30 秒上手](#-30-秒上手) · [🏠 犬舍](#-犬舍现成的工作狗) · [📝 更新记录](CHANGELOG.md) · [English](README.en.md)
 
-<img src="docs/screenshot.png" width="880" alt="PromptDog 首页：提示词提示狗，把说不清的需求变成能上岗的 Agent">
+<img src="docs/screenshot.png" width="880" alt="PromptDog 工作台：合同审查工作狗实时生成风险审查报告">
 
-<div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:14px">
-  <img src="https://avatars.githubusercontent.com/u/106303992?v=4" width="42" height="42" style="border-radius:999px;border:2px solid #e8e4de" alt="Orcastao GitHub avatar">
-  <span>Author: <a href="https://github.com/shandianT">Orcastao</a></span>
-</div>
-
-*↑ PromptDog 首页：把说不清的需求，变成能上岗的 Agent（[看动态演示](https://prompt-dog.vercel.app/)）*
+*↑ 工作狗上岗实况：一句话 + 一份合同，实时产出带条款定位的审查报告（[看动态演示](https://prompt-dog.vercel.app/)）*
 
 </div>
 
@@ -38,11 +33,9 @@ git clone https://github.com/shandianT/Prompt-dog
 读取 Prompt-dog/SKILL.md 并严格按其流程执行。
 ```
 
-**方式二：Agent 工作台（WorkBuddy / SoWork）** —— 把整个 `Prompt-dog` 文件夹拖进工作区；如果平台支持项目指令，就按上面的 `AGENTS.md` 路由接入。要直接使用现成工作狗时，把 `kennel/标书撰写Agent`、`kennel/合同审查Agent` 或 `kennel/内容营销Agent` 整个文件夹放进工作区，按里面的 `启动指令.md` 发一句话即可。
+**方式二：任意对话 AI** —— 复制 [`assets/system-prompt.md`](assets/system-prompt.md) 分隔线以下全文，贴进系统提示词框或对话第一条。
 
-**方式三：低代码工作流平台（Coze 等）** —— 这类平台更适合拆成节点使用：主 Agent 用 [`assets/persona-single-field.md`](assets/persona-single-field.md) 里的名称 / 简介 / 人设，流程节点按 `references/` 或 `kennel/*/prompts/` 逐段配置。
-
-**方式四：任意对话 AI** —— 复制 [`assets/system-prompt.md`](assets/system-prompt.md) 分隔线以下全文，贴进系统提示词框或对话第一条。
+**方式三：SoWork / Coze 等单人设平台** —— [`assets/persona-single-field.md`](assets/persona-single-field.md) 里名称/简介/人设三框直接抄。
 
 ## 一次交互长什么样
 
@@ -81,6 +74,14 @@ git clone https://github.com/shandianT/Prompt-dog
 | 复杂度 | 一律一段提示词 | 判级后给提示词 / SOP / 流水线 / AI 团队 |
 | 质量 | 看运气 | 验收标准先行 + 交付前找茬 + 止损线 |
 | 交付 | 一段文字 | 可复用资产包（含复盘与回归） |
+
+## 最近更新
+
+- 2026-07-24：同步 `prompt-dog 6` 版本，更新官网、README、截图和犬舍资产包。
+- 2026-07-24：维护 Vercel 在线演示站点，访问即可看到可视化 demo。
+- 2026-07-23：PromptDog 开源发布，首批沉淀合同审查 Agent 资产包。
+
+完整记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## 参与
 
