@@ -4,9 +4,16 @@
 
 **把说不清的需求，变成能上岗的 Agent。**
 
+作者：[Orcastao](https://github.com/shandianT)
+
 [🌐 在线演示](https://prompt-dog.vercel.app/) · [⚡ 30 秒上手](#-30-秒上手) · [🏠 犬舍](#-犬舍现成的工作狗) · [English site](https://prompt-dog.vercel.app/#en)
 
 <img src="docs/screenshot.png" width="880" alt="PromptDog 首页：提示词提示狗，把说不清的需求变成能上岗的 Agent">
+
+<div style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:14px">
+  <img src="https://avatars.githubusercontent.com/u/106303992?v=4" width="42" height="42" style="border-radius:999px;border:2px solid #e8e4de" alt="Orcastao GitHub avatar">
+  <span>Author: <a href="https://github.com/shandianT">Orcastao</a></span>
+</div>
 
 *↑ PromptDog 首页：把说不清的需求，变成能上岗的 Agent（[看动态演示](https://prompt-dog.vercel.app/)）*
 
