@@ -357,7 +357,10 @@
     render() {
       ensure(); contractSync();
       const c = P().contract;
-      const canSubmit = c.current === 2 && c.approvalApi;
+      const c3 = commit('c3');
+      const fields = c.fields.map((f) => (f.k === '账期' && c3 && c3.status !== '待处理'
+        ? Object.assign({}, f, c3.status === '有理由例外批准' ? { v: '30 天（承诺 60 天 · 已授权例外）', src: '差异' } : { v: '60 天（已按承诺修正 · 报价 v3）', src: '报价域' })
+        : f));
       const btns = [];
       if (c.current <= 2) btns.push(ui().btn(c.generated ? '重新生成草稿' : '一键生成草稿', { tone: 'secondary', icon: 'template', onclick: 'S_P1.genContract()' }));
       if (c.current <= 2) btns.push(c.approvalApi ? ui().btn('提交审批', { icon: 'send', onclick: 'S_P1.submitContract()' }) : ui().btn('待人工提交', { tone: 'ghost', icon: 'hand', disabled: true }));
@@ -385,7 +388,7 @@
         </div>
         ${ui().section('可变内容与来源')}
         <div class="card">
-          ${c.fields.map((f) => `<div class="p1-line"><span class="k">${App.esc(f.k)}</span><span class="v"><span class="${f.src === '差异' ? 'me-err' : ''}">${App.esc(f.v)}</span> ${ui().chip(f.src, srcTone(f.src), { sm: true })}</span></div>`).join('')}
+          ${fields.map((f) => `<div class="p1-line"><span class="k">${App.esc(f.k)}</span><span class="v"><span class="${f.src === '差异' ? 'me-err' : ''}">${App.esc(f.v)}</span> ${ui().chip(f.src, srcTone(f.src), { sm: true })}</span></div>`).join('')}
           <div class="divider"></div>
           <div class="p1-line"><span class="k">非标条款</span><span class="v">客户要求 60 天账期 ${ui().chip('转指定审核', 'warn', { sm: true })}</span></div>
           <div class="tiny muted mt8">按模板填充可变内容；非标条款进入指定审核流程，不由 AI 擅自改写。合同引用最新批准的报价版本。</div>
@@ -635,7 +638,7 @@
             { k: '客诉', v: ka2 && ka2.complaint.status === 'none' ? '无未结客诉（服务系统 9/7）' : '见交付质量', tone: 'ok' },
             { k: '承诺差异', v: blockingCnt ? `${blockingCnt} 项重要差异待处理（张江报价 v2 / 合同草稿）` : '无待处理差异', tone: blockingCnt ? 'danger' : 'ok', go: 'p1-commitments' },
             { k: '时间压力', v: 'AIB 审核 2026-11 前（客户要求）', tone: 'warn' },
-          ].filter(Boolean).map((r) => `<div class="p1-line ${r.go ? 'pressable' : ''}" ${r.go ? `onclick="App.go('${r.go}')"` : ''}><span class="k">${r.k}</span><span class="v"><span class="p1-dt"><i class="p1-dot ${r.tone}"></i>${App.esc(r.v)}</span>${r.go ? App.icon('chevron-right', 14, 'muted') : ''}</span></div>`).join('')}
+          ].filter(Boolean).map((r) => `<div class="p1-line ${r.go ? 'pressable' : ''}" ${r.go ? `onclick="App.go('${r.go}')"` : ''}><span class="k">${r.k}</span><span class="v"><span class="p1-dt"><i class="p1-dot ${r.tone}"></i>${App.esc(r.v)}${r.go ? ' <span class="link small">查看 ›</span>' : ''}</span></span></div>`).join('')}
           <div class="tiny muted mt8">四象限量化待样本验证，当前只做定性呈现，不输出评分或排名。</div>
         </div>
         ${ui().notice('gray', '子合同明细按授权汇总，不因集团关系开放所有区域数据：华南子公司（非授权范围）不展示。', 'lock')}

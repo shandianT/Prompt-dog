@@ -82,7 +82,7 @@
         <span class="tiny muted num">9/7 14:36</span>
       </div>
       <div class="vis-minis mt8">
-        ${mini('store', '客户', st.alias ? `${st.alias} · ${st.name}` : st.name, true)}
+        ${mini('store', '客户', st.alias || st.name, true)}
         ${mini('camera', '门头', ocr, !!CAP.ocr && CAP.ocr.status === 'done' && !!CAP.ocrChoice)}
         ${mini('image', '现场', CAP.photos.length ? `${CAP.photos.length} 张` : '未拍', CAP.photos.length > 0)}
         ${mini('mic', '口述', speech, rec.status === 'done' || (CAP.textMode && !!CAP.text.trim()))}

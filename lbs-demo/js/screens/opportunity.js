@@ -25,7 +25,7 @@
     .opp-ai-grid .g { background: rgba(255, 255, 255, .7); border-radius: 10px; padding: 8px 10px; min-width: 0; }
     .opp-ai-grid .g .l { font-size: 11px; color: #7b7fb3; margin-bottom: 4px; }
     .opp-ai-grid .g .v { font-size: 13px; font-weight: 600; color: #3b3bb0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .opp-ai-grid .g .v .delta { font-size: 11px; font-weight: 500; color: #7b7fb3; }
+    .opp-ai-grid .g .v .delta { font-size: 11px; font-weight: 500; color: #7b7fb3; flex-basis: 100%; }
     .opp-ai-list h5 { font-size: 12px; font-weight: 700; color: #3b3bb0; margin: 10px 0 4px; display: flex; align-items: center; gap: 4px; }
     .opp-ai-list ul { padding-left: 16px; margin: 0; }
     .opp-ai-list li { font-size: 13px; margin: 3px 0; color: #2f3350; line-height: 1.45; }

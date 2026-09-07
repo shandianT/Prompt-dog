@@ -177,7 +177,7 @@
             return `<div class="cell me-sync-row">
               <div class="cell-icon ${isFail ? 'danger' : 'info'}">${App.icon(isFail ? 'cloud-off' : 'sync', 20)}</div>
               <div class="cell-body">
-                <div class="cell-title ellipsis">${App.esc(st ? st.name : v.storeId)} · ${App.esc(v.type)}拜访记录</div>
+                <div class="cell-title ellipsis">${App.esc(st ? st.name : v.storeId)} · ${App.esc(v.type)}记录</div>
                 <div class="cell-sub">${App.esc(v.time)}${isFail ? ` · 环节：${App.esc(v.syncStage || 'CRM 回写')} · <span class="me-err">${App.esc(v.syncError || '接口超时')}</span>` : ' · 等待回写 CRM'}</div>
                 <div class="row mt8 wrap gap6">${ui().chip('本系统已保存', 'info', { icon: 'check' })}${isFail ? ui().chip('CRM 同步失败', 'danger', { icon: 'alert' }) : ui().chip('待同步', 'gray', { icon: 'clock' })}${ui().btn(isFail ? '重试' : '立即同步', { tone: 'secondary', size: 'xs', icon: 'refresh', onclick: `S_ME.retryVisit('${v.id}')` })}</div>
               </div>

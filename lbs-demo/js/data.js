@@ -5,7 +5,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  const D = window.DATA = { VERSION: 8 };
+  const D = window.DATA = { VERSION: 9 };
 
   /* ---------- 用户 / 角色 ---------- */
   const users = {
@@ -67,7 +67,7 @@
       lastVisit: { date: '2026-08-20', type: '回访', result: '服务满意，询问卫生间清洁', by: '陈奕辰' },
       contacts: [{ name: '周经理', role: '运营经理', decision: '对接人', phone: '135****6620', source: 'CRM', verified: true }],
       services: ['有害生物防治（月度）'], updatedAt: '2026-08-20 18:00' },
-    { id: 's_maixiang', name: '麦香园面包房', type: '餐饮 · 烘焙', street: '一马路', district: '浦东新区', address: '一马路 60 号', coop: 'none', ownerId: 'u_other', ownerName: '王磊', perm: 'minimal',
+    { id: 's_maixiang', name: '麦香园面包房', type: '餐饮 · 烘焙', street: '一马路', district: '浦东新区', address: '一马路 60 号', coop: 'none', ownerId: 'u_wanglei', ownerName: '王磊', perm: 'minimal',
       recentTouch: '近 7 天有触达', primaryOppId: null, complaint: { status: 'none' }, lastVisit: null, contacts: [], services: [], updatedAt: '2026-09-04 11:00' },
     { id: 's_yujia', name: '渔家灯火海鲜酒楼', type: '餐饮 · 海鲜', street: '一马路', district: '浦东新区', address: '一马路 188 号', coop: 'active', ownerId: 'u_dj', perm: 'full',
       since: '2025-10-15', contractEnd: '2026-10-14', primaryOppId: 'o_yujia_renew',
@@ -94,9 +94,9 @@
       contacts: [{ name: '何店长', role: '店长', decision: '对接人', phone: '136****2098', source: 'CRM', verified: true }], services: ['有害生物防治（月度）'], updatedAt: '2026-08-30 16:00' },
     { id: 's_chuanyu', name: '川渝人家', type: '餐饮 · 中餐', street: '二马路', district: '浦东新区', address: '二马路 102 号', coop: 'none', ownerId: 'u_dj', perm: 'full',
       primaryOppId: 'o_chuanyu', complaint: { status: 'none' }, lastVisit: null, contacts: [], services: [], updatedAt: '2026-08-15 10:00' },
-    { id: 's_shiguang', name: '拾光咖啡', type: '餐饮 · 咖啡', street: '二马路', district: '浦东新区', address: '二马路 8 号', coop: 'none', ownerId: 'u_other', ownerName: '赵敏', perm: 'minimal', recentTouch: '近 30 天无触达', primaryOppId: null, complaint: { status: 'none' }, lastVisit: null, contacts: [], services: [], updatedAt: '2026-08-01 10:00' },
+    { id: 's_shiguang', name: '拾光咖啡', type: '餐饮 · 咖啡', street: '二马路', district: '浦东新区', address: '二马路 8 号', coop: 'none', ownerId: 'u_zhaomin', ownerName: '赵敏', perm: 'minimal', recentTouch: '近 30 天无触达', primaryOppId: null, complaint: { status: 'none' }, lastVisit: null, contacts: [], services: [], updatedAt: '2026-08-01 10:00' },
     // 建设路
-    { id: 's_laomatou', name: '老码头火锅（建设路店）', type: '餐饮 · 火锅', street: '建设路', district: '浦东新区', address: '建设路 300 号', coop: 'none', ownerId: 'u_other', ownerName: '王磊', perm: 'minimal', recentTouch: '近 7 天有触达', primaryOppId: null, complaint: { status: 'none' }, lastVisit: null, contacts: [], services: [], updatedAt: '2026-09-04 10:00' },
+    { id: 's_laomatou', name: '老码头火锅（建设路店）', type: '餐饮 · 火锅', street: '建设路', district: '浦东新区', address: '建设路 300 号', coop: 'none', ownerId: 'u_wanglei', ownerName: '王磊', perm: 'minimal', recentTouch: '近 7 天有触达', primaryOppId: null, complaint: { status: 'none' }, lastVisit: null, contacts: [], services: [], updatedAt: '2026-09-04 10:00' },
     { id: 's_xiangyu', name: '湘遇小馆', type: '餐饮 · 湘菜', street: '建设路', district: '浦东新区', address: '建设路 77 号', coop: 'none', ownerId: 'u_dj', perm: 'full', primaryOppId: 'o_xiangyu', complaint: { status: 'none' },
       lastVisit: { date: '2026-08-26', type: '陌拜', result: '店长不在，留资料', by: '刘晓芸' }, contacts: [], services: [], updatedAt: '2026-08-26 15:00' },
     // 待补地址
@@ -184,7 +184,7 @@
     { id: 't_ka_survey', storeId: 's_ka2', oppId: 'o_ka2', title: '南翔中央厨房现场勘查（卫生间深度清洁）', type: '勘查', ownerId: 'u_ka', ownerName: '陈奕辰', due: '2026-09-10', time: '10:00', status: 'todo', source: '客户约定', reason: '8/27 回访约定', evidence: ['拜访记录 8/27'], expected: '勘查结论、范围与频次' },
     { id: 't_ka_commit', storeId: 's_ka1', oppId: 'o_ka1', title: '核对"一年两次风险勘查"承诺是否进入报价与合同', type: '承诺核对', ownerId: 'u_ka', ownerName: '陈奕辰', due: '2026-09-07', status: 'todo', source: 'AI建议', reason: 'AI 发现承诺未计入报价 v2（待人确认）', evidence: ['拜访记录 9/1 · 承诺条目'], expected: '补入报价或授权例外' },
     { id: 't_mgr_coach', storeId: 's_jinpai', oppId: 'o_jinpai', title: '与刘晓芸复盘金牌烤鸭方案反馈', type: '辅导', ownerId: 'u_mgr', ownerName: '周明远', due: '2026-09-09', status: 'todo', source: '本人创建', reason: '方案发送 3 天无反馈', evidence: ['商机推进卡'], expected: '明确异议处理策略' },
-    { id: 't_wanglei_overdue', storeId: 's_laomatou', oppId: null, title: '回访：老码头火锅', type: '回访', ownerId: 'u_other', ownerName: '王磊', due: '2026-09-04', status: 'todo', source: '规则型', reason: '50% 分层 · 3 天周期', evidence: [], expected: '', overdue: true },
+    { id: 't_wanglei_overdue', storeId: 's_laomatou', oppId: null, title: '回访：老码头火锅', type: '回访', ownerId: 'u_wanglei', ownerName: '王磊', due: '2026-09-04', status: 'todo', source: '规则型', reason: '50% 分层 · 3 天周期', evidence: [], expected: '', overdue: true },
   ];
 
   /* ---------- 方案模板 & 方案 ---------- */
@@ -257,7 +257,7 @@
     unfollowed: [
       { storeId: 's_xiangyu', days: 12, owner: '刘晓芸' }, { storeId: 's_chuanyu', days: 23, owner: '刘晓芸' }, { storeId: 's_taotao', days: 18, owner: '陈奕辰' },
     ],
-    trend: { weeks: ['8/17', '8/24', '8/31', '9/7'], coverage: [22, 26, 24, 31], effective: [38, 41, 36, 47], proposals: [3, 5, 4, 7] },
+    trend: { weeks: ['8/17', '8/24', '8/31', '9/7'], coverage: [36, 42, 40, 49], effective: [34, 38, 33, 43], proposals: [3, 5, 4, 7] },
   };
 
   /* ---------- P1 预览数据 ---------- */

@@ -199,7 +199,7 @@
 
   /* ---------- 动作 ---------- */
   S.filter = (id) => { U().custFilter = id; App.save(); App.refresh(); };
-  S.mode = (m) => { const ui = U(); ui.custMode = m; ui.custFilter = 'all'; App.save(); App.refresh(); };
+  S.mode = (m) => { const ui = U(); ui.custMode = m; ui.custFilter = 'all'; S.q = ''; App.save(); App.refresh(); };
   S.pick = (street) => { const ui = U(); ui.street = street; ui.custMode = 'street'; ui.custFilter = 'all'; S.q = ''; App.save(); if (App.stack.length > 1 && App.currentEntry().id === 'street-picker') App.back(); else App.refresh(); };
   S.clear = () => { S.q = ''; App.refresh(); };
   S.visit = function (id, extra) {

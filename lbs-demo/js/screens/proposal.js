@@ -172,9 +172,9 @@
         <div class="row between"><div class="pp-logo">LBS 史维莎 · 服务方案</div><div class="pp-band-chip">${esc(m.segment)} · 模板 ${esc(m.templateVersion)}</div></div>
         <div class="pp-doc-title">${esc(s.name || '')}</div>
         <div class="pp-doc-sub">${esc(td.docTitle)}</div>
-        <div class="pp-meta"><span>${App.icon('layers', 11)}版本 v${m.version}</span><span>${App.icon('clock', 11)}输入快照 ${esc(fmtT(m.snapshotAt))}</span><span>${App.icon('sparkle', 11)}生成 ${esc(fmtT(m.createdAt))}</span></div>
+        <div class="pp-meta"><span>${App.icon('layers', 11)}版本 v${m.version} · 模板 ${esc(m.templateVersion)}</span><span>${App.icon('clock', 11)}输入快照 ${esc(fmtT(m.snapshotAt))}</span><span>${App.icon('sparkle', 11)}生成 ${esc(fmtT(m.createdAt))}</span></div>
+        ${stamp}
       </div>
-      ${stamp}
       <div class="pp-body">
         <div class="pp-sec">${sec(1, '客户信息与现场观察')}
           ${cover ? `<div class="pp-cover">${App.ui.scene(cover.kind, cover.label)}</div>` : ''}
@@ -188,7 +188,7 @@
           <div class="pp-src mt4">来源：已确认拜访记录 ${esc(fmtT(m.snapshotAt))}，仅包含客户明确表达的内容</div>
         </div>
         <div class="pp-sec">${sec(3, '服务范围与安排')}
-          <div class="pp-scope">${esc(m.scope)}<span class="pp-tag gray">${esc(m.scopeSource)}</span></div>
+          <div class="pp-scope">${esc(m.freqSource === '销售确认' && m.scopeSource === '模板默认' ? m.scope.replace(/月度 1 次|每月 1 次/, m.freq) : m.scope)}<span class="pp-tag gray">${esc(m.freqSource === '销售确认' && m.scopeSource === '模板默认' ? '模板默认 · 频次销售确认' : m.scopeSource)}</span></div>
           <table class="pp-table"><thead><tr><th style="width:26%">项目</th><th style="width:27%">频次</th><th>说明</th></tr></thead><tbody>${rows.map((r) => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`).join('')}</tbody></table>
           <div class="pp-src mt4">频次：${m.freqSource === '销售确认' ? `销售确认（${esc(m.freq)}）` : `模板默认（${esc(m.templateVersion)}），可在确认参数后修改`}；设备数量与点位数以勘查结果为准，不从照片推定。</div>
         </div>
@@ -210,7 +210,7 @@
   function versionStrip(p) {
     const cv = curVer(p) || {};
     const st = propStatus(p);
-    return `<div class="row between pp-strip"><div class="chips">${App.ui.chip(`v${p.version} · 模板 ${p.templateVersion} · 输入快照 ${fmtT((p.inputSnapshot && p.inputSnapshot.snapshotAt) || cv.snapshotAt || p.createdAt)}`, 'outline', { sm: true, icon: 'layers' })}</div>${statusChip(st, true)}</div>`;
+    return `<div class="row between pp-strip"><div class="chips">${App.ui.chip(`v${p.version} · 模板 ${p.templateVersion} · 输入快照 ${fmtT((p.inputSnapshot && p.inputSnapshot.snapshotAt) || cv.snapshotAt || p.createdAt)}`, 'outline', { sm: true, icon: 'layers' })}</div>${p.confirmedBy && p.status !== 'draft' ? App.ui.chip(`确认人 ${p.confirmedBy}`, 'brand', { sm: true, icon: 'user' }) : statusChip(st, true)}</div>`;
   }
 
   /* ---------- 向导：片段 ---------- */
@@ -248,7 +248,7 @@
   function stepInputs() {
     const I = W.inputs;
     let h = App.ui.section('输入确认', `${App.ui.factTag('fact')}`, '第 2 步');
-    h += `<div class="pp-src-line">${App.icon('history', 12)}来源：${esc(I.sourceLabel)} · 系统预填，不填造未提及内容</div>`;
+    h += `<div class="pp-src-line">${App.icon('history', 12)}来源：${esc(I.sourceLabel)} · 系统预填 · 未提及内容不填造</div>`;
     h += `<div class="list">
       ${field('needs', '已确认需求', I.needs.length ? `<ul class="pp-ul">${I.needs.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>` : '<span class="muted">暂无 · 点击补充</span>')}
       ${field('observations', '现场观察', I.observations.length ? `<ul class="pp-ul">${I.observations.map((o) => `<li>${esc(o.text)}${o.tag ? ` ${App.ui.chip(o.tag, 'warn', { sm: true })}` : ''}</li>`).join('')}</ul>` : '<span class="muted">无</span>')}
@@ -267,7 +267,7 @@
     const src = v ? `拜访 ${fmtT(v.time)}` : '本门店拜访记录';
     let h = App.ui.section('照片位置', `<span class="muted">${W.photos.length} 张 · ${esc(src)}</span>`, '第 3 步');
     if (!W.photos.length) h += `<div class="card">${App.ui.empty({ icon: 'image', title: '本次拜访无照片', sub: '可直接生成不含照片的方案；不使用其他门店照片' })}</div>`;
-    else h += `<div class="list">${W.photos.map((ph, i) => `<div class="pp-photo-row"><div class="pp-grip" aria-hidden="true"></div>${App.ui.scene(ph.kind, '')}<div class="grow"><div class="bold ellipsis" style="font-size:14px">${esc(ph.label)}</div><div class="tiny muted mt4">${ph.pos === '不使用' ? '不进入方案' : `将放入：${esc(ph.pos)}`}</div></div><select class="pp-select" onchange="S_PROP.setPos(${i}, this.value)">${POS.map((p) => `<option value="${p}" ${ph.pos === p ? 'selected' : ''}>${p}</option>`).join('')}</select></div>`).join('')}</div>`;
+    else h += `<div class="list">${W.photos.map((ph, i) => `<div class="pp-photo-row"><div class="pp-grip" aria-hidden="true"></div>${App.ui.scene(ph.kind, '')}<div class="grow"><div class="pp-plabel">${esc(ph.label)}</div><div class="tiny muted mt4">${ph.pos === '不使用' ? '不进入方案' : `将放入：${esc(ph.pos)}`}</div></div><select class="pp-select" onchange="S_PROP.setPos(${i}, this.value)">${POS.map((p) => `<option value="${p}" ${ph.pos === p ? 'selected' : ''}>${p}</option>`).join('')}</select></div>`).join('')}</div>`;
     h += App.ui.notice('ok', '销售确认图片位置后生成，不同门店不会串照片：照片仅来自本门店已确认拜访记录。', 'shield');
     return h;
   }
@@ -287,7 +287,8 @@
   function stepPreview() {
     const p = App.proposal(W.proposalId);
     if (!p) return `<div class="card">${App.ui.empty({ icon: 'doc', title: '尚未生成方案', sub: '请返回上一步生成' })}</div>`;
-    let h = App.ui.section('预览确认', versionStrip(p), '第 5 步');
+    let h = App.ui.section('预览确认', statusChip(propStatus(p)), '第 5 步');
+    h += versionStrip(p);
     h += paperHtml(modelFromProposal(p));
     h += App.ui.notice(p.internal ? 'warn' : 'info', p.internal
       ? '本版本含专业判断项，仅作内部草稿；转技术复核通过前不可对外导出或发送。'
@@ -574,12 +575,13 @@
       const st = propStatus(p);
       const vers = versionsOf(p).slice().sort((a, b) => b.v - a.v);
       let h = `<div class="card pp-head">
-        <div class="row top"><div class="cell-icon">${App.icon('doc', 20)}</div><div class="grow"><div class="bold" style="font-size:16px;line-height:1.3">${esc(s.name || '')}</div><div class="small muted mt4">${esc(m.td.docTitle)} · ${esc(tpl.name || '')} ${esc(p.templateVersion)} · 当前 v${p.version}</div></div></div>
+        <div class="row top"><div class="cell-icon">${App.icon('doc', 20)}</div><div class="grow"><div class="bold" style="font-size:16px;line-height:1.3">${esc(s.name || '')}</div><div class="small muted mt4">${esc(tpl.name || m.td.docTitle)} · 模板 ${esc(p.templateVersion)} · 当前 v${p.version} / 共 ${versionsOf(p).length} 版</div></div></div>
         <div class="row wrap mt12 gap6">${statusChip(st)}${p.confirmedBy ? App.ui.chip(`确认人 ${p.confirmedBy}${m.confirmedAt ? ' · ' + fmtT(m.confirmedAt) : ''}`, 'outline', { sm: true, icon: 'user' }) : App.ui.chip('未人工确认', 'outline', { sm: true })}${p.internal ? App.ui.chip('仅内部', 'warn', { sm: true, icon: 'lock' }) : ''}</div>
         <div class="row mt12 gap6 pp-links"><span class="pp-link" onclick="App.go('opportunity',{id:'${p.oppId}'})">${App.icon('trend', 14)}商机推进卡${App.ui.stageChip(m.opp.stage || '')}</span><span class="pp-link" onclick="App.go('customer',{id:'${p.storeId}'})">${App.icon('store', 14)}客户详情${App.icon('chevron-right', 14)}</span></div>
       </div>`;
       if (p.internal && p.status === 'draft') h += App.ui.notice('warn', '本方案含专业判断项，仅为内部草稿；技术复核通过前不可对外导出或发送。', 'beaker');
-      h += App.ui.section('方案预览', versionStrip(p));
+      h += App.ui.section('方案预览', `<span class="muted">固定版式 PDF 草稿</span>`);
+      h += versionStrip(p);
       h += paperHtml(m);
       h += App.ui.section('版本列表', `<span class="muted">${vers.length} 个版本</span>`);
       h += `<div class="list">${vers.map((v) => { const cur = v.v === p.version; const vs = v.status === 'draft' && p.internal && cur ? 'internal' : v.status; const locked = ['confirmed', 'exported', 'marked_sent'].includes(v.status);
