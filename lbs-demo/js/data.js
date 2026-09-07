@@ -20,6 +20,7 @@
     { id: 'st_2', name: '二马路', district: '浦东新区', city: '上海' },
     { id: 'st_3', name: '建设路', district: '浦东新区', city: '上海' },
     { id: 'st_4', name: '张江路', district: '浦东新区', city: '上海' },
+    { id: 'st_5', name: '南翔工业园', district: '嘉定区', city: '上海' },
   ];
 
   /* ---------- 门店 ----------
@@ -111,7 +112,7 @@
         { name: '钱经理', role: '品控经理', decision: '决策人', phone: '138****2260', source: 'CRM', verified: true },
         { name: '郑采购', role: '采购专员', decision: '采购方', phone: '—', source: '客户介绍', verified: false },
       ], services: [], updatedAt: '2026-09-05 18:30' },
-    { id: 's_ka2', name: '华信食品 · 南翔中央厨房', type: '中央厨房', street: '张江路', district: '嘉定区', address: '南翔工业园 6 号', coop: 'active', ownerId: 'u_ka', perm: 'full',
+    { id: 's_ka2', name: '华信食品 · 南翔中央厨房', type: '中央厨房', street: '南翔工业园', district: '嘉定区', address: '南翔工业园 6 号', coop: 'active', ownerId: 'u_ka', perm: 'full',
       group: { name: '华信食品集团', entity: '华信食品（上海）有限公司', sites: 3 }, since: '2026-02-01', contractEnd: '2027-01-31', primaryOppId: 'o_ka2', complaint: { status: 'none' },
       lastVisit: { date: '2026-08-27', type: '回访', result: '服务稳定，提出卫生间深度清洁需求', by: '陈奕辰' },
       contacts: [{ name: '钱经理', role: '品控经理', decision: '决策人', phone: '138****2260', source: 'CRM', verified: true }], services: ['有害生物防治（月度）'], updatedAt: '2026-08-27 17:00' },

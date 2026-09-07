@@ -339,8 +339,8 @@
     el.className = 'screen';
     el.dataset.key = entry.key;
     entry.el = el;
+    stage.appendChild(el); // 先入 DOM 再渲染，保证 mount 内可读取布局
     App.renderEntry(entry);
-    stage.appendChild(el);
     const prev = App.stack[App.stack.length - 2];
     if (anim === 'push' && prev) {
       el.classList.add('enter');
@@ -393,11 +393,11 @@
     if (next && next.el) { next.el.classList.remove('under'); App.renderEntry(next); }
     App._syncHash(); App._updatePresenter();
   };
-  App.tab = function (tabId) {
+  App.tab = function (tabId, params = {}) {
     App.closeOverlay();
     App.stack.forEach((e) => e.el && e.el.remove());
     App.stack = [];
-    const entry = { id: tabId, params: {}, key: ++App._seq };
+    const entry = { id: tabId, params: params || {}, key: ++App._seq };
     App.stack.push(entry);
     App._mount(entry, 'none');
   };
@@ -433,7 +433,7 @@
     if (params.role && App.state.users[params.role]) { App.state.role = params.role; App.save(); }
     const def = App.screens[id];
     if (!def) { App.tab('today'); return; }
-    if (TAB_ROOTS.includes(id)) { App.tab(id); return; }
+    if (TAB_ROOTS.includes(id)) { App.tab(id, params); return; }
     App.tab(def.tab || 'today');
     App.go(id, params);
   };

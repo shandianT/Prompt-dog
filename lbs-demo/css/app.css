@@ -315,6 +315,8 @@ svg.ico { display: inline-block; vertical-align: -0.18em; flex: none; }
 .cell .cell-icon.gray { background: var(--gray-soft); color: var(--gray); }
 .cell .cell-body { flex: 1; min-width: 0; }
 .cell .cell-title { font-size: 15px; font-weight: 500; }
+.cell .cell-title > .ellipsis { flex: 0 1 auto; min-width: 0; }
+.cell .cell-title > .chip { flex: none; }
 .cell .cell-sub { font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
 .cell .cell-right { color: var(--ink-3); font-size: 13px; display: flex; align-items: center; gap: 4px; flex: none; }
 .cell.pressable:active { background: var(--surface-2); }
@@ -802,7 +804,7 @@ svg.ico { display: inline-block; vertical-align: -0.18em; flex: none; }
 .p1-okico { color: var(--brand); flex: none; }
 .p1-line { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; font-size: 13.5px; border-bottom: .5px solid var(--line); }
 .p1-line:last-child { border-bottom: 0; }
-.p1-line .k { width: 96px; flex: none; color: var(--ink-3); }
+.p1-line .k { width: 104px; flex: none; color: var(--ink-3); }
 .p1-line .v { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; line-height: 1.4; }
 .p1-line.pressable:active { background: var(--surface-2); }
 .p1-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; background: var(--ink-4); }

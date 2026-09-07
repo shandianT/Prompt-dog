@@ -293,7 +293,7 @@
       const spd = speechText();
       CAP.sub.lines.push({ text: `本地草稿已保存（${media} 张照片${CAP.rec.status === 'done' ? `、录音 ${CAP.rec.seconds} 秒` : (spd ? `、文字 ${spd.length} 字` : '')}）` });
       App.refresh(); App.scrollTop();
-      const step = (ms, fn) => setTimeout(() => { if (gen !== CAP.gen || !alive('visit-capture')) return; fn(); refreshIf('visit-capture'); }, ms);
+      const step = (ms, fn) => setTimeout(() => { if (gen !== CAP.gen || CAP.sub.status !== 'running' || !alive('visit-capture')) return; fn(); refreshIf('visit-capture'); }, ms);
       const runUpload = () => {
         step(500, () => { CAP.sub.stage = 1; CAP.sub.pct = 30; CAP.sub.lines.push({ text: `上传 ${media} 张照片（压缩后 ${(media * 0.4).toFixed(1)}MB）` }); });
         step(1300, () => {

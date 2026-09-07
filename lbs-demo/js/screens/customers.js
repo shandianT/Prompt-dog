@@ -238,9 +238,8 @@
       const inp = root.querySelector('#cus-q'); if (!inp) return;
       inp.value = S.q;
       inp.addEventListener('input', () => { S.q = inp.value; const l = root.querySelector('#cus-list'); if (l) l.innerHTML = S.renderList(); });
-      // 让当前筛选芯片保持可见
-      const bar = root.querySelector('.filter-bar'); const act = bar && bar.querySelector('.fchip.active');
-      if (bar && act) bar.scrollLeft = Math.max(0, act.offsetLeft - 14);
+      // 让当前筛选芯片保持可见（mount 在元素挂载到文档前调用，布局读数需延后一帧）
+      requestAnimationFrame(() => { const bar = root.querySelector('.filter-bar'); const act = bar && bar.querySelector('.fchip.active'); if (bar && act) bar.scrollLeft = Math.max(0, act.offsetLeft - 14); });
     },
     demoActions: [
       { label: '切换到二马路', icon: 'road', run() { S.pick('二马路'); App.toast('已切换到二马路', { icon: 'map-pin' }); } },
