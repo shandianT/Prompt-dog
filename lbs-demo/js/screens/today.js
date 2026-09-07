@@ -7,6 +7,47 @@
   'use strict';
   const T = window.S_TODAY = {};
 
+  /* ---------- 页面专属样式（.tdy-），经 App.css 注入一次；不改 app.css ---------- */
+  const CSS = `
+.tdy-seg { margin: 2px 0 12px; }
+.tdy-hero .h-title { font-size: 22px; }
+.tdy-hero .h-eyebrow, .tdy-hero .h-title { padding-right: 48px; }
+.tdy-hero .h-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .16); }
+.tdy-hero .h-metrics .m { padding: 0 6px 0 10px; }
+.tdy-hero .h-metrics .m:first-child { padding-left: 0; }
+.tdy-hero .h-metrics .m + .m { border-left: 1px solid rgba(255, 255, 255, .16); }
+.tdy-hero .h-metrics .m.warn .v { color: #ffd58a; }
+.tdy-hero .h-metrics .m .l { white-space: nowrap; }
+.tdy-bell { position: absolute; right: 14px; top: 14px; z-index: 1; width: 36px; height: 36px; border-radius: 12px; background: rgba(255, 255, 255, .16); display: flex; align-items: center; justify-content: center; color: #fff; cursor: pointer; }
+.tdy-bell:active { background: rgba(255, 255, 255, .28); }
+.tdy-bell .n { position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: var(--danger); color: #fff; font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; border: 2px solid #0d7a5f; }
+.tdy-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-size: 11px; opacity: .78; }
+.tdy-foot span { display: inline-flex; align-items: center; gap: 4px; }
+.tdy-quick { margin-bottom: 4px; }
+.tdy-quick .quick { cursor: pointer; }
+.tdy-link { display: inline-flex; align-items: center; gap: 1px; color: var(--brand); font-weight: 500; cursor: pointer; }
+.tdy-time { width: 46px; height: 42px; border-radius: 11px; flex: none; display: flex; align-items: center; justify-content: center; background: var(--brand-soft); color: var(--brand-3); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.tdy-time.done { background: var(--ok-soft); color: var(--ok); }
+.tdy-em { color: #b91c1c; font-weight: 600; }
+/* core 修正：App.icon 的 svg.ico 会命中 .empty .ico（64px 盒）；限定在本页范围内复原 */
+.tdy-fix .empty svg.ico { width: 30px; height: 30px; background: none; border-radius: 0; margin: 0; }
+.tdy-fix .btn svg.ico { width: 18px; height: 18px; background: none; border-radius: 0; margin: 0; }
+.tdy-fix .cell-title .ellipsis { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.35; }
+.tdy-fix .cell-sub svg.ico { display: inline-block; vertical-align: -2px; }
+.tdy-fix .cell-sub .chip { vertical-align: -5px; margin-right: 2px; }
+.tdy-empty .empty { padding: 18px 16px; }
+.tdy-empty .empty .ico { width: 42px; height: 42px; border-radius: 13px; margin-bottom: 8px; }
+.tdy-empty .empty .ico svg { width: 22px; height: 22px; }
+.tdy-empty .empty .t { font-size: 14px; }
+.tdy-empty .empty .s { font-size: 12px; }
+.tdy-caption { display: flex; align-items: flex-start; gap: 5px; font-size: 11.5px; color: var(--ink-3); line-height: 1.5; padding: 0 4px; margin: -4px 0 14px; }
+.tdy-caption svg { flex: none; margin-top: 3px; }
+.tdy-caption.center { justify-content: center; margin-top: 6px; }
+.cell .cell-sub .fact-tag { vertical-align: 1px; }
+`;
+  if (typeof App.css === 'function') App.css('tdy', CSS);
+  else { const st = document.createElement('style'); st.id = 'css-tdy'; st.textContent = CSS; document.head.appendChild(st); }
+
   /* ---------- 工具 ---------- */
   const esc = (s) => App.esc(s);
   const TODAY = () => App.TODAY;
@@ -71,9 +112,9 @@
       <div class="tdy-bell" onclick="App.go('notifications')" aria-label="通知">${App.icon('bell', 20)}${d.unread ? `<span class="n">${d.unread}</span>` : ''}</div>
       <div class="h-eyebrow">${esc(App.fmt.mdw(TODAY()))} · ${esc(me.org)}</div>
       <div class="h-title">${greeting()}，${esc(me.name)}</div>
-      <div class="h-sub">${esc(me.roleName)} · ${esc(me.scope)}</div>
+      <div class="h-sub">${esc(me.scope)}</div>
       <div class="h-metrics">${metrics.map((m) => `<div class="m ${m.warn ? 'warn' : ''}"><div class="v">${m.v}</div><div class="l">${esc(m.l)}</div></div>`).join('')}</div>
-      <div class="tdy-foot"><span>${App.icon('refresh', 11)}数据更新 ${DATA_UPDATED} · 演示数据</span><span>${esc(TODAY())}</span></div>
+      <div class="tdy-foot"><span>${App.icon('refresh', 11)}数据更新 ${DATA_UPDATED} · 演示数据</span><span>${esc(me.roleName)}</span></div>
     </div>`;
   }
   function quickGrid() {
@@ -154,8 +195,8 @@
     const n = App.fmt.days(t.due);
     const isAI = t.source === 'AI建议';
     return App.ui.cell({
-      title: esc(t.title), sub: `${esc(st.name || '')} · ${esc(t.source || '')}${t.time ? ` · ${esc(t.time)}` : ''}`,
-      badge: isAI ? App.ui.chip('AI 建议 · 待确认', 'ai', { sm: true, icon: 'sparkle' }) : '',
+      title: esc(t.title),
+      sub: `${isAI ? App.ui.chip('AI 建议 · 待确认', 'ai', { sm: true, icon: 'sparkle' }) + ' ' : ''}${esc(st.name || '')}${isAI ? '' : ` · ${esc(t.source || '')}`}${t.time ? ` · ${esc(t.time)}` : ''}`,
       icon: TYPE_ICON[t.type] || 'list', iconTone: isAI ? 'ai' : (n === 0 ? 'warn' : 'info'),
       right: App.ui.chip(App.fmt.dueLabel(t.due), n === 0 ? 'warn' : (n === 1 ? 'info' : 'gray'), { sm: true }),
       onclick: `App.go('task',{id:'${t.id}'})`,
@@ -207,7 +248,7 @@
         : compactEmpty('list', '近两天没有其他待办', '');
     }
     h += `<div class="tdy-caption center">${App.icon('shield', 12)}AI 建议为派生数据，仅在 AI 标识内出现；正式阶段/分层需人工确认后才改变</div>`;
-    return h;
+    return `<div class="tdy-fix">${h}</div>`;
   }
 
   /* ---------- 团队工作台（主管） ---------- */
@@ -216,8 +257,8 @@
     if (window.S_TEAM && typeof window.S_TEAM.render === 'function') {
       try { return window.S_TEAM.render(params, ctx) || ''; } catch (e) { console.error(e); return App.ui.notice('danger', `团队工作台渲染失败：${esc(e.message)}`); }
     }
-    return `<div class="card">${App.ui.empty({ icon: 'users', title: '团队工作台尚未纳入演示', sub: '重点卡点 · 未跟进客户 · 任务完成 · 待复核 · 基础趋势（由 team.js 提供）' })}</div>`
-      + App.ui.notice('info', '主管在"今日"切换"我的 / 团队"；团队数据按权限过滤，不显示未经授权的跨区数据。', 'shield');
+    return `<div class="tdy-fix"><div class="card">${App.ui.empty({ icon: 'users', title: '团队工作台尚未纳入演示', sub: '重点卡点 · 未跟进客户 · 任务完成 · 待复核 · 基础趋势（由 team.js 提供）' })}</div>`
+      + App.ui.notice('info', '主管在"今日"切换"我的 / 团队"；团队数据按权限过滤，不显示未经授权的跨区数据。', 'shield') + '</div>';
   }
   T.mode = function (m) {
     uiState().todayMode = m === 'team' ? 'team' : 'my';
@@ -326,7 +367,7 @@
       h += list.length ? `<div class="list">${list.map(notifCell).join('')}</div>` : compactEmpty('bell', '暂无通知', '任务到期、服务风险与待确认记录会在这里提醒');
       h += App.ui.section('设置');
       h += `<div class="list">${App.ui.cell({ title: '通知设置', sub: '任务提醒 · 服务风险 · 外部渠道', icon: 'settings', iconTone: 'gray', onclick: "App.go('settings-notify')" })}${App.ui.cell({ title: '同步与上传异常', sub: '失败任务可在此重试', icon: 'sync', iconTone: 'info', onclick: "App.go('sync-center')" })}</div>`;
-      return h;
+      return `<div class="tdy-fix">${h}</div>`;
     },
   });
 })();

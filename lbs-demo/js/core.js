@@ -288,7 +288,7 @@
   ui.stageChip = (stage) => ui.chip(stage, ({ 待触达: 'gray', 已触达: 'info', 需求确认: 'info', 方案沟通: 'warn', 报价商务: 'warn', 待签约: 'brand', 已赢单: 'ok', 已丢单: 'danger', 暂停培育: 'gray', 待判断: 'gray' }[stage] || 'gray'));
   ui.tierChip = (t, opts) => ui.chip(App.tierLabel(t), App.tierTone(t), opts);
   ui.taskStatusChip = (st) => ui.chip(({ todo: '待办', doing: '进行中', done: '已完成', rescheduled: '已改期', cancelled: '已取消' }[st] || st), ({ todo: 'info', doing: 'warn', done: 'ok', rescheduled: 'gray', cancelled: 'gray' }[st] || 'gray'));
-  ui.visitStatusChip = (st) => ui.chip(({ draft: '本地草稿', uploading: '上传中', ai: 'AI处理中', pending_confirm: '待确认', saved: '已保存/待同步', synced: '同步成功', failed: '同步失败' }[st] || st), ({ draft: 'gray', uploading: 'info', ai: 'ai', pending_confirm: 'warn', saved: 'info', synced: 'ok', failed: 'danger' }[st] || 'gray'));
+  ui.visitStatusChip = (st, opts) => ui.chip(({ draft: '本地草稿', uploading: '上传中', ai: 'AI处理中', pending_confirm: '待确认', saved: '已保存/待同步', synced: '同步成功', failed: '同步失败' }[st] || st), ({ draft: 'gray', uploading: 'info', ai: 'ai', pending_confirm: 'warn', saved: 'info', synced: 'ok', failed: 'danger' }[st] || 'gray'), opts);
   // 简单 SVG 场景（门头 / 后厨），用于照片占位
   ui.scene = (kind = 'storefront', label = '') => {
     const scenes = {
@@ -419,9 +419,10 @@
     const top = App.currentEntry();
     if (!top) return;
     const qs = Object.keys(top.params).filter((k) => typeof top.params[k] !== 'object').map((k) => `${encodeURIComponent(k)}=${encodeURIComponent(top.params[k])}`).join('&');
-    App._ignoreHash = true;
-    location.hash = `/${top.id}${qs ? '?' + qs : ''}`;
-    setTimeout(() => { App._ignoreHash = false; }, 0);
+    const next = `#/${top.id}${qs ? '?' + qs : ''}`;
+    App._lastHash = next;
+    // replaceState 不触发 hashchange，避免自写 hash 引起的重入循环
+    try { history.replaceState(null, '', next); } catch (e) { App._ignoreHash = true; location.hash = next; setTimeout(() => { App._ignoreHash = false; }, 0); }
   };
   App.openFromHash = function () {
     const h = location.hash.replace(/^#\/?/, '');
@@ -481,7 +482,7 @@
     // 状态栏时间
     const sb = App.q('#statusbar');
     if (sb) sb.innerHTML = `<span>9:41</span><span class="right">${App.icon('signal', 16)}${App.icon('wifi', 16)}${App.icon('battery', 22)}</span>`;
-    window.addEventListener('hashchange', () => { if (!App._ignoreHash) App.openFromHash(); });
+    window.addEventListener('hashchange', () => { if (!App._ignoreHash && location.hash !== App._lastHash) App.openFromHash(); });
     App.openFromHash();
   };
 })();

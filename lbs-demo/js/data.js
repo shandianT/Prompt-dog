@@ -5,7 +5,7 @@
    ============================================================ */
 (function () {
   'use strict';
-  const D = window.DATA = { VERSION: 7 };
+  const D = window.DATA = { VERSION: 8 };
 
   /* ---------- 用户 / 角色 ---------- */
   const users = {
@@ -340,6 +340,7 @@
   D.initial = function () {
     return {
       version: D.VERSION, role: 'dj', users, streets, stores, opportunities, visits, tasks, templates, proposals, faq, askTemplates, team, p1, sync, notifications,
+      ui: { street: '一马路', todayMode: 'my', customerTab: '概览', teamSeg: '地推' }, // 页面级 UI 状态
       chat: [], // 工作助手会话
       settings: { notify: { task: true, risk: true, external: false }, revisitRule: { 20: 7, 50: 3, 80: 1, enabled: true, label: '演示规则：20%=7天 · 50%=3天 · 80%=1天' } },
       demo: { visitConfirmed: false, oppConfirmed: false, proposalGenerated: false },
