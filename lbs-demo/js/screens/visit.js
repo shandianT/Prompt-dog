@@ -461,7 +461,7 @@
     const items = [];
     (v.commitments && v.commitments.customer || []).forEach((c, i) => items.push({ k: 'cust' + i, label: '客户承诺', text: T(c), icon: 'handshake' }));
     (v.commitments && v.commitments.sales || []).forEach((c, i) => items.push({ k: 'sales' + i, label: '销售承诺', text: T(c), icon: 'hand' }));
-    items.push({ k: 'date', label: '计划日期', text: v.planDate ? `${App.fmt.mdw(v.planDate)}（${App.fmt.rel(v.planDate)}）` : '未填写 · 可留空，稍后补充', icon: 'calendar', missing: !v.planDate });
+    items.push({ k: 'date', label: '计划日期', text: v.planDate ? dateLabel(v.planDate) : '未填写 · 可留空，稍后补充', icon: 'calendar', missing: !v.planDate });
     items.push({ k: 'budget', label: '金额 / 预算', text: v.budget ? (v.budget.value || v.budget.status) : '未提及（不强填）', icon: 'yuan' });
     return items;
   }
@@ -473,10 +473,10 @@
     return ui.chip('AI 抽取', 'ai', { sm: true });
   }
   function fieldRow({ label, value, placeholder, tag, helper, missing, onclick, extra, required }) {
-    return `<div class="form-item vis-f ${missing ? 'missing' : ''} ${required ? 'required' : ''} pressable" onclick="${onclick}">
+    return `<div class="form-item vis-f ${missing ? 'missing' : ''} ${required ? 'required' : ''} ${onclick ? 'pressable' : ''}" ${onclick ? `onclick="${onclick}"` : ''}>
       <label>${esc(label)}</label>
-      <div class="fv">${value ? `<div class="vis-fv">${value}</div>` : `<span class="placeholder">${esc(placeholder || '未填写 · 点击补充')}</span>`}${extra || ''}${helper ? `<div class="tiny muted mt4">${helper}</div>` : ''}</div>
-      <div class="vis-ftag">${tag || ''}${App.icon('chevron-right', 14)}</div>
+      <div class="fv">${value ? `<div class="vis-fv">${value}</div>` : `<span class="placeholder">${esc(placeholder || (onclick ? '未填写 · 点击补充' : '未填写'))}</span>`}${extra || ''}${helper ? `<div class="tiny muted mt4">${helper}</div>` : ''}</div>
+      <div class="vis-ftag">${tag || ''}${onclick ? App.icon('chevron-right', 14) : ''}</div>
     </div>`;
   }
   function factsCard(v, readOnly) {
@@ -551,7 +551,7 @@
     confirmAll() { const v = getVisit(CONF.id); if (!v) return; keyItems(v).forEach((it) => { CONF.keys[it.k] = true; }); App.refresh(); },
     edit(field) {
       const v = getVisit(CONF.id); if (!v || CONF.sync.status !== 'idle') return;
-      const set = (fn) => (val) => { fn(val); CONF.edited[field] = true; App.save(); App.refresh(); App.toast('已修改，确认后一次写入', { icon: 'edit', bottom: true }); };
+      const set = (fn) => (val) => { if (fn(val) === false) return; CONF.edited[field] = true; App.save(); App.refresh(); App.toast('已修改，确认后一次写入', { icon: 'edit', bottom: true }); };
       if (field === 'type') { App.sheet({ title: '拜访类型', items: TYPES.map((t) => ({ label: t, icon: 'tag', onSelect: set((x) => { v.type = t; })(t) })) }); return; }
       const map = {
         contact: ['联系人姓名 · 角色', '如：王女士 店长', (val) => { const p = val.trim().split(/[\s·/]+/); v.contact = Object.assign({}, v.contact, { name: p[0] || '', role: p[1] || (v.contact && v.contact.role) || '', decision: (v.contact && v.contact.decision) || '对接人', source: '销售填写' }); }],
@@ -560,7 +560,7 @@
         observations: ['现场观察（描述即可，不下结论）', '如：后厨墙角疑似鼠迹', (val) => { const first = (v.observations || [])[0]; v.observations = val.trim() ? [Object.assign({}, typeof first === 'object' ? first : {}, { text: val.trim(), tag: (first && first.tag) || '销售描述 · 非确认虫害' })] : []; }],
         result: ['本次结果', '如：需求初步确认，等待决策人沟通', (val) => { v.result = val.trim(); }],
         next: ['下一步', '如：下周老板到店时带方案沟通', (val) => { v.next = val.trim(); }],
-        planDate: ['计划日期（YYYY-MM-DD，可留空）', '如：2026-09-15', (val) => { const d = val.trim(); if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) { App.toast('日期格式：2026-09-15', { icon: 'alert' }); return; } v.planDate = d; }],
+        planDate: ['计划日期（YYYY-MM-DD，可留空）', '如：2026-09-15', (val) => { const d = val.trim(); if (d && !/^\d{4}-\d{2}-\d{2}$/.test(d)) { App.toast('日期格式：2026-09-15', { icon: 'alert' }); return false; } v.planDate = d; }],
       };
       const m = map[field]; if (!m) return;
       App.prompt(m[0], m[1], (val) => { if (val == null) return; set(m[2])(val); });
@@ -577,8 +577,8 @@
       CONF.sync = { status: 'running', stage: 0, lines: [{ text: '本系统已保存 · 已确认事实与原始证据（录音 / 照片）落库' }] };
       App.refresh(); App.scrollTop();
       const step = (ms, fn) => setTimeout(() => { if (gen !== CONF.gen || !alive('visit-confirm')) return; fn(); refreshIf('visit-confirm'); }, ms);
-      step(700, () => { CONF.sync.stage = 1; CONF.sync.lines.push({ text: `待同步 CRM · 请求 ID ${reqId}（去重，重试不重复建记录）` }); });
-      step(1500, () => {
+      step(800, () => { CONF.sync.stage = 1; CONF.sync.lines.push({ text: `待同步 CRM · 请求 ID ${reqId}（去重，重试不重复建记录）` }); });
+      step(1900, () => {
         if (CONF.sim.crmTimeout) { CONF.sync.status = 'error'; CONF.sync.lines.push({ text: 'CRM 同步超时 · 本系统已保存，稍后自动重试', tone: 'error' }); return; }
         S_VC.finishSync(v);
       });
@@ -602,7 +602,6 @@
       if (App.state.sync && App.state.sync.drafts) App.state.sync.drafts = App.state.sync.drafts.filter((d) => d.visitId !== v.id);
       if (App.state.notifications) App.state.notifications = App.state.notifications.filter((n) => n.visitId !== v.id);
       App.save();
-      App.toast('已写入一次', { icon: 'check' });
     },
   };
 
