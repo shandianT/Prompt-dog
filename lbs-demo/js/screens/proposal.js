@@ -210,7 +210,7 @@
   function versionStrip(p) {
     const cv = curVer(p) || {};
     const st = propStatus(p);
-    return `<div class="row between pp-strip"><div class="chips">${App.ui.chip(`v${p.version} · 模板 ${p.templateVersion} · 输入快照 ${fmtT((p.inputSnapshot && p.inputSnapshot.snapshotAt) || cv.snapshotAt || p.createdAt)}`, 'outline', { sm: true, icon: 'layers' })}</div>${p.confirmedBy && p.status !== 'draft' ? App.ui.chip(`确认人 ${p.confirmedBy}`, 'brand', { sm: true, icon: 'user' }) : statusChip(st, true)}</div>`;
+    return `<div class="row between pp-strip"><div class="chips">${App.ui.chip(`v${p.version} · 模板 ${p.templateVersion} · 输入快照 ${fmtT((p.inputSnapshot && p.inputSnapshot.snapshotAt) || cv.snapshotAt || p.createdAt)}`, 'outline', { sm: true, icon: 'layers' })}</div>${p.confirmedBy && p.status !== 'draft' ? App.ui.chip(`确认人 ${p.confirmedBy}`, 'brand', { sm: true, icon: 'user' }) : App.ui.chip('未人工确认', 'outline', { sm: true })}</div>`;
   }
 
   /* ---------- 向导：片段 ---------- */
@@ -445,7 +445,7 @@
       const t = nextTime(p);
       p.internal = true;
       const obs = (p.inputSnapshot && p.inputSnapshot.observations || []).map(normObs).find((o) => o.tag) || null;
-      p.pendingReview.push({ id: App.uid('rv'), item: `虫种 / 风险确认${obs ? `：${obs.text}` : ''}`, to: '技术部 李工', by: App.me().name, at: t, status: '待技术复核', version: p.version });
+      p.pendingReview.push({ id: App.uid('rv'), item: `虫种确认${obs ? `：${obs.text}` : ''}`, to: '技术部 李工', by: App.me().name, at: t, status: '待技术复核', version: p.version });
       p.events.push({ t, e: `转技术复核（仅内部草稿 v${p.version}）`, kind: 'review' });
       App.save(); App.refresh(); App.toast('已转技术复核 · 已生成复核任务给技术部（演示）', { icon: 'beaker', duration: 2400 });
     }, '转技术复核');
@@ -576,7 +576,7 @@
       const vers = versionsOf(p).slice().sort((a, b) => b.v - a.v);
       let h = `<div class="card pp-head">
         <div class="row top"><div class="cell-icon">${App.icon('doc', 20)}</div><div class="grow"><div class="bold" style="font-size:16px;line-height:1.3">${esc(s.name || '')}</div><div class="small muted mt4">${esc(tpl.name || m.td.docTitle)} · 模板 ${esc(p.templateVersion)} · 当前 v${p.version} / 共 ${versionsOf(p).length} 版</div></div></div>
-        <div class="row wrap mt12 gap6">${statusChip(st)}${p.confirmedBy ? App.ui.chip(`确认人 ${p.confirmedBy}${m.confirmedAt ? ' · ' + fmtT(m.confirmedAt) : ''}`, 'outline', { sm: true, icon: 'user' }) : App.ui.chip('未人工确认', 'outline', { sm: true })}${p.internal ? App.ui.chip('仅内部', 'warn', { sm: true, icon: 'lock' }) : ''}</div>
+        <div class="row wrap mt12 gap6">${statusChip(st)}${p.confirmedBy ? App.ui.chip(`确认人 ${p.confirmedBy}${m.confirmedAt ? ' · ' + fmtT(m.confirmedAt) : ''}`, 'outline', { sm: true, icon: 'user' }) : App.ui.chip('未人工确认', 'outline', { sm: true })}</div>
         <div class="row mt12 gap6 pp-links"><span class="pp-link" onclick="App.go('opportunity',{id:'${p.oppId}'})">${App.icon('trend', 14)}商机推进卡${App.ui.stageChip(m.opp.stage || '')}</span><span class="pp-link" onclick="App.go('customer',{id:'${p.storeId}'})">${App.icon('store', 14)}客户详情${App.icon('chevron-right', 14)}</span></div>
       </div>`;
       if (p.internal && p.status === 'draft') h += App.ui.notice('warn', '本方案含专业判断项，仅为内部草稿；技术复核通过前不可对外导出或发送。', 'beaker');
