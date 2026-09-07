@@ -322,7 +322,7 @@
       commitments: { customer: [{ text: '下周老板到店，可进一步沟通', key: true }], sales: [{ text: '先提供每月服务方案', key: true }] },
       budget: { value: '', status: '未提及（陌拜/首访不强填）' },
       result: '需求初步确认，等待决策人沟通', next: '下周老板到店时带方案沟通', planDate: '2026-09-15',
-      media: [{ kind: 'storefront', label: '门头 · OCR：蜀香居川菜馆' }, { kind: 'kitchen', label: '后厨墙角 · 风险点位 1' }, { kind: 'corner', label: '仓库门缝 · 风险点位 2' }],
+      media: [{ kind: 'storefront', label: '门头 · OCR 已识别' }, { kind: 'kitchen', label: '后厨墙角 · 风险点位 1' }, { kind: 'corner', label: '仓库门缝 · 风险点位 2' }],
       ocr: { text: '蜀香居川菜馆', matched: 's_bing', candidates: [{ id: 's_bing', name: '蜀香居川菜馆', addr: '一马路 156 号', score: 0.96 }, { id: 'x', name: '蜀香居（二马路店）', addr: '二马路 210 号（其他区域）', score: 0.41 }] },
       aiMissing: ['决策人（老板）姓名与联系方式', '预算口径（首访不强填）', '现供应商情况'],
       status: 'pending_confirm',
