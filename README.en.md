@@ -41,14 +41,13 @@ read Prompt-dog/SKILL.md and follow its process strictly.
 
 > **You**: I run a cross-border e-commerce store, I want AI to QA my customer-service chats
 >
-> **PromptDog**: Medium-complexity task needing industry know-how — I'll design an SOP. One thing to confirm, reply "all recommended" to pass:
+> **PromptDog**: Medium-complexity task needing industry know-how — I'll design an SOP; industry defaults are pre-selected. (Delivers the full SOP + assumption list + a beginner's guide right away.)
+> An optional correction card at the end, effective as-is if you don't reply:
 > **Q1 QA dimensions?** (multi-select) A. Response time ★　B. Script compliance ★　C. Resolution rate ★　D. Empathy　E. Other
 >
-> **You**: all recommended
->
-> **PromptDog**: Effective: all ★. (Delivers the full SOP + assumption list + a beginner's guide.)
+> **You**: (nothing to type; say "1D too" to add empathy and only the affected steps are redone)
 
-Zero open-ended questions. You typed fewer than ten words.
+Zero open-ended questions. You don't have to type a word. Only when the direction is genuinely unclear does it ask first — at most two rounds — and "just do it" skips even that.
 
 ## 🏠 The Kennel: ready-to-work WorkDogs
 
