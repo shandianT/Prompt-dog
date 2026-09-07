@@ -48,7 +48,7 @@
         ${ui().p1Banner()}
         <div class="hero dark">
           <div class="h-eyebrow">包 B / P1 · 预览</div>
-          <div class="h-title">报价合同闭环 + KA 经营 + 专业辅助</div>
+          <div class="h-title" style="font-size:18px">报价合同闭环 · KA 经营 · 专业辅助</div>
           <div class="h-sub">依赖接口与规则，单独设上线门槛；本页各项均为能力边界演示</div>
           <div class="h-metrics"><div class="m"><div class="v">6</div><div class="l">能力项</div></div><div class="m"><div class="v">3</div><div class="l">外部接口依赖</div></div><div class="m"><div class="v">0</div><div class="l">首期承诺</div></div></div>
         </div>
@@ -57,7 +57,7 @@
           ${HUB.map((h) => `<div class="cell pressable p1-hubcell" onclick="App.go('${h.id}')">
             <div class="cell-icon ${h.tone}">${App.icon(h.icon, 20)}</div>
             <div class="cell-body">
-              <div class="cell-title row"><span class="ellipsis">${App.esc(h.title)}</span>${ui().chip(h.f, 'outline', { sm: true })}</div>
+              <div class="cell-title p1-hubtitle">${App.esc(h.title)} ${ui().chip(h.f, 'outline', { sm: true })}</div>
               <div class="cell-sub">${App.esc(h.sub)}</div>
               <div class="p1-need">${App.icon('link', 11)}<span>需要：${App.esc(h.need)}</span></div>
             </div>
@@ -507,7 +507,7 @@
         </div>
         ${st.complaint.status === 'open' ? ui().notice('danger', '未结客诉优先：先了解 / 协调服务问题，再谈续约；AI 不建立额外收费商机。', 'alert') : ''}
         ${ui().section('服务摘要', `<span class="tiny">源系统执行派单 / 服务 / 财务</span>`)}
-        <div class="card">${items.map((it) => `<div class="p1-line"><span class="k">${App.esc(it.k)}</span><span class="v"><i class="p1-dot ${it.tone || 'gray'}"></i>${App.esc(it.v)}</span></div>`).join('')}
+        <div class="card">${items.map((it) => `<div class="p1-line"><span class="k">${App.esc(it.k)}</span><span class="v"><span class="p1-dt"><i class="p1-dot ${it.tone || 'gray'}"></i>${App.esc(it.v)}</span></span></div>`).join('')}
           <div class="tiny muted mt8">摘要按字段映射接入，仅显示销售需要的内容；服务异常带来源与更新时间。</div></div>
 
         ${ui().section('续约窗口')}
@@ -564,6 +564,7 @@
      ============================================================ */
   const KA_SITES = [{ id: 's_ka1', name: '张江工厂', region: '浦东' }, { id: 's_ka2', name: '南翔中央厨房', region: '嘉定' }, { id: null, name: '青浦冷链仓', region: '青浦', note: '未建档' }];
   const KA_LINES = ['有害生物防治', '卫生间深度清洁', '油烟 / 通风清洁'];
+  const KA_LINE_HEAD = { 有害生物防治: '有害生物<br>防治', 卫生间深度清洁: '卫生间<br>深度清洁', '油烟 / 通风清洁': '油烟 / 通风<br>清洁' };
   const KA_ROLES = ['使用方', '决策人', '采购方', '财务 / 高层'];
   function lineState(siteId, line) {
     if (!siteId) return { k: 'blank' };
@@ -610,7 +611,7 @@
 
         ${ui().section('可服务门店及服务线空间')}
         <div class="card flush" style="padding:10px 6px">
-          <table class="table p1-matrix"><thead><tr><th>场所</th>${KA_LINES.map((l) => `<th>${App.esc(l)}</th>`).join('')}</tr></thead><tbody>
+          <table class="table p1-matrix"><thead><tr><th>场所</th>${KA_LINES.map((l) => `<th>${KA_LINE_HEAD[l] || App.esc(l)}</th>`).join('')}</tr></thead><tbody>
             ${sites.map((s) => `<tr><td><div class="bold">${App.esc(s.name)}</div><div class="tiny muted">${App.esc(s.region)}${s.note ? ' · ' + App.esc(s.note) : ''}</div></td>${KA_LINES.map((l) => cellHtml(s, l)).join('')}</tr>`).join('')}
           </tbody></table>
           <div class="tiny muted" style="padding:6px 8px 2px">空白 = 可能机会，需确认需求后立商机；不据此自动创建商机。潜力不用现有收入替代。</div>
@@ -634,7 +635,7 @@
             { k: '客诉', v: ka2 && ka2.complaint.status === 'none' ? '无未结客诉（服务系统 9/7）' : '见交付质量', tone: 'ok' },
             { k: '承诺差异', v: blockingCnt ? `${blockingCnt} 项重要差异待处理（张江报价 v2 / 合同草稿）` : '无待处理差异', tone: blockingCnt ? 'danger' : 'ok', go: 'p1-commitments' },
             { k: '时间压力', v: 'AIB 审核 2026-11 前（客户要求）', tone: 'warn' },
-          ].filter(Boolean).map((r) => `<div class="p1-line ${r.go ? 'pressable' : ''}" ${r.go ? `onclick="App.go('${r.go}')"` : ''}><span class="k">${r.k}</span><span class="v"><i class="p1-dot ${r.tone}"></i>${App.esc(r.v)}${r.go ? App.icon('chevron-right', 14, 'muted') : ''}</span></div>`).join('')}
+          ].filter(Boolean).map((r) => `<div class="p1-line ${r.go ? 'pressable' : ''}" ${r.go ? `onclick="App.go('${r.go}')"` : ''}><span class="k">${r.k}</span><span class="v"><span class="p1-dt"><i class="p1-dot ${r.tone}"></i>${App.esc(r.v)}</span>${r.go ? App.icon('chevron-right', 14, 'muted') : ''}</span></div>`).join('')}
           <div class="tiny muted mt8">四象限量化待样本验证，当前只做定性呈现，不输出评分或排名。</div>
         </div>
         ${ui().notice('gray', '子合同明细按授权汇总，不因集团关系开放所有区域数据：华南子公司（非授权范围）不展示。', 'lock')}

@@ -170,8 +170,8 @@
     if (!ai) {
       return ui.notice('gray', `<div>确认拜访事实后生成建议（AI 不覆盖正式值）</div><div class="tiny muted mt4">建议将附依据、缺失证据、置信度与规则版本，需人工确认后才写入正式值</div><div class="mt8">${ui.btn('记录拜访', { tone: 'secondary', size: 'sm', icon: 'camera', onclick: `App.go('visit-capture',{storeId:'${opp.storeId}',oppId:'${opp.id}'})` })}</div>`, 'sparkle');
     }
-    const tierDelta = ai.tier !== opp.tier ? `<span class="delta">正式 ${esc(tl(opp.tier))} → 建议 ${esc(tl(ai.tier))}</span>` : '<span class="delta">与正式值一致</span>';
-    const stageDelta = ai.stage !== opp.stage ? `<span class="delta">正式 ${esc(opp.stage)} → 建议</span>` : '<span class="delta">与正式值一致</span>';
+    const tierDelta = ai.tier !== opp.tier ? `<span class="delta">正式 ${esc(tl(opp.tier))} → ${esc(tl(ai.tier))}</span>` : '<span class="delta">与正式值一致</span>';
+    const stageDelta = ai.stage !== opp.stage ? `<span class="delta">正式 ${esc(opp.stage)} → ${esc(ai.stage)}</span>` : '<span class="delta">与正式值一致</span>';
     const nexts = (ai.next || []).map(nextObj);
     const body = `
       ${ai.conflict ? `<div class="notice warn" style="margin-bottom:10px">${icon('alert', 16)}<div><b>${esc(ai.reviewStatus === '待复核' ? '待主管复核' : ai.reviewStatus || '待主管复核')}</b> · ${esc(ai.conflict)}<div class="tiny mt4">不自动降级、不改变跟进责任；复核前正式分层保持 ${esc(tl(opp.tier))}</div></div></div>` : ''}
@@ -229,7 +229,7 @@
       <div class="opp-rule">
         <div class="r ${on('agreed')}"><div class="rank">1</div><div class="v"><b>客户约定</b>${rv.agreed ? ` · ${esc(App.fmt.mdw(rv.agreed.due))} · <span class="link" onclick="App.go('task',{id:'${rv.agreed.id}'})">${esc(rv.agreed.title)}</span>` : ' · 暂无销售确认的客户约定日期'}</div>${tag('agreed')}</div>
         <div class="r ${on('accepted')}"><div class="rank">2</div><div class="v"><b>已接受任务</b>${rv.accepted ? ` · ${esc(App.fmt.mdw(rv.accepted.due))} · <span class="link" onclick="App.go('task',{id:'${rv.accepted.id}'})">${esc(rv.accepted.title)}</span>` : ' · 暂无'}</div>${tag('accepted')}</div>
-        <div class="r ${on('rule')}"><div class="rank">3</div><div class="v"><b>规则周期</b>${rv.days ? ` · ${esc(tl(opp.tier))}=${rv.days} 天 · 自最近有效跟进 ${esc(App.fmt.md(rv.base))} 起 → ${esc(App.fmt.mdw(rv.ruleDate))}` : ` · 分层「${esc(tl(opp.tier))}」未配置周期，不生成规则型任务`}</div>${tag('rule')}</div>
+        <div class="r ${on('rule')}"><div class="rank">3</div><div class="v"><b>规则周期</b>${rv.days ? ` · ${esc(tl(opp.tier))}=${rv.days} 天 · 自最近有效跟进 ${esc(App.fmt.md(rv.base))} 起 → ${esc(App.fmt.mdw(rv.ruleDate))}${rv.ruleDate < App.TODAY ? '（已过，以上一级为准）' : ''}` : ` · 分层「${esc(tl(opp.tier))}」未配置周期，不生成规则型任务`}</div>${tag('rule')}</div>
       </div>
       ${rv.agreed ? `<div class="notice info" style="margin:10px 0 0">${icon('info', 16)}<div>已存在客户约定任务，同一商机同一周期的规则型提醒<b>已去重</b>，不再重复生成</div></div>` : ''}
       <div class="tiny muted mt8">资料编辑、AI 重算、创建草稿、发送系统提醒不重置跟进计时；仅发材料无反馈只记"已发送"</div>
@@ -274,7 +274,7 @@
       }
       if (opp.aiRejected) return ui.btn('补充事实重算（记录拜访）', { block: true, icon: 'camera', onclick: `App.go('visit-capture',{storeId:'${opp.storeId}',oppId:'${id}'})` }) + sub;
       if (opp.ai.conflict) {
-        return `<div class="btn-row">${ui.btn('拒绝建议并说明', { tone: 'outline', icon: 'x', onclick: `S_OPP.reject('${id}')` })}${ui.btn('补充事实（记录拜访）', { icon: 'camera', onclick: `App.go('visit-capture',{storeId:'${opp.storeId}',oppId:'${id}'})` })}</div><div class="tiny muted mt8" style="text-align:center">降层建议已进入主管复核，复核通过前不可直接确认</div>`;
+        return `<div class="btn-row">${ui.btn('拒绝建议并说明', { tone: 'outline', icon: 'x', onclick: `S_OPP.reject('${id}')` })}${ui.btn('补充事实', { icon: 'camera', onclick: `App.go('visit-capture',{storeId:'${opp.storeId}',oppId:'${id}'})` })}</div><div class="tiny muted mt8" style="text-align:center">降层建议已进入主管复核，复核通过前不可直接确认；补充事实 = 记录拜访后重算</div>`;
       }
       return ui.btn('一次确认：阶段 + 分层 + 任务草稿', { block: true, icon: 'check-circle', onclick: `S_OPP.confirmSuggestion('${id}')` })
         + `<div class="opp-foot-sub">${ui.btn('拒绝建议并说明', { tone: 'outline', size: 'sm', icon: 'x', onclick: `S_OPP.reject('${id}')` })}${ui.btn('阶段变更', { tone: 'ghost', size: 'sm', onclick: `S_OPP.changeStage('${id}')` })}${ui.btn('分层调整', { tone: 'ghost', size: 'sm', onclick: `S_OPP.changeTier('${id}')` })}</div>`;

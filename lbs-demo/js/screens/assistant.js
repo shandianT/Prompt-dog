@@ -277,7 +277,9 @@
 
   /* ---------- 主管问数 ---------- */
   const ASK_KW = { a1: ['逾期', '超期', '过期', '没完成', '未完成'], a2: ['签约', '金额', '产出', '区域', '街', '收入', '业绩'], a3: ['转化', '新触达', '触达', '漏斗', '推进', '新客'], a4: ['拜访', '分布', '每个人', '团队', '谁', '多少'] };
+  const RANK_WORDS = ['排名', '排行', '绩效', '考核', '最好', '最差', '最厉害', '第一名', '谁最'];
   const tmplById = (id) => App.by(App.state.askTemplates, 'id', id);
+  S.isRanking = (q) => { const nq = norm(q); return RANK_WORDS.some((w) => nq.includes(norm(w))); };
   S.askMatch = function (q) {
     const nq = norm(q); const ts = App.state.askTemplates || [];
     const direct = ts.find((t) => norm(t.q) === nq || (t.variants || []).some((v) => norm(v) === nq));
@@ -294,7 +296,7 @@
   function askAnswerHtml(t) {
     const a = t.answer; let body = ''; let canTask = true;
     if (a.kind === 'list') {
-      body = `<table class="table ask-table"><colgroup><col style="width:44%"><col style="width:22%"><col style="width:20%"><col style="width:14%"></colgroup><thead><tr><th>门店</th><th>任务</th><th>负责人</th><th class="r">逾期天</th></tr></thead><tbody>${a.rows.map((r) => `<tr class="pressable" onclick="App.go('customer',{id:'${r.storeId}'})"><td title="${esc(r.store)}">${esc(r.store)}</td><td>${esc(r.task)}</td><td>${esc(r.owner)}</td><td class="r"><span class="d">${r.days}</span></td></tr>`).join('')}</tbody></table><div class="tiny muted mt4">点击行可进入客户详情（下钻）</div>${explainHtml(a.explain)}`;
+      body = `<table class="table ask-table"><colgroup><col style="width:40%"><col style="width:22%"><col style="width:20%"><col style="width:18%"></colgroup><thead><tr><th>门店</th><th>任务</th><th>负责人</th><th class="r">逾期天</th></tr></thead><tbody>${a.rows.map((r) => `<tr class="pressable" onclick="App.go('customer',{id:'${r.storeId}'})"><td title="${esc(r.store)}">${esc(r.store)}</td><td>${esc(r.task)}</td><td>${esc(r.owner)}</td><td class="r"><span class="d">${r.days}</span></td></tr>`).join('')}</tbody></table><div class="tiny muted mt4">点击行可进入客户详情（下钻）</div>${explainHtml(a.explain)}`;
     } else if (a.kind === 'unavailable') {
       canTask = false;
       body = `${ui().notice('warn', '<b>签约金额未接入（P1）</b>，不可计算；不用商机预估额替代。', 'cloud-off')}<div class="small" style="color:var(--ink-2)">${esc(a.reason)}</div>${altCard(a.alt)}${altCard(a.alt2)}${explainHtml('替代指标只说明活动量与反馈情况，不等于"产出"；分母为零的街道显示"暂无数据"。')}`;
@@ -305,17 +307,21 @@
     }
     return `<div class="ask-card"><div class="ask-q">${esc(t.q)}</div>${metaHtml(a)}${body}<div class="ask-links"><a class="link" onclick="S_AST.detail('${t.id}')">${App.icon('list', 14)}查看计算明细</a>${canTask ? `<a class="link" onclick="S_AST.coach('${t.id}')">${App.icon('coach', 14)}发起辅导/任务</a>` : ''}</div></div>`;
   }
-  function askUnknownHtml() {
+  function askUnknownHtml(m) {
     const ts = App.state.askTemplates || [];
-    return `<div class="row gap6 mb8">${ui().chip('口径不明确', 'warn', { sm: true, icon: 'question' })}</div><div class="ast-answer">口径不明确：请选择默认口径或换一种问法。</div><div class="ask-opts">${ts.map((t, i) => `<button onclick="S_AST.askSend(${i})">${esc(t.q)}</button>`).join('')}</div>`;
+    const opts = `<div class="ask-opts">${ts.map((t, i) => `<button onclick="S_AST.askSend(${i})">${esc(t.q)}</button>`).join('')}</div>`;
+    if (m && m.kind === 'ranking') {
+      return `<div class="row gap6 mb8">${ui().chip('不生成排名 / 绩效结论', 'gray', { sm: true, icon: 'eye-off' })}</div><div class="ast-answer">问数只返回事实指标（覆盖、有效拜访、阶段分布、超期等）并按地推 / KA 分开比较，不生成销售个人排名或绩效结论。可以改问：</div>${opts}`;
+    }
+    return `<div class="row gap6 mb8">${ui().chip('口径不明确', 'warn', { sm: true, icon: 'question' })}</div><div class="ast-answer">口径不明确：请选择默认口径或换一种问法。</div>${opts}`;
   }
   function askChatHtml() {
     const chat = App.state.askChat || [];
     let h = '';
     chat.forEach((m) => {
       if (m.role === 'user') h += msgUser(m.text);
-      else if (m.kind === 'answer') { const t = tmplById(m.tid); h += t ? askAnswerHtml(t) : msgAI(askUnknownHtml(), true); }
-      else h += msgAI(askUnknownHtml(), true);
+      else if (m.kind === 'answer') { const t = tmplById(m.tid); h += t ? askAnswerHtml(t) : msgAI(askUnknownHtml(m), true); }
+      else h += msgAI(askUnknownHtml(m), true);
     });
     if (!chat.length) h += msgAI('选择上方固定问题，或直接输入自然语言变体。回答由服务端按指标字典计算，我只负责理解问题与解释结果。');
     return `<div class="chat" id="ask-chat">${h}</div>`;
@@ -329,8 +335,8 @@
     if (chat) chat.insertAdjacentHTML('beforeend', msgUser(text) + typingHtml());
     scrollBottom();
     setTimeout(() => {
-      const t = S.askMatch(text);
-      App.state.askChat.push(t ? { role: 'assistant', kind: 'answer', tid: t.id, q: text } : { role: 'assistant', kind: 'unknown', q: text });
+      const t = S.isRanking(text) ? null : S.askMatch(text);
+      App.state.askChat.push(t ? { role: 'assistant', kind: 'answer', tid: t.id, q: text } : { role: 'assistant', kind: S.isRanking(text) ? 'ranking' : 'unknown', q: text });
       App.save();
       const cur = App.currentEntry();
       if (cur && cur.id === 'ask') { App.refresh(); scrollBottom(); }

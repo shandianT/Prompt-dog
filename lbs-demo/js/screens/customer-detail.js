@@ -60,7 +60,7 @@
     const kv = [['负责人', `${App.ui.avatar(own.name, 'sm' + (mine ? '' : ' gray'))}<span>${mine ? `本人（${esc(own.name)}）` : esc(own.name)}</span>`]];
     if (st.group) { kv.push(['集团', esc(st.group.name)]); kv.push(['签约主体', esc(st.group.entity)]); kv.push(['服务门店', `${st.group.sites} 家 · 本店为其中之一`]); }
     if (st.coop === 'active') { const n = App.fmt.days(st.contractEnd); kv.push(['合同期', `${ymdDot(st.since)} – ${ymdDot(st.contractEnd)}${n != null ? ` <span class="${n <= 90 ? 'chip warn sm' : 'muted'}">${n < 0 ? '已到期' : n + ' 天后到期'}</span>` : ''}`]); }
-    if (st.coop === 'paused') kv.push(['停做原因', `${esc(st.pausedReason || '—')}<span class="muted">· ${shortMd(st.pausedAt)} 停做</span>`]);
+    if (st.coop === 'paused') kv.push(['停做原因', `${App.ui.chip(`${shortMd(st.pausedAt)} 停做`, 'danger', { sm: true })}<span>${esc(st.pausedReason || '—')}</span>`]);
     if (st.services && st.services.length) kv.push(['服务项目', esc(st.services.join(' / '))]);
     kv.push(['数据更新', `${esc(st.updatedAt)} ${App.ui.factTag('official')}`]);
     return `<div class="card cdt-head">

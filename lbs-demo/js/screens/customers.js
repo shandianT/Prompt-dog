@@ -14,8 +14,8 @@
     .cus-street { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; background: var(--surface); border-radius: var(--radius-lg); border: 1px solid rgba(17,24,39,.04); box-shadow: var(--shadow-xs); margin-bottom: 10px; text-align: left; }
     .cus-street .ci { width: 40px; height: 40px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); display: flex; align-items: center; justify-content: center; flex: none; }
     .cus-street .t { font-size: 16px; font-weight: 700; letter-spacing: -.01em; }
-    .cus-street .s { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
-    .cus-street .sw { display: flex; align-items: center; gap: 2px; font-size: 12.5px; color: var(--brand); font-weight: 600; flex: none; }
+    .cus-street .s { font-size: 12px; color: var(--ink-3); margin-top: 3px; line-height: 1.4; }
+    .cus-street .sw { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 9px; background: var(--surface-3); color: var(--brand); flex: none; }
     .cus-search { margin-bottom: 6px; }
     .cus-search .clr { display: flex; color: var(--ink-4); }
     .cus-card { padding: 12px 14px; margin-bottom: 10px; }
@@ -116,7 +116,7 @@
   function card(st) {
     if (st.perm === 'minimal') return minimalCard(st);
     const own = ownerOf(st); const mine = isMine(st); const t = nextTask(st); const lv = st.lastVisit; const rr = repeatRisk(st);
-    const where = mode() === 'mine' ? ` · ${esc(st.street || NEEDS)}` : '';
+    const where = mode() === 'mine' && !(st.address || '').startsWith(st.street || '') ? ` · ${esc(st.street || NEEDS)}` : '';
     return `<div class="card cus-card pressable" data-store="${st.id}" onclick="App.go('customer',{id:'${st.id}'})">
       <div class="hd">
         <div class="grow">
@@ -164,7 +164,7 @@
     const appt = base.filter(apptToday).length;
     const title = street === NEEDS ? `${m.city} · ${m.district} · 待补地址` : `${m.city} · ${m.district} · ${m.name}`;
     const sub = street === NEEDS ? `${base.length} 家门店无标准街道 · 待治理清单` : (base.length ? `${base.length} 家门店 · 服务中 ${active} · 未结客诉 ${open} · 今日约访 ${appt}` : '该街道暂无客户');
-    return `<button class="cus-street pressable" onclick="App.go('street-picker')"><div class="ci">${App.icon('map-pin', 20)}</div><div class="grow"><div class="t ellipsis">${esc(title)}</div><div class="s ellipsis">${esc(sub)}</div></div><div class="sw">切换${App.icon('chevron-down', 16)}</div></button>`;
+    return `<button class="cus-street pressable" onclick="App.go('street-picker')"><div class="ci">${App.icon('map-pin', 20)}</div><div class="grow"><div class="t ellipsis">${esc(title)}</div><div class="s">${esc(sub)}</div></div><div class="sw" aria-label="切换街道">${App.icon('chevron-down', 18)}</div></button>`;
   }
   function mineSummary(base) {
     const me = App.me();
@@ -238,6 +238,9 @@
       const inp = root.querySelector('#cus-q'); if (!inp) return;
       inp.value = S.q;
       inp.addEventListener('input', () => { S.q = inp.value; const l = root.querySelector('#cus-list'); if (l) l.innerHTML = S.renderList(); });
+      // 让当前筛选芯片保持可见
+      const bar = root.querySelector('.filter-bar'); const act = bar && bar.querySelector('.fchip.active');
+      if (bar && act) bar.scrollLeft = Math.max(0, act.offsetLeft - 14);
     },
     demoActions: [
       { label: '切换到二马路', icon: 'road', run() { S.pick('二马路'); App.toast('已切换到二马路', { icon: 'map-pin' }); } },
@@ -266,7 +269,7 @@
         const active = list.filter((x) => x.coop === 'active').length;
         const open = list.filter((x) => x.complaint && x.complaint.status === 'open').length;
         const noperm = list.filter((x) => x.perm === 'minimal').length;
-        const sub = list.length ? `${list.length} 家门店 · 服务中 ${active} · 未结客诉 ${open}${noperm ? ` · 无权 ${noperm}` : ''}` : '暂无客户';
+        const sub = list.length ? `服务中 ${active} · 未结客诉 ${open}${noperm ? ` · 无权 ${noperm}` : ''}` : '暂无客户';
         return App.ui.cell({ title: esc(s.name), badge: `${App.ui.chip(s.id, 'outline', { sm: true })}${cur === s.name ? App.ui.chip('当前', 'brand', { sm: true }) : ''}`, sub, icon: 'road', iconTone: list.length ? '' : 'gray', right: `<span class="sp-cnt">${list.length}</span>`, onclick: `S_CUS.pick('${s.name}')` });
       }).join('');
       const needs = App.state.stores.filter((s) => s.needsAddress);

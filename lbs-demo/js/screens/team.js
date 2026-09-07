@@ -49,7 +49,7 @@
 .tm-bcard .tm-chev { transition: transform .2s ease; color: var(--ink-3); flex: none; margin-top: 2px; }
 .tm-bcard.open .tm-chev { transform: rotate(180deg); }
 .tm-kv { display: flex; gap: 10px; font-size: 13.5px; margin-top: 8px; line-height: 1.5; }
-.tm-kv .k { width: 40px; flex: none; color: var(--ink-3); }
+.tm-kv .k { width: 46px; flex: none; color: var(--ink-3); white-space: nowrap; }
 .tm-kv .v { flex: 1; min-width: 0; color: var(--ink); }
 .tm-kv.ai .v { color: #3b3bb0; }
 .tm-cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
@@ -381,7 +381,7 @@
       const kinds = ['全部'].concat(all.map((b) => b.kind).filter((k, i, a) => a.indexOf(k) === i));
       const list = all.filter((b) => kind === '全部' || b.kind === kind);
       let h = `<div class="filter-bar">${kinds.map((k) => `<button class="fchip ${k === kind ? 'active' : ''}" onclick="S_TEAM.setKind('${k}')">${esc(k)}<span class="count">${k === '全部' ? all.length : all.filter((b) => b.kind === k).length}</span></button>`).join('')}</div>`;
-      h += `<div class="tm-cap" style="margin-top:0;margin-bottom:10px">${App.icon('info', 12)}${list.length} 项 · 按已发布的停滞 / 风险 / 差异 / 逾期规则识别 · ${UPDATED}</div>`;
+      h += `<div class="tm-cap" style="margin-top:0;margin-bottom:10px">${App.icon('info', 12)}${list.length} 项 · 按已发布规则识别 · ${UPDATED}</div>`;
       if (!list.length) h += App.ui.empty({ icon: 'check-circle', title: '该类型暂无卡点' });
       h += list.map((b) => {
         const m = memberByName(b.owner); const st = App.store(b.storeId); const open = T._open.has(b.id);
@@ -412,7 +412,7 @@
         const o = App.opp(r.oppId); const st = App.store(r.storeId); const m = memberByName(r.owner); const ai = o && o.ai;
         if (!o || !ai) return `<div class="card">${esc(r.title)}<div class="small muted">缺少商机或 AI 建议记录</div></div>`;
         return `<div class="card">
-          <div class="row top gap12">${m ? av(m) : ''}<div class="grow"><div class="tm-btitle">${esc(r.title)}</div><div class="small muted mt4 ellipsis">${esc(st ? st.name : '')} · 负责人 ${esc(r.owner)} · ${esc(o.service)} · ${esc(o.kind)}</div></div>${App.ui.chip(r.status, 'warn', { sm: true })}</div>
+          <div class="row top gap12">${m ? av(m) : ''}<div class="grow"><div class="tm-btitle">${esc(r.title)}</div><div class="small muted mt4">${esc(st ? st.name : '')} · 负责人 ${esc(r.owner)} · ${esc(o.service)} · ${esc(o.kind)}</div></div>${App.ui.chip(r.status, 'warn', { sm: true })}</div>
           <div class="mt12">${App.ui.notice('warn', `<b>冲突</b>：${esc(r.reason)}${ai.conflict ? '<br><span class="tiny">' + esc(ai.conflict) + '</span>' : ''}`)}</div>
           <div class="tm-cmp"><div><div class="e"><span>正式分层</span>${App.ui.factTag('official')}</div><div class="big">${App.tierLabel(o.tier)}</div><div class="s">${esc(o.tierSource)} · 阶段 ${esc(o.stage)}</div></div><div class="ai"><div class="e"><span>AI 建议</span>${App.ui.factTag('derived')}</div><div class="big">${App.tierLabel(ai.tier)}</div><div class="s">置信度 ${esc(ai.confidence)} · 不改正式值</div></div></div>
           <div class="tm-kv"><div class="k">依据</div><div class="v">${(ai.basis || []).map(esc).join('；')}</div></div>
