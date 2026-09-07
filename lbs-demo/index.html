@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>LBS 销售管理小程序 · 演示</title>
+<meta name="description" content="LBS 史维莎销售管理小程序 P0 闭环演示（纯前端模拟数据，微信小程序界面）">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230e8f6e'/%3E%3Ctext x='32' y='42' font-size='28' font-family='Arial' font-weight='700' text-anchor='middle' fill='%23fff'%3ELB%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<button class="presenter-toggle" onclick="App.togglePresenter()" aria-label="演示导览">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+</button>
+
+<div class="app">
+  <!-- 左侧：演示导览 -->
+  <aside class="presenter" id="presenter">
+    <div class="p-head">
+      <div class="p-brand">
+        <div class="logo">LB</div>
+        <div>
+          <div class="t">LBS 销售管理小程序</div>
+          <div class="s">P0 闭环演示 · 模拟数据 · 无后端</div>
+        </div>
+      </div>
+    </div>
+    <div class="p-scroll">
+      <div class="p-sec">
+        <h4>切换角色</h4>
+        <div class="roles" id="p-roles"></div>
+      </div>
+      <div class="p-sec">
+        <h4>黄金演示路径</h4>
+        <div class="steps" id="p-steps"></div>
+      </div>
+      <div class="p-sec">
+        <h4>当前页面对应 PRD</h4>
+        <div id="p-cur"></div>
+      </div>
+      <div class="p-sec">
+        <h4>演示动作</h4>
+        <div class="p-actions" id="p-demo-actions"></div>
+      </div>
+      <div class="p-sec">
+        <h4>工具</h4>
+        <div class="p-actions">
+          <button class="p-btn" onclick="App.tab('today')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>回到今日工作台</button>
+          <a class="p-btn" href="requirements.html" target="_blank"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>打开需求梳理文档</a>
+          <button class="p-btn danger" onclick="App.confirm('重置演示数据','将清除本次演示中产生的拜访、任务、方案等记录，恢复初始样本。',()=>App.reset())"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg>重置演示数据</button>
+        </div>
+      </div>
+    </div>
+    <div class="p-foot">页面中的门店、联系人、金额均为虚构演示样本；AI 建议为派生数据，不改写正式值。演示日期固定为 2026-09-07（周一）。</div>
+  </aside>
+
+  <!-- 右侧：手机 -->
+  <main class="stage-wrap">
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="island"></div>
+        <div class="statusbar" id="statusbar"></div>
+        <div class="stage" id="stage"></div>
+        <div id="overlay"></div>
+        <div class="home-indicator"></div>
+      </div>
+    </div>
+    <div class="stage-caption">微信小程序界面演示 · 点击左侧步骤可直接跳转 · 数据均为模拟</div>
+  </main>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/screens/today.js"></script>
+<script src="js/screens/customers.js"></script>
+<script src="js/screens/customer-detail.js"></script>
+<script src="js/screens/visit.js"></script>
+<script src="js/screens/opportunity.js"></script>
+<script src="js/screens/proposal.js"></script>
+<script src="js/screens/assistant.js"></script>
+<script src="js/screens/tasks.js"></script>
+<script src="js/screens/me.js"></script>
+<script src="js/screens/team.js"></script>
+<script src="js/screens/p1.js"></script>
+<script>App.boot();</script>
+</body>
+</html>
