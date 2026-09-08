@@ -15,7 +15,7 @@
 
   App.css('confirm', `
     .cf-store{display:flex;align-items:center;gap:10px}
-    .cf-store .n{font-size:17px;font-weight:700} .cf-store .m{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+    .cf-store .n{font-size:17px;font-weight:700} .cf-store-m{font-size:12.5px;color:var(--ink-3);margin-top:3px}
     .cf-score{display:flex;gap:14px;align-items:center}
     .cf-dims{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
     .cf-dim{display:grid;grid-template-columns:82px 1fr 42px;gap:8px;align-items:center;font-size:12.5px}
@@ -101,18 +101,17 @@
     else if ((m = text.match(/今天|今晚|今日/))) { date = new Date(today); matched = m[0]; }
     if (date && text.slice(text.indexOf(matched) + matched.length).match(/^\s*(前|之前|以前)/)) before = true;
     // 时间点
-    let hm = '';
+    let hm = '', tm;
     if ((tm = text.match(/(\d{1,2})[:：](\d{2})/))) hm = `${String(tm[1]).padStart(2, '0')}:${tm[2]}`;
     else if ((tm = text.match(/(上午|下午|晚上|早上)?\s*([一二两三四五六七八九十\d]{1,2})\s*点(半)?/))) { let h = cn2n(tm[2]); if ((tm[1] === '下午' || tm[1] === '晚上') && h < 12) h += 12; hm = `${String(h).padStart(2, '0')}:${tm[3] ? '30' : '00'}`; }
-    var tm;
-    // 动作：去掉时间词与连接词后的剩余
-    let action = text;
-    if (matched) action = action.replace(matched, '');
-    action = action.replace(/(上午|下午|晚上|早上)?\s*[一二两三四五六七八九十\d]{1,2}\s*点半?/g, '').replace(/\d{1,2}[:：]\d{2}/g, '')
-      .replace(/^(之前|以前|前)/, '').replace(/(约了|让我|我会|我来|计划|打算|准备|再|去|一趟|过去|再去|之前|以前|前|，|,|。|、|\s)+/g, (s) => (/^(去|过去|再去|一趟|前)$/.test(s.trim()) ? '' : ' ')).trim();
-    action = action.replace(/\s+/g, ' ').replace(/^前|前$/g, '').trim();
-    const vague = /^(再?联系|保持?跟进|再?跟进|沟通|看看|再说|回访|再聊|保持联系)$/;
-    const hasAction = !!action && !vague.test(action) && action.length >= 2;
+    // 动作：去掉时间词与填充词后的剩余
+    let action = matched ? text.replace(matched, ' ') : text;
+    action = action.replace(/(上午|下午|晚上|早上)?\s*[一二两三四五六七八九十\d]{1,2}\s*点半?/g, ' ').replace(/\d{1,2}[:：]\d{2}/g, ' ');
+    ['约了', '让我', '我会', '我来', '计划', '打算', '准备', '之前', '以前', '再去', '过去', '一趟', '然后'].forEach((w) => { action = action.split(w).join(' '); });
+    action = action.replace(/[，,。、；;！!\s]+/g, ' ').trim().replace(/^前\s*|\s*前$/g, '').replace(/^(再|去)\s*/, '').trim();
+    const concrete = /(送|带|发|出|上门|到店|勘查|勘察|签|提交|报价|方案|电话|拜访|安排|复处理|演示|培训|试|谈|见|会议|开会|样品|资料)/;
+    const vague = /^(再?联系|保持?跟进|再?跟进|沟通|看看|再说|回访|再聊|保持联系|近期跟进|近期再联系)$/;
+    const hasAction = !!action && !vague.test(action) && (concrete.test(action) || action.length >= 3);
     const reasons = [];
     if (!date) reasons.push(matched ? '时间不明确' : (/(近期|尽快|有空|回头|改天|过几天|下次)/.test(text) ? '「' + text.match(/(近期|尽快|有空|回头|改天|过几天|下次)/)[1] + '」不算明确时间' : '未解析到明确时间'));
     if (!hasAction) reasons.push(action ? '「' + action + '」不算明确动作' : '缺少明确动作');
@@ -185,7 +184,7 @@
      片段
      ---------------------------------------------------------- */
   function storeCard(store, chip, sub) {
-    return `<div class="card"><div class="cf-store"><div class="grow"><div class="n">${esc(store.name)}</div><div class="m">${esc(sub)}</div></div>${chip}</div></div>`;
+    return `<div class="card"><div class="cf-store"><div class="n grow ellipsis">${esc(store.name)}</div>${chip}</div><div class="cf-store-m">${esc(sub)}</div></div>`;
   }
   function dimBars(score) {
     const W = weights();
@@ -222,7 +221,7 @@
       <div class="cf-group"><span>16 项基础字段</span>${legend}</div>
       <div class="cf-group" style="padding-top:2px;font-size:12.5px;color:var(--ink-3);font-weight:600">自动带出 · ${auto.length} 项<span class="g-sub">由登录账号与打点带出，灰色不可改</span></div>
       ${auto.map((k) => fieldRow(k, fields[k], opts)).join('')}
-      <div class="cf-group" style="font-size:12.5px;color:var(--ink-3);font-weight:600">AI 抽取 · ${ai.length} 项<span class="g-sub">带置信度与原文定位，点行可看原文 / 修改</span></div>
+      <div class="cf-group" style="font-size:12.5px;color:var(--ink-3);font-weight:600">AI 抽取 · ${ai.length} 项<span class="g-sub">${opts.readonly ? '带置信度与原文定位' : '带置信度与原文定位，点行可看原文 / 修改'}</span></div>
       ${ai.map((k) => fieldRow(k, fields[k], opts)).join('')}
     </div>`;
     if (first.length && (opts.readonly || App.state.settings.firstVisit)) {
@@ -235,7 +234,7 @@
     return `<div class="card cf-gate ${pass ? '' : 'fail'}">
       <div class="row between mb8"><div class="card-title" style="margin:0">下一步硬校验</div>${pass ? ui().chip('通过', 'ok', { icon: 'check' }) : ui().chip('未通过', 'danger')}</div>
       <div class="cf-kv" ${opts.readonly ? '' : `onclick="S_CONFIRM.editNext()"`}><span class="k">原文</span><span class="v ${pass ? '' : 'bad'}">${esc(g2.raw || '（空）')}</span></div>
-      <div class="cf-kv"><span class="k b">时间解析</span><span class="v ${g2.time && !/未解析/.test(g2.time) ? 'good' : 'bad'}">${esc(g2.time)}</span></div>
+      <div class="cf-kv"><span class="k b">时间解析</span><span class="v ${g2.time && !/未解析/.test(g2.time) ? 'good' : 'bad'}">${esc(String(g2.time || '').split('（')[0])}${/（/.test(g2.time || '') ? `<div class="tiny muted" style="font-weight:400">${esc(g2.time.split('（')[1].replace('）', ''))}</div>` : ''}</span></div>
       <div class="cf-kv"><span class="k b">动作</span><span class="v ${pass ? 'good' : 'bad'}">${esc(g2.action || '未识别到明确动作')}</span></div>
       ${pass ? '' : `<div class="cf-hint">${esc(g2.hint || '须同时有明确时间与明确动作。例：「9月12日前送方案与报价」')}</div>`}
       ${pass && !opts.readonly ? `<div class="tiny muted mt8">通过后归档即自动生成待办与回访提醒 · 规则：须同时有明确时间与动作（后台可配）</div>` : ''}
@@ -477,7 +476,7 @@
       const bars = Array.from({ length: 46 }, (_, i) => { const h = 6 + Math.round(Math.abs(Math.sin(i * 1.7) * 14 + Math.cos(i * .9) * 8)); return `<i class="${i > 30 ? 'dim' : ''}" style="height:${h}px"></i>`; }).join('');
       const opp = App.primaryOpp(v.storeId);
       return `
-        <div class="card"><div class="cf-store"><div class="grow"><div class="n">${esc(store.name)}</div><div class="m">${esc(v.time)} · ${esc(v.mode || '语音')} · ${esc(v.type || '拜访')} · ${esc(v.by)}</div></div>${ui().chip(`${sc.total} 分`, sc.total >= t ? 'ok' : 'danger')}</div></div>
+        ${storeCard(store, ui().chip(`${sc.total} 分`, sc.total >= t ? 'ok' : 'danger'), `${v.time} · ${v.mode || '语音'} · ${v.type || '拜访'} · ${v.by}`)}
         <div class="card"><div class="row between mb8"><div class="card-title" style="margin:0">原音</div>${ui().chip('原音与原文都留下', 'gray', { sm: true })}</div>
           <div class="vd-audio"><span class="vd-play" onclick="App.toast('演示：原音播放为占位')">${App.icon('play', 18)}</span><div class="vd-wave">${bars}</div><span class="vd-dur">00:32</span></div></div>
         <div class="card"><div class="row between mb8"><div class="card-title" style="margin:0">原文</div><span class="row" style="gap:6px">${manual ? ui().chip('已人工校正', 'ok', { sm: true }) : ''}${ui().chip(`热词命中 ${(v.hotwords || []).length}`, 'brand', { sm: true })}</span></div>

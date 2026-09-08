@@ -14,15 +14,16 @@
     .rt-head { padding: 6px 2px 10px; }
     .rt-head .rt-h1 { font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
     .rt-head .rt-h2 { font-size: 12.5px; color: var(--ink-3); margin-top: 4px; }
+    .rt-head .rt-h2.tight { font-size: 12px; letter-spacing: -.01em; }
     .rt-kpis .kpi.done .v { color: var(--brand); } .rt-kpis .kpi.running .v { color: var(--brand); } .rt-kpis .kpi.pending .v { color: var(--warn); } .rt-kpis .kpi.todo .v { color: var(--ink-2); }
     .rt-kpis .kpi.active { box-shadow: inset 0 0 0 1.5px var(--brand); }
     .rt-amber { background: #fdf6e7; border-left: 4px solid var(--warn); border-radius: 14px; padding: 12px 12px 12px 14px; margin: 12px 0; }
     .rt-amber .rt-at { font-weight: 700; color: #8a5a0c; font-size: 14px; }
     .rt-amber .rt-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
-    .rt-amber .rt-av { width: 36px; height: 36px; border-radius: 12px; background: #f6e3b8; color: #8a5a0c; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; flex: none; }
+    .rt-amber .rt-av { width: 32px; height: 32px; border-radius: 10px; background: #f6e3b8; color: #8a5a0c; font-weight: 700; font-size: 15px; display: flex; align-items: center; justify-content: center; flex: none; }
     .rt-amber .rt-nm { font-weight: 700; font-size: 15px; color: var(--ink); }
-    .rt-amber .rt-sub { font-size: 11.5px; color: var(--ink-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .rt-amber .pill { background: var(--warn); color: #fff; border-radius: 999px; padding: 7px 10px; font-size: 11px; font-weight: 700; white-space: nowrap; flex: none; }
+    .rt-amber .rt-sub { font-size: 11px; color: var(--ink-3); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rt-amber .pill { background: var(--warn); color: #fff; border-radius: 999px; padding: 7px 9px; font-size: 11px; font-weight: 700; white-space: nowrap; flex: none; }
     .rt-amber .pill:active { opacity: .85; }
     .rt-group { display: flex; align-items: baseline; justify-content: space-between; margin: 14px 2px 8px; }
     .rt-group b { font-size: 14px; font-weight: 700; color: var(--ink-2); }
@@ -205,18 +206,18 @@
     if (kind === 'new') chips.push(ui().chip('新开', 'ai', { sm: true }));
     if (s.coop === 'active') chips.push(ui().chip('合作中', 'ok', { sm: true }));
     if (s.coop === 'paused') chips.push(ui().chip('停做', 'danger', { sm: true }));
-    if (s.dupSuspect) chips.push(ui().chip('疑似重复', 'danger', { sm: true }));
+    const dup = s.dupSuspect ? ui().chip('疑似重复', 'danger', { sm: true, icon: 'alert' }) : '';
     const act = mine ? ui().btn('开始拜访', { tone: 'primary', size: 'xs', onclick: `${stop}S_ROUTE.startVisit('${s.id}')` }) : ui().btn('联系负责人', { tone: 'outline', size: 'xs', onclick: `${stop}S_ROUTE.contactOwner('${esc(s.ownerName)}')` });
     let l1;
-    if (kind === 'new') l1 = `<span class="tx">${s.lastVisit ? '仅电话联系 · 未到店 · ' : '未拜访 · '}门头 / 营业执照可识别</span>`;
-    else l1 = `<span class="tx">拜访 ${s.lastVisit ? App.fmt.rel(s.lastVisit) : '未拜访'}${s.lastNext ? ' · ' + esc(s.lastNext) : ''}</span>`;
+    if (kind === 'new') l1 = `${dup}<span class="tx">${s.lastVisit ? '仅电话联系 · 未到店 · ' : '未拜访 · '}门头 / 营业执照可识别</span>`;
+    else l1 = `${dup}<span class="tx">拜访 ${s.lastVisit ? App.fmt.rel(s.lastVisit) : '未拜访'}${s.lastNext ? ' · ' + esc(s.lastNext) : ''}</span>`;
     const l2 = kind === 'new' ? `${ui().tierChip(s.tier, { sm: true })}` : `<span class="tx">回访 ${s.nextDue ? App.fmt.md(s.nextDue) : '—'}${s.nextDue && App.fmt.days(s.nextDue) < 0 ? '（逾期）' : ''}</span>${ui().tierChip(s.tier, { sm: true })}`;
     const owner = `<span class="tx">负责人 ${esc(s.ownerName)}${s.ownerId === meId() ? '（我）' : ''}</span>`;
     const avCls = { new: 'new', coop: 'coop', due: 'due' }[kind] || 'other';
     return `<div class="st-item" onclick="App.go('customer',{id:'${s.id}'})">
       <div class="avatar ${avCls}">${esc(App.initials(s.name))}</div>
       <div class="st-body">
-        <div class="st-top"><span class="nm">${esc(s.name)}</span>${chips.join('')}${act}</div>
+        <div class="st-top"><span class="nm" title="${esc(s.name)}">${esc(s.name.replace(/（.*?）/g, ''))}</span>${chips.join('')}${act}</div>
         <div class="st-line">${l1}</div>
         <div class="st-line">${l2}${kind === 'new' ? owner : ''}</div>
         ${kind !== 'new' ? `<div class="st-line">${owner}</div>` : ''}
@@ -352,7 +353,7 @@
       const doneList = all.filter((r) => r.status === 'done');
       const myTasks = st.tasks.filter((t) => t.toId === meId() && t.status !== '已完成').length;
 
-      const head = `<div class="rt-head"><div class="row between"><div class="rt-h1">回访提醒与待办</div><button class="link small" style="flex:none" onclick="App.go('tasks')">${App.icon('list', 14)} 待办 ${myTasks} ›</button></div><div class="rt-h2">按分层自动生成回访周期（规则由贵司配置）· 延期须填原因</div></div>`;
+      const head = `<div class="rt-head"><div class="row between"><div class="rt-h1">回访提醒与待办</div><button class="link small" style="flex:none" onclick="App.go('tasks')">${App.icon('list', 14)} 待办 ${myTasks} ›</button></div><div class="rt-h2 tight">按分层自动生成回访周期（规则由贵司配置）· 延期须填原因</div></div>`;
       const kpis = `<div class="kpis rm-kpis">${[['overdue', '逾期'], ['today', '今天'], ['week', '本周']].map(([k, l]) => `<div class="kpi ${k}"><div class="v">${groups[k].length}</div><div class="l">${l}</div></div>`).join('')}</div>`;
       const g = (k, title) => groups[k].length ? `<div class="rt-group"><b>${title} · ${groups[k].length}</b>${k === 'overdue' ? '<span>优先处理</span>' : ''}</div><div class="list">${groups[k].map((r) => reminderItem(r, mergeMap[r.id] || [])).join('')}</div>` : '';
       const body = shown.length ? g('overdue', '逾期') + g('today', '今天') + g('week', '本周') + g('later', '之后') : ui().empty({ icon: 'bell', title: '暂无回访提醒', sub: '归档留痕后按分层规则自动生成' });
