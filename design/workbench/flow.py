@@ -624,14 +624,22 @@ FLOW_X = W + GX
 if __name__ == "__main__":
     gen.build(
         extra_files={"FlowCanvas.dc.html": FLOW_CANVAS, "FlowNode.dc.html": FLOW_NODE, "DesignScreen.dc.html": __import__("design_screen").DESIGN, "Onboarding.dc.html": __import__("onboarding_screen").ONBOARDING,
+                     **{f"{k}.dc.html": getattr(__import__("screens_v3"), v) for k, v in (("Report", "REPORT"), ("ComponentDetail", "COMPONENT_DETAIL"), ("Retro", "RETRO"))},
                      **{f"{k}.dc.html": getattr(__import__("screens_v2"), v) for k, v in (("Main", "MAIN"), ("Confirm", "CONFIRM"), ("Deliver", "DELIVER"), ("Kennel", "KENNEL"), ("WorkdogRun", "RUN"))}},
         extra_boards=[
             {"file": "Onboarding.dc.html", "x": -(W + GX), "y": 0, "w": W, "h": H, "title": "00 首次引导 · 从 0 到 1（第一周把一条流程跑起来）"},
+            {"file": "ComponentDetail.dc.html", "x": 3 * (W + GX), "y": H + GY, "w": W, "h": H, "title": "09 组件详情 · 合同审查（组件即资产：契约 · 复用 · 版本）"},
+            {"file": "Retro.dc.html", "x": 4 * (W + GX), "y": H + GY, "w": W, "h": H, "title": "10 复盘与回归 · 四指标回填 + 回归门槛 + 回流建议"},
+            {"file": "Report.dc.html", "x": W + GX, "y": 3980, "w": W, "h": H, "title": "08 汇报模式 · 给老板看的一屏（五问 30 秒答完）"},
             {"file": "DesignScreen.dc.html", "x": 2 * (W + GX), "y": H + GY, "w": W, "h": H, "title": "11 设计 · 从一个想法到能开工的三件套（产品定义 · 故事 · 图）"},
             {"file": "FlowCanvas.dc.html", "x": FLOW_X, "y": FLOW_Y, "w": 1920, "h": 1080, "title": "07 流程画布 · 投标流程（拖连线 · 框选打包 · 钻取 · 对照 · 试跑）", "is_interactive": True, "expand": "fill"},
             {"file": "FlowNode.dc.html", "x": FLOW_X + 1920 + GX, "y": FLOW_Y, "w": 150, "h": 64, "title": "FlowNode · 节点组件（变体用上方调节）"},
         ],
         extra_notes=[
+            {"id": "new-screens-note", "x": 3 * (W + GX), "y": H + GY - 250, "w": 700,
+             "text": "09 组件详情 / 10 复盘与回归（新）· 补齐 SPEC §5 里已列规格但没画的屏\n09 回答原则 3「组件即资产」：一只工作狗的输入输出契约、参数、7 环节子图、复用于哪两条流程与节点号、版本与改动；右栏是「改一处全局同步」与发布前必过项\n10 是飞轮的操作面：四指标回填（漏审 / 误报 / 定位失败 / 虚构来源，带上期对比）、2 份历史样本的回归对照、不达标就不许发布、右栏给出到达触发条件的回流建议与已知规律\n两屏的数据都来自狗自己的 复盘/日志.md 与 验收清单.json，不经服务端"},
+            {"id": "report-note", "x": W + GX, "y": 3980 - 250, "w": 700,
+             "text": "08 汇报模式（新）· 原则 1「先读懂再动手」的直接产物\n与 07 流程画布同一份数据（flow.py 的 NODES / EDGES），只读、放大、隐藏组件库与属性面板\n一屏要能 30 秒答完五问：哪些自动 · 人在哪 · 卡在哪 · 缺什么 · 打通什么——所以顶部固定五个数字，图上只保留卡点 / 缺口 / 待打通三种标记与人审 / 人定徽章\n底部三张卡是诊断结论，每条写「怎么解」与「解完变成什么」；主按钮只有一个：先打通招标平台"},
             {"id": "onboarding-note", "x": -(W + GX), "y": -190, "w": 640,
              "text": "00 首次引导 · 使用逻辑（从 0 到 1）\n第一周只做一条流程、一只狗：画出现状（30 分钟）→ 建第一只狗（30 分钟）→ 上岗一次（1 小时，只在递交前停）→ 复盘（15 分钟）→ 回到图上（10 分钟，卡点 2 → 0）\n每一步有输入、产出、屏幕、耗时、停在哪；用户只做纠错，不写文档、不整理材料、不一次建多只狗\n文档：design/workbench/使用逻辑.md · 图：design/figures/first-run.svg · QUICKSTART 第八节"},
             {"id": "design-note", "x": 2 * (W + GX), "y": H + 30, "w": 640,
