@@ -100,6 +100,8 @@
   .tm-kv .r .v { text-align: right; min-width: 0; color: var(--ink); }
   .tm-kv .r .v.link { color: var(--brand); cursor: pointer; }
   .tm-kv .r .v .muted { display: block; font-size: 12px; margin-top: 2px; }
+  .tm-kv .r.stack { flex-direction: column; gap: 4px; }
+  .tm-kv .r.stack .v { text-align: left; color: var(--ink-2); line-height: 1.55; }
   .tm-foot { font-size: 12px; color: var(--ink-3); text-align: center; padding: 4px 10px 8px; line-height: 1.5; }
   /* --- 成员页 KPI --- */
   .tm-kpi4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
@@ -228,7 +230,7 @@
     if (!p) { App.toast('今日全部已留痕，无需催办', { icon: 'check-circle' }); return; }
     const store = App.store(p.storeId) || { name: '门店' };
     const exists = App.state.tasks.find((t) => t.kind === '催办' && t.toId === p.memberId && t.storeId === p.storeId && !['已完成', '已拒绝'].includes(t.status)) || App.state.tasks.find((t) => t.id === 't_cuiban' && t.toId === p.memberId && !['已完成', '已拒绝'].includes(t.status));
-    if (exists) { App.toast(`已催办过：${p.name} 的待办里已有「${exists.title.slice(0, 12)}…」`, { icon: 'info', duration: 2000 }); return; }
+    if (exists) { S.pushHistory(exists, `${me().name} 再次催办`); App.save(); App.refresh(); App.toast(`已催办过 · 已再次提醒 ${p.name}（待办「${exists.title.slice(0, 10)}…」仍${exists.status}）`, { icon: 'bell', duration: 2000 }); return; }
     const t = S.createTask({ kind: '催办', title: `催办：${store.name.replace(/（.*?）/g, '')}今日已打点未留痕`, toId: p.memberId, due: TODAY, source: '主管催办', body: `${p.checkin} 打点${store.route && store.route.checkout ? `、${store.route.checkout} 离店` : ''}，尚未留痕；请今天内补录（30 秒留痕 · 设计目标）。`, storeId: p.storeId });
     App.refresh();
     App.toast(`已催办：${p.name} 的待办里出现「${t.title.slice(0, 10)}…」`, { icon: 'bell', duration: 2000 });
@@ -306,7 +308,7 @@
     const sum = `<div class="tm-sum"><div class="st"><div class="t">${App.icon('sparkle', 16)}团队即时总结</div><span class="ai-tag">日日新大模型 · 近 7 天</span></div>${tm.summary.map((l) => `<p>${esc(l)}</p>`).join('')}<div class="sf">按已归档记录即时生成 · AI 派生，不改正式值 · 门槛 ${st.settings.threshold} 分</div></div>`;
     const pend = tm.pendingTrace;
     const pendCard = `<div class="card tm-pend"><div class="tm-card-head"><div class="card-title">今日已打点未留痕 · ${pend.length}</div>${App.ui.chip('点名', 'warn', { sm: true })}</div>
-      ${pend.length ? pend.map((p) => { const m = S.member(p.memberId) || { name: p.name, color: '#b9770e' }; const s = App.store(p.storeId) || { name: '—' }; const urged = st.tasks.some((t) => t.kind === '催办' && t.toId === p.memberId && !['已完成', '已拒绝'].includes(t.status)); return `<div class="tm-row"><div class="tm-tile warn">${esc(App.initials(m.name))}</div><div class="grow" style="min-width:0"><div class="tn ellipsis">${esc(p.name)} · ${esc(s.name.replace(/（.*?）/g, ''))}</div><div class="ts">${esc(p.checkin)} 打点 · 尚未留痕${urged ? ' · 已催办' : ''}</div></div>${urged ? App.ui.btn('已催办', { tone: 'ghost', size: 'sm', disabled: true }) : App.ui.btn('一键催办', { tone: 'primary', size: 'sm', onclick: `S_TEAM.urge('${p.memberId}','${p.storeId}')` })}</div>`; }).join('') : '<div class="muted small">今日打点门店均已留痕</div>'}</div>`;
+      ${pend.length ? pend.map((p) => { const m = S.member(p.memberId) || { name: p.name, color: '#b9770e' }; const s = App.store(p.storeId) || { name: '—' }; const urged = st.tasks.some((t) => t.kind === '催办' && t.toId === p.memberId && !['已完成', '已拒绝'].includes(t.status)); return `<div class="tm-row"><div class="tm-tile warn">${esc(App.initials(m.name))}</div><div class="grow" style="min-width:0"><div class="tn ellipsis">${esc(p.name)} · ${esc(s.name.replace(/（.*?）/g, ''))}</div><div class="ts">${esc(p.checkin)} 打点 · 尚未留痕${urged ? ` · ${App.ui.chip('已催办', 'warn', { sm: true })}` : ''}</div></div>${App.ui.btn('一键催办', { tone: 'primary', size: 'sm', onclick: `S_TEAM.urge('${p.memberId}','${p.storeId}')` })}</div>`; }).join('') : '<div class="muted small">今日打点门店均已留痕</div>'}</div>`;
     const askCard = `<div class="card"><div class="tm-card-head"><div class="card-title">数据咨询</div><a onclick="App.go('ask')">日日新大模型 · 按数据范围</a></div>
       <div class="tm-ask"><input id="tmHomeAsk" placeholder="例：按门店类型看转化率" onkeydown="if(event.key==='Enter')S_TEAM.askFromHome()">${App.ui.btn('问', { tone: 'primary', size: 'sm', onclick: 'S_TEAM.askFromHome()' })}</div>
       <div class="tm-qwrap">${tm.ask.map((a) => `<span class="tm-qchip" onclick="App.go('ask',{q:'${esc(a.q)}'})">${esc(a.q)}</span>`).join('')}</div></div>`;
@@ -380,7 +382,7 @@
       body = `<div class="tm-stat"><div class="v">${esc(a.value)}</div><div class="s">${esc(a.sub)}</div></div><div class="muted small mt8">口径：${esc(a.definition)}</div>`;
     }
     return `<div class="tm-ans"><div class="ah"><div class="logo">${App.icon('sparkle', 15)}</div><div class="grow"><div class="t">${esc(a.q)}</div><div class="m">日日新大模型 · 统计结果 · 只读已入库数据</div></div></div>
-      <div class="meta"><div><b>时间范围</b>${esc(a.period)}</div><div><b>组织范围</b>${esc(a.scope)}</div><div class="full"><b>口径</b>${esc(a.definition)}</div><div><b>样本</b>${a.sample} 条</div><div><b>更新</b>${esc(a.updatedAt.slice(11))}</div></div>
+      <div class="meta"><div class="full"><b>时间范围</b>${esc(a.period)}</div><div><b>组织范围</b>${esc(a.scope)}</div><div><b>样本</b>${a.sample} 条 · <b>更新</b>${esc(a.updatedAt.slice(11))}</div><div class="full"><b>口径</b>${esc(a.definition)}</div></div>
       <div class="ab">${body}</div>
       <div class="af"><span>演示数据 · 数字可下钻到具体记录</span><a onclick="S_TEAM.askDetail(${idx})">查看明细 ›</a></div></div>`;
   };
@@ -459,7 +461,7 @@
       const cells = list.length ? `<div class="list">${list.map((a) => `<div class="cell pressable ${sel && sel.id === a.id ? 'tm-sel' : ''}" onclick="S_TEAM.selectApproval('${a.id}')" style="${sel && sel.id === a.id ? 'background:var(--brand-soft)' : ''}"><div class="tm-tile ai">价</div><div class="cell-body"><div class="cell-title ellipsis">${esc(a.title)}</div><div class="cell-sub ellipsis">${esc(a.by)} · 折扣 ${a.discount}% · ${esc(a.amount)}</div></div><div class="cell-right">${S.approvalStatusChip(a.status)}</div></div>`).join('')}</div>` : `<div class="list">${App.ui.empty({ icon: 'check-circle', title: '暂无待审批', sub: '销售端提交超阈值折扣后会出现在这里' })}</div>`;
       if (!sel) return head + cells;
       const hist = (sel.history || []).length ? App.ui.timeline(sel.history.map((h) => ({ time: h.t, title: esc(h.e), tone: /驳回/.test(h.e) ? 'warn' : '' }))) : '';
-      const detail = `<div class="card tm-appr"><div class="row between top"><div class="grow"><div class="eyebrow">方案版本 · 报价 ${esc(sel.title.match(/v\d+/) ? sel.title.match(/v\d+/)[0] : 'v1')} · 提交 ${esc(App.fmt.md(sel.submittedAt))}</div><div class="ap-amt mt4">${esc(sel.amount)}</div></div>${S.approvalStatusChip(sel.status)}</div>
+      const detail = `<div class="card tm-appr"><div class="row between top"><div class="grow"><div class="eyebrow" style="text-transform:none">方案版本 · 报价 ${esc(sel.title.match(/v\d+/) ? sel.title.match(/v\d+/)[0] : 'v1')} · 提交 ${esc(App.fmt.md(sel.submittedAt))}</div><div class="ap-amt mt4">${esc(sel.amount)}</div></div>${S.approvalStatusChip(sel.status)}</div>
         <div class="mt12">
           <div class="ap-line"><span class="k">方案</span><span class="v">${esc(sel.title)}</span></div>
           <div class="ap-line"><span class="k">提交人</span><span class="v">${esc(sel.by)}</span></div>
@@ -576,15 +578,18 @@
       const store = t.storeId ? App.store(t.storeId) : null;
       const visit = t.visitId ? App.visit(t.visitId) : null;
       const head = `<div class="card"><div class="row between"><span class="chip ${t.kind === '催办' ? 'warn' : ''}" style="${t.kind === '催办' ? '' : 'background:#0f2444;color:#fff'}">${esc(S.kindLabel(t.kind))}</span><span class="row" style="gap:6px">${overdue ? App.ui.chip('逾期', 'danger', { icon: 'alert' }) : ''}${S.statusChip(t.status)}</span></div>
-        <div class="tm-task-head"><div class="grow"><h2>${esc(t.title)}</h2>${t.body ? `<p>${esc(t.body)}</p>` : ''}</div></div></div>`;
+        <div class="tm-task-head"><div class="grow"><h2>${esc(t.title)}</h2></div></div></div>`;
+      const criteria = { 催办: '完成该客户留痕并通过两道闸门', 辅导: '完成一次 15 分钟对练并重新提交该条记录', 下发: '完成首次拜访并留痕', 报价: '发送正式报价单并在客户档案标记已发送', 任务: '按内容完成并记录结果' }[t.kind] || '按内容完成并记录结果';
       const kv = `<div class="card"><div class="tm-kv">
         <div class="r"><span class="k">来源</span><span class="v">${esc(t.source || '—')}</span></div>
         <div class="r"><span class="k">发起人</span><span class="v">${esc(t.from)}${iAmInitiator ? '（我）' : ''}</span></div>
         <div class="r"><span class="k">执行人</span><span class="v">${esc(S.memberName(t.toId))}${mine ? '（我）' : ''}</span></div>
         ${store ? `<div class="r"><span class="k">关联客户</span><span class="v link" onclick="App.go('customer',{id:'${store.id}'})">${esc(store.name)} ›</span></div>` : ''}
         ${visit ? `<div class="r"><span class="k">关联记录</span><span class="v link" onclick="App.go('visit-detail',{id:'${visit.id}'})">${App.fmt.md(visit.time)} · ${visit.score.total} 分 ›</span></div>` : ''}
-        <div class="r"><span class="k">截止</span><span class="v ${overdue ? '' : ''}" style="${overdue ? 'color:var(--danger);font-weight:600' : ''}">${esc(t.due)} 18:00（${esc(App.fmt.dueLabel(t.due))}）${t.deferred ? `<span class="muted">曾延期：${esc(t.deferred.reason)}（原 ${App.fmt.md(t.deferred.from)}）</span>` : ''}</span></div>
-        <div class="r"><span class="k">内容</span><span class="v">${esc(t.body || t.title)}</span></div>
+        <div class="r"><span class="k">截止</span><span class="v" style="${overdue ? 'color:var(--danger);font-weight:600' : ''}">${App.fmt.md(t.due)} 18:00 · ${esc(overdue ? App.fmt.dueLabel(t.due) : App.fmt.rel(t.due))}${t.deferred ? `<span class="muted">曾延期：${esc(t.deferred.reason)}（原 ${App.fmt.md(t.deferred.from)}）</span>` : ''}</span></div>
+        <div class="r stack"><span class="k">内容</span><span class="v">${esc(t.body || t.title)}</span></div>
+        <div class="r stack"><span class="k">完成标准</span><span class="v">${esc(criteria)}</span></div>
+        <div class="r"><span class="k">相关方</span><span class="v">${esc(t.from.replace(/（.*?）/g, ''))}、${esc(S.memberName(t.toId))}</span></div>
         ${t.rejectReason ? `<div class="r"><span class="k">拒绝意见</span><span class="v" style="color:var(--danger)">${esc(t.rejectReason)}</span></div>` : ''}
         ${t.result ? `<div class="r"><span class="k">完成结果</span><span class="v" style="color:var(--ok)">${esc(t.result)}</span></div>` : ''}
       </div></div>`;

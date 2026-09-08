@@ -165,7 +165,8 @@
   });
   S.shortName = (name) => String(name || '').replace(/（.*?）/g, '');
   S.glyph = (s) => `<div class="cu-av ${s.tier || 'pending'}">${esc(App.initials(s.name))}</div>`;
-  S.ownerHtml = (s) => S.isMe(s.ownerId) ? `<span class="own"><b>负责人 ${esc(s.ownerName)}（我）</b></span>` : `<span class="own other">负责人 <b>${esc(s.ownerName)}</b></span>`;
+  // 主管看直属团队：负责人正常显示；销售看到同事客户：负责人橙色提示「联系负责人」
+  S.ownerHtml = (s) => S.isMe(s.ownerId) ? `<span class="own"><b>负责人 ${esc(s.ownerName)}（我）</b></span>` : `<span class="own ${App.isMgr() ? '' : 'other'}">负责人 <b>${esc(s.ownerName)}</b></span>`;
   S.crmChip = function (s, opts) {
     const pending = s.route && s.route.trace === 'pending';
     return pending ? App.ui.chip('CRM 待同步', 'warn', Object.assign({ icon: 'cloud-off' }, opts)) : App.ui.chip(`CRM 已同步 ${App.fmt.hm(s.updatedAt) || '09:30'}`, 'ok', Object.assign({ icon: 'sync' }, opts));
@@ -321,7 +322,7 @@
       ${s.lastNext ? `<div class="cu-next"><div class="ni">${App.icon('flag', 18)}</div><div class="grow"><div class="nt">${esc(s.lastNext)}</div><div class="ns">来自 ${s.lastVisit ? App.fmt.md(s.lastVisit) : '上次'} 留痕 · ${s.nextDue ? `到期 ${App.fmt.md(s.nextDue)}（${App.fmt.dueLabel(s.nextDue)}）` : '未设到期'} · 已生成回访提醒</div></div></div>` : App.ui.notice('warn', '上次留痕未记录下一步（待补充）。下一步需同时有明确时间与动作，如「9月12日前送方案」。', 'alert')}
     </div>`;
     let complaint = '';
-    if (s.complaint && s.complaint.status === 'open') complaint = `<div class="card cu-cmp"><div class="ct">${App.icon('alert', 16)}客诉 ${App.ui.complaintChip(s.complaint)}</div><div class="cb">${esc(s.complaint.date.slice(5).replace('-', '/'))} 未结客诉 · 服务部复处理中。${esc(s.complaint.summary)}</div><div class="cs">来自派单系统 · 处理结果回流后自动更新 · 拜访时请先回应客诉</div></div>`;
+    if (s.complaint && s.complaint.status === 'open') complaint = `<div class="card cu-cmp"><div class="ct">${App.icon('alert', 16)}客诉 ${App.ui.complaintChip(s.complaint)}</div><div class="cb">${esc(String(+s.complaint.date.slice(5, 7)) + '/' + String(+s.complaint.date.slice(8, 10)))} 未结客诉 · 服务部复处理中。${esc(s.complaint.summary)}</div><div class="cs">来自派单系统 · 处理结果回流后自动更新 · 拜访时请先回应客诉</div></div>`;
     else if (s.coop === 'active') complaint = `<div class="card"><div class="row between"><div class="card-title" style="margin:0">客诉</div>${App.ui.chip('近 90 天无客诉', 'ok', { sm: true, dot: true })}</div></div>`;
     const dup = s.dupSuspect ? App.ui.notice('danger', `<b>疑似重复</b>：与已有客户「${esc(S.shortName(s.name))}」名称 / 地址相近。合并提示由人确认，不自动合并。<a class="link" style="color:#991b1b;text-decoration:underline" onclick="S_CUS.mergeHint('${s.id}')">处理 ›</a>`, 'alert') : '';
     return dup + basic + next + complaint;
