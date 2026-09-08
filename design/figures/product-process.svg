@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="620" viewBox="0 0 1440 620" font-family="-apple-system,BlinkMacSystemFont,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#9aa4af"/></marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#16a34a"/></marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2563eb"/></marker>
+  </defs>
+  <rect width="1440" height="620" fill="#f7f8fa"/>
+  <text x="40" y="44" font-size="22" font-weight="800" fill="#1e232b">PromptDog 产品流程 · 从一句话或一段流程，到上岗，再回到图上</text>
+  <text x="40" y="68" font-size="13" fill="#68707c">灰实线 = 顺序（上游停机标记 = 下游启动条件）　蓝虚线 = 并联分支与汇总　绿虚线 = 回流（只对重复的事）　琥珀边 = 有人参与的点</text>
+
+  <!-- lanes -->
+  <g font-size="12" font-weight="700" fill="#68707c">
+    <rect x="40" y="96" width="1360" height="130" rx="12" fill="#ffffff" stroke="#e5e8ee"/>
+    <text x="56" y="118">入口 · 四种模式，任选其一，都能零提问预填交付</text>
+    <rect x="40" y="246" width="1360" height="150" rx="12" fill="#ffffff" stroke="#e5e8ee"/>
+    <text x="56" y="268">建造</text>
+    <rect x="40" y="416" width="1360" height="150" rx="12" fill="#ffffff" stroke="#e5e8ee"/>
+    <text x="56" y="438">运行与回流</text><text x="600" y="438" font-weight="500">记忆在文件里：验收清单.json · 复盘/日志.md · 流程图 JSON</text>
+  </g>
+
+  <!-- entry row -->
+  <g font-size="13" fill="#1e232b">
+    <rect x="80" y="140" width="220" height="64" rx="10" fill="#fef3e2" stroke="#d97706" stroke-width="1.5"/>
+    <text x="96" y="165" font-weight="700">诊断</text><text x="96" y="186" font-size="11.5" fill="#68707c">贴现有提示词 → 十维分 + 改进版</text>
+    <rect x="340" y="140" width="220" height="64" rx="10" fill="#fef3e2" stroke="#d97706" stroke-width="1.5"/>
+    <text x="356" y="165" font-weight="700">新建 / 工作流</text><text x="356" y="186" font-size="11.5" fill="#68707c">一句话 + 材料 → 判级</text>
+    <rect x="600" y="140" width="220" height="64" rx="10" fill="#fef3e2" stroke="#d97706" stroke-width="1.5"/>
+    <text x="616" y="165" font-weight="700">流程重构</text><text x="616" y="186" font-size="11.5" fill="#68707c">一段流程 → 泳道图 + 诊断 + 打包建议</text>
+    <rect x="860" y="140" width="220" height="64" rx="10" fill="#fef3e2" stroke="#d97706" stroke-width="1.5"/>
+    <text x="876" y="165" font-weight="700">设计</text><text x="876" y="186" font-size="11.5" fill="#68707c">产品想法 → 产品定义 + 故事 + 图</text>
+    <rect x="1140" y="140" width="220" height="64" rx="10" fill="#f5f2ec" stroke="#e5e8ee"/>
+    <text x="1156" y="165" font-weight="700" fill="#68707c">契约</text><text x="1156" y="186" font-size="11.5" fill="#68707c">流程图 JSON · H 假设清单</text>
+  </g>
+
+  <!-- build row -->
+  <g font-size="13" fill="#1e232b">
+    <rect x="80" y="300" width="180" height="64" rx="10" fill="#ffffff" stroke="#e5e8ee"/>
+    <text x="96" y="325" font-weight="700">判级</text><text x="96" y="346" font-size="11.5" fill="#68707c">六信号 · L1–L4</text>
+    <rect x="300" y="300" width="180" height="64" rx="10" fill="#ffffff" stroke="#d97706" stroke-width="1.5"/>
+    <text x="316" y="325" font-weight="700">澄清</text><text x="316" y="346" font-size="11.5" fill="#68707c">★ 预填 · 不回复即生效</text>
+    <rect x="520" y="300" width="180" height="64" rx="10" fill="#ffffff" stroke="#e5e8ee"/>
+    <text x="536" y="325" font-weight="700">构建</text><text x="536" y="346" font-size="11.5" fill="#68707c">环节表 · 一环节一上下文</text>
+    <rect x="740" y="300" width="180" height="64" rx="10" fill="#ffffff" stroke="#e5e8ee"/>
+    <text x="756" y="325" font-weight="700">会话内试跑</text><text x="756" y="346" font-size="11.5" fill="#68707c">修 2 轮 + 重设计 1 次</text>
+    <rect x="960" y="300" width="180" height="64" rx="10" fill="#ffffff" stroke="#e5e8ee"/>
+    <text x="976" y="325" font-weight="700">交付 · 入犬舍</text><text x="976" y="346" font-size="11.5" fill="#68707c">资产包 + 验收清单.json</text>
+    <rect x="1180" y="300" width="180" height="64" rx="10" fill="#f5f2ec" stroke="#e5e8ee"/>
+    <text x="1196" y="325" font-weight="700" fill="#68707c">契约</text><text x="1196" y="346" font-size="11.5" fill="#68707c">验收清单.json · 停机标记</text>
+  </g>
+
+  <!-- run row -->
+  <g font-size="13" fill="#1e232b">
+    <rect x="80" y="470" width="220" height="64" rx="10" fill="#ffffff" stroke="#e5e8ee"/>
+    <text x="96" y="495" font-weight="700">上岗循环</text><text x="96" y="516" font-size="11.5" fill="#68707c">一轮一环节 · 交付 / 止损 / 待确认</text>
+    <rect x="340" y="470" width="220" height="64" rx="10" fill="#ffffff" stroke="#d97706" stroke-width="1.5"/>
+    <text x="356" y="495" font-weight="700">人审 / 人定</text><text x="356" y="516" font-size="11.5" fill="#68707c">只在不可逆动作前</text>
+    <rect x="600" y="470" width="220" height="64" rx="10" fill="#ffffff" stroke="#e5e8ee"/>
+    <text x="616" y="495" font-weight="700">复盘两级制</text><text x="616" y="516" font-size="11.5" fill="#68707c">日志追加 → 已知规律 → AGENTS.md</text>
+    <rect x="860" y="470" width="220" height="64" rx="10" fill="#f0faf2" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="876" y="495" font-weight="700">回流</text><text x="876" y="516" font-size="11.5" fill="#68707c">候选库 · 必带验收项 · evals · 犬舍 · 图</text>
+    <rect x="1140" y="470" width="220" height="64" rx="10" fill="#f5f2ec" stroke="#e5e8ee"/>
+    <text x="1156" y="495" font-weight="700" fill="#68707c">契约</text><text x="1156" y="516" font-size="11.5" fill="#68707c">复盘/日志.md · 卡点报告</text>
+  </g>
+
+  <!-- sequence arrows -->
+  <g fill="none" stroke="#9aa4af" stroke-width="1.6" marker-end="url(#a)">
+    <path d="M300 172H340"/>
+    <path d="M260 332H300"/><path d="M480 332H520"/><path d="M700 332H740"/><path d="M920 332H960"/>
+    <path d="M300 502H340"/><path d="M560 502H600"/><path d="M820 502H860"/>
+    <path d="M1050 364V410C1050 422 1040 430 1028 430H210C198 430 190 438 190 450V470"/>
+    <path d="M170 270V300"/>
+  </g>
+  <!-- 流程重构 ↔ 设计：流程图 JSON 双向 -->
+  <path d="M822 172H858" fill="none" stroke="#9aa4af" stroke-width="1.6" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="806" y="133" font-size="10.5" fill="#68707c">流程图 JSON</text>
+  <!-- 汇入主循环的总线：新建直接判级；流程重构的打包建议每只狗各判级（并联）；设计的第一条故事转判级 -->
+  <g fill="none" stroke="#9aa4af" stroke-width="1.6">
+    <path d="M450 204V270"/><path d="M970 204V270"/><path d="M170 270H970"/>
+  </g>
+  <path d="M710 204V270" fill="none" stroke="#2563eb" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <g fill="#9aa4af"><circle cx="450" cy="270" r="3.5"/><circle cx="970" cy="270" r="3.5"/></g>
+  <circle cx="710" cy="270" r="3.5" fill="#2563eb"/>
+  <text x="985" y="241" font-size="11.5" fill="#2563eb">打包建议里的多只狗并行判级建包 · 汇总点：流程图 JSON</text>
+  <text x="200" y="262" font-size="11" fill="#68707c">三个入口汇入同一条主循环：新建直接判级 · 设计的第一条故事转判级</text>
+  <!-- loop back: 回流 → entry -->
+  <g fill="none" stroke="#16a34a" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#ag)">
+    <path d="M1080 502H1110C1122 502 1130 494 1130 482V120C1130 108 1122 100 1110 100H720C708 100 700 108 700 120V140"/>
+  </g>
+  <text x="740" y="90" font-size="11.5" fill="#16a34a">运行数据回到图上：改现状、改候选库、加 evals，下次更准</text>
+  <text x="40" y="600" font-size="11.5" fill="#68707c">每一格都有「无人回复时怎么走」：未答项取 ★，缺口进未达标清单，只有不可逆动作前停下。示例：投标流程。</text>
+</svg>
