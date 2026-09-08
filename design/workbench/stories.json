@@ -6,11 +6,12 @@
     {
       "id": "S01",
       "标题": "工程骨架与数据契约",
-      "描述": "初始化 Vite + React + TS 工程；把 flow.schema.json 接入运行时校验；把 flow.py 的投标流程导出为 sample/投标流程.json 并通过校验；决定画布库（React Flow 或自研）并把理由写进 README。",
+      "描述": "初始化 Vite + React + TS 工程；装 `@xyflow/react` v12（MIT）作为画布底座、`html-to-image@1.11.11` + `jsPDF` 做导出、`mermaid` 做文本档图；把 flow.schema.json 接入运行时校验；把 flow.py 的投标流程导出为 sample/投标流程.json 并通过校验。选型理由见 design/workbench/开源选型.md，不再重新论证。",
       "验收": [
         "sample/投标流程.json 通过 flow.schema.json 校验",
+        "package.json 里画布依赖是 @xyflow/react v12，html-to-image 锁定 1.11.11",
         "npm run typecheck 通过",
-        "README 写明画布库选型与理由"
+        "README 链到 开源选型.md 而不是重复论证"
       ],
       "优先级": 1,
       "passes": false,

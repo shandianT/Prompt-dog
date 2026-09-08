@@ -51,7 +51,7 @@ git clone https://github.com/shandianT/Prompt-dog
 
 ## 🏠 犬舍：现成的工作狗
 
-工作狗 = PromptDog 产出的场景专用 Agent 资产包，整个文件夹拖进工作区即上岗，自带启动指令、复盘飞轮和回归测试：
+工作狗 = PromptDog 产出的场景专用 Agent 资产包，**格式符合 [Agent Skills 开放标准](https://github.com/agentskills/agentskills)**（`SKILL.md` + 可选 `references/` `assets/`），整个文件夹拖进工作区即上岗，自带启动指令、复盘飞轮和回归测试：
 
 | 工作狗 | 干什么 | 位置 |
 |---|---|---|

@@ -15,6 +15,7 @@
 - **按环节类型必带的验收项**（verification.md）：文档要有来源、结构化要过 schema、代码要过检查、界面要在浏览器里验、对外动作前要有人工确认点。
 - **行业候选库**新增招投标 / 标书；复杂度边界案例新增「一段流程」；evals 新增用例 9（流程重构）、10（无人上岗资产包）。
 - **犬舍 · 标书撰写 v1.2**：随包提供 `验收清单.json`、`上岗.sh`、`复盘/日志.md`，AGENTS.md 增加无人上岗路由与「已知规律」。
+- **开源选型**：`design/workbench/开源选型.md` 逐项定下每个能力用哪个现成开源项目——画布依赖 `@xyflow/react`（MIT，Dify / Langflow / Flowise 的画布底座都是它，所以不 fork 任何一家）、导出用 `html-to-image@1.11.11` + `jsPDF`、文本档图用 `mermaid`、评测用 `promptfoo`、前端壳用 `shadcn/ui` + `Tremor`；观测不引入平台，只把字段命名对齐 OTel GenAI 语义约定。同时确认资产包格式**本来就符合 Agent Skills 开放标准**，README 口径随之修正；与 Dify 的关系定为上下游（目标态流程图单向导出 Dify DSL），不是竞品。产品定义的技术栈待拍板项就此结清。
 - **从 0 到 1 的使用逻辑**：`design/workbench/使用逻辑.md`（第 0 天准备、第一周五步、节奏、入口选择、常见误区）、旅程图 `design/figures/first-run.svg`、画布新增 00 首次引导屏；QUICKSTART 加第八节「第一周怎么用」。
 - **工作台画布 v2**：01–05 按产品目标重画（四个入口、预填交付的纠错卡、交付页的入犬舍 / 画布出口与未达标清单、犬舍状态来自 验收清单.json、上岗屏停在人工确认点），新增 11 设计屏；源在 `design/workbench/screens_v2.py` 与 `design_screen.py`。
 - **工作台设计资产** `design/workbench/`：一页产品定义、构建规范 `SPEC.md`、按依赖排序的 `stories.json`、流程图契约 `flow.schema.json`、原型生成器与交互验证脚本。
