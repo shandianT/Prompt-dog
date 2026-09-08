@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LBS 销售管理小程序 · 需求梳理与增量分析</title>
+<style>
+:root { --ink:#17202a; --ink2:#4b5563; --ink3:#8a94a6; --line:#e5e9ef; --brand:#0e8f6e; --brand-soft:#e6f6f0; --ai:#5b5bd6; --bg:#f6f7f9; --surface:#fff; --warn:#b45309; --warn-soft:#fff4e0; --danger:#b91c1c; --danger-soft:#feecec; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Hiragino Sans GB","Microsoft YaHei",sans-serif; color:var(--ink); background:var(--bg); line-height:1.7; font-size:15px; }
+.layout { display:grid; grid-template-columns:280px 1fr; min-height:100vh; }
+nav { position:sticky; top:0; height:100vh; overflow:auto; padding:24px 18px; background:#0b1220; color:#cbd5e1; }
+nav .brand { display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+nav .brand .logo { width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,#34d399,#0e8f6e); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:13px; }
+nav .brand b { color:#fff; font-size:14px; display:block; }
+nav .brand small { color:#64748b; font-size:11px; }
+nav ul { list-style:none; padding:0; margin:0; }
+nav li { margin:2px 0; }
+nav a { color:#cbd5e1; text-decoration:none; font-size:13px; display:block; padding:4px 8px; border-radius:6px; }
+nav a:hover { background:rgba(255,255,255,.06); color:#fff; }
+nav ul ul a { font-size:12px; color:#94a3b8; padding-left:18px; }
+nav .back { display:inline-block; margin-top:18px; font-size:12px; color:#34d399; }
+main { padding:40px 56px 80px; max-width:1040px; }
+h1 { font-size:28px; letter-spacing:-.01em; margin:0 0 6px; }
+h2 { font-size:20px; margin:40px 0 12px; padding-bottom:8px; border-bottom:2px solid var(--brand-soft); }
+h3 { font-size:16px; margin:26px 0 8px; }
+p { margin:8px 0; }
+a { color:var(--brand); }
+table { border-collapse:collapse; width:100%; font-size:13px; margin:12px 0 18px; background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden; display:block; overflow-x:auto; }
+th, td { padding:8px 10px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; }
+th { background:#f1f5f9; color:var(--ink2); font-weight:600; white-space:nowrap; }
+tr:last-child td { border-bottom:0; }
+code { background:#eef1f5; padding:1px 5px; border-radius:4px; font-size:12.5px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+pre { background:#0b1220; color:#e2e8f0; padding:14px 16px; border-radius:10px; overflow:auto; font-size:12.5px; }
+pre code { background:none; color:inherit; padding:0; }
+blockquote { margin:12px 0; padding:10px 14px; border-left:4px solid var(--brand); background:var(--brand-soft); color:#14532d; border-radius:0 8px 8px 0; }
+ul, ol { padding-left:22px; }
+li { margin:3px 0; }
+hr { border:0; border-top:1px solid var(--line); margin:28px 0; }
+.meta { color:var(--ink3); font-size:13px; margin-bottom:20px; }
+strong { font-weight:650; }
+@media (max-width: 900px) { .layout { grid-template-columns:1fr; } nav { position:static; height:auto; } main { padding:24px 18px; } }
+@media print { nav { display:none; } .layout { display:block; } main { padding:0; max-width:none; } table { display:table; } }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <div class="brand"><div class="logo">LB</div><div><b>需求梳理</b><small>LBS 销售管理小程序 · 2026-09-07</small></div></div>
+  <div class="toc">
+<ul>
+<li><a href="#0">0. 结论摘要</a></li>
+<li><a href="#1">1. 来源与可访问性说明</a></li>
+<li><a href="#2-prd">2. PRD ↔ 会议纪要匹配核对</a></li>
+<li><a href="#3-prd">3. 会议提到但 PRD 未覆盖 / 覆盖不足的点</a></li>
+<li><a href="#4-prd">4. PRD 新增而会议未讨论的内容</a></li>
+<li><a href="#5-prd-ai">5. PRD 与会议 / AI 纪要冲突点及处理建议</a></li>
+<li><a href="#6">6. 现有「销售智助」代码能力盘点</a></li>
+<li><a href="#7">7. 增量分析</a></li>
+<li><a href="#8-lbs-demo">8. 旧产品中 LBS 未要求的功能（建议不带入 demo 或降级）</a></li>
+<li><a href="#9-demo">9. Demo 范围建议</a><ul>
+<li><a href="#91-prd">9.1 页面清单（底部导航按 PRD：今日｜客户｜工作助手｜我的）</a></li>
+<li><a href="#92-prd-71-u01u09">9.2 黄金演示路径（对齐 PRD 7.1 与 U01–U09）</a></li>
+<li><a href="#93">9.3 模拟数据种子</a></li>
+<li><a href="#94">9.4 必须体现的业务规则</a></li>
+<li><a href="#95">9.5 绝不能造假的点</a></li>
+</ul>
+</li>
+<li><a href="#10-lbs">10. 周四评审前需 LBS 确认的问题</a></li>
+</ul>
+</div>
+
+  <a class="back" href="index.html">← 返回演示</a>
+</nav>
+<main>
+<h1 id="lbs-demo">LBS 史维莎销售小程序 Demo —— 需求梳理与增量分析（终版）</h1>
+<blockquote>
+<p>依据：2026-09-07 会议纪要（含 AI 智能纪要 + 全文逐字稿）、PRD v0.1、旧「销售智助」代码包与文档、两轮比对报告及三组对抗性复核裁定。复核裁定中凡给出文件/逐字稿证据的更正均已采纳，本文以更正后的口径为准。</p>
+</blockquote>
+<hr />
+<h2 id="0">0. 结论摘要</h2>
+<p>PRD v0.1 与 2026-09-07 会议<strong>基本匹配（mostly match，约 90%）</strong>：5.1 追踪矩阵 R01–R12 全部能在逐字稿中找到客户方原话，12 个引用时间段全部准确，无编造需求、无丢失核心诉求；P0/P1 划分与 vendor 现场可行性表态一致或更保守（R12 为 PRD 主动保守、R08 为 PRD 主动纳入 P0）。经复核后真正成立的 PRD↔会议冲突缩减为 6 条（知识库/识虫是否放 CRM 内、街道筛选粒度与"按部门配置"共识、方案不自动发送、合同一键审批的接口依赖、AI 自动分层 vs 人工确认、虫害联网兜底），真正成立的会议遗漏为 7 条（客户心理预期价、拜访次数×流失、按部门配置展示字段、现有拜访类型枚举、月度/季度回顾与开票收款、联网兜底、派单交接包只作只读摘要），另新发现 4 条中等偏差（地推每天二三十家的工作量量纲未进入 PRD、"及时出方案报价"在 P0 无降级承接、会议唯一正式决策"周四 demo"未在 PRD 出现、vendor 自有 CRM 与 LBS 自研 CRM 的系统主体定位未明确）。与旧「销售智助」代码相比，PRD 的 13 项功能、11 个页面、7 条规则共 31 项中 <strong>existing 0 / partial 22 / new 9</strong>：可整体搬运的是设计语言与原子组件（深蓝 hero + 玻璃卡 + 固定底栏、field-row + 编辑抽屉、ai-advice-card、business-card、chat-stream、customer-card、timeline-rail、stage-pipeline、task-card、底部 sheet、纯 CSS 图表）以及数据形状；必须新建的是街道客户清单、餐饮方案模板与方案工作台、审核 FAQ 知识问答、258 独立分层与七阶段、回访日期优先级、门头/现场照片采集。<strong>Demo 可以开工</strong>：范围以 R03/R04/R05/R06/R07/R08 的 P0 闭环为主线（PRD 7.1 一马路/丙店故事），P1 项只做只读预览并标注，PRD 自标"产品建议"的项以"建议"标识展示，旧代码中的四象限、评分阻断、六维画像、BI 估算等一律不带入。</p>
+<hr />
+<h2 id="1">1. 来源与可访问性说明</h2>
+<table>
+<thead>
+<tr>
+<th>来源</th>
+<th>状态</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>飞书妙记 <code>obcnvuma5c6xgwktxal9cf2e</code></td>
+<td>无法打开</td>
+<td>本环境网络出口受限，链接不可访问</td>
+</tr>
+<tr>
+<td>文字记录 docx <code>QssBdYM9XoAkAFxV1mQcnc8VnFb</code></td>
+<td>无法打开</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>智能纪要 docx <code>AWdidwOPBo7mefxahV4c1aP2nzn</code></td>
+<td>无法打开</td>
+<td>同上</td>
+</tr>
+<tr>
+<td>上传的会议纪要文件</td>
+<td>已完整读取</td>
+<td>内嵌 AI 智能纪要 + 全文逐字稿（录音 16:02–16:37，末条时间戳 00:34:44，说话人4；文件末行无换行符，按行号截取时易漏读）。本次所有比对以该文件为准</td>
+</tr>
+<tr>
+<td>PRD v0.1</td>
+<td>已完整读取</td>
+<td>文档头部声明范围/规则默认值/验收阈值/分期均为产品建议，尚未由 LBS 确认；S1 自述"34分51秒"纪要中无对应数据，无法核实（与 16:02–16:37 不矛盾）</td>
+</tr>
+<tr>
+<td>PRD 引用的 S2/S3/S4（神码 MVP 需求梳理、Agent Team 架构、AI 销售管理知识体系）</td>
+<td>不可用</td>
+<td>为作者本机路径；上传的代码包「销售智助-开发」即该神码经验的具体落地物，本文以代码包代替 S2/S3 做复用评估</td>
+</tr>
+<tr>
+<td>代码包「销售智助-开发」</td>
+<td>已完整审计</td>
+<td>微信小程序 21 页 + FastAPI/PostgreSQL 后端 + 迁移脚本 V001–V026 + 设计文档；2026-09-07 为"可演示快照"，主链路已接真实 API</td>
+</tr>
+</tbody>
+</table>
+<p>逐字稿转写误差（demo 文案禁止照抄）："CM""BIM"→CRM；"A 团队"→KA 团队；"开场方案"→方案；"停座记录"→停做记录；"有货人"→多个人；"转介绍的分类"→客户分类；"刘博/刘老师/吕老师/吕总"为同一人（说话人5，地推）；00:19:26 "我是刘博"误标为说话人3；00:18:52 "你需要的是哪几类方案"重复 22 次为转写故障；00:08:04–00:09:56 音频故障，KA 每人客户数/territory 问题未获回答。</p>
+<hr />
+<h2 id="2-prd">2. PRD ↔ 会议纪要匹配核对</h2>
+<table>
+<thead>
+<tr>
+<th>编号</th>
+<th>PRD 标题</th>
+<th>会议出处</th>
+<th>客户原话摘录</th>
+<th>PRD 表述是否忠实</th>
+<th>P0/P1 是否合理</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R01</td>
+<td>流程打通</td>
+<td>13:37–15:25</td>
+<td>说话人2（林/KA）13:37："能把我们的这些方案跟我们的报价系统联动到这个 CRM 里面，同步也可以把我们的合同的这个审批流程能关联到我们前面"；15:25："现在可能分属在不同的板块嘛"</td>
+<td>忠实</td>
+<td>合理：P0 接客户/组织/拜访，P1 接报价/合同/审批/履约摘要</td>
+<td>vendor 15:32 "肯定可以实现，成本不确定，先统一流程→看打通→再看实现"；15:04 vendor 系统未与履约打通</td>
+</tr>
+<tr>
+<td>R02</td>
+<td>承诺一致性</td>
+<td>14:05–14:51</td>
+<td>14:05："我跟客户已经同意答应说我要每一年要做两次的风险勘查。但我在合同里面是没有提到这些内容的，或者是说我的审批流没有去提示到……价格会有偏差"；14:42："不只是合同输入，还有可能在我审批过程当中就已经产生出入了"</td>
+<td>忠实（F10 直接以"一年两次风险勘查"为例，审批环节纳入比对）</td>
+<td>合理：P0 记录承诺，P1 比对</td>
+<td>PRD "阻断提交审批"为产品建议；vendor 只说"前置提醒还是后续补申请流程"待定</td>
+</tr>
+<tr>
+<td>R03</td>
+<td>拍照语音录入</td>
+<td>19:29–20:48</td>
+<td>说话人5（地推）19:29："直接拍这个门店的这个门头，就可以自动识别他的这个门头的信息……包括他的语音的口述……自动录入到系统里面，就不用再一家一家去填了"</td>
+<td>忠实</td>
+<td>合理：P0；vendor 21:21 "我们这个系统现在就可以实现这个功能"</td>
+<td>PRD 不采用 vendor demo 的"低于 60 分拒收"是对 vendor 预设的取舍，非对客户需求的偏离</td>
+</tr>
+<tr>
+<td>R04</td>
+<td>定制方案</td>
+<td>19:29–22:34</td>
+<td>19:29："在后厨拍了几个风险点位……一键生成方案……我们的方案对于餐饮客户来说都是大同小异的"；20:48："有一两张客户门头的照片，有一两张客户本身的风险点位在这个方案里面，那看上去就是一个为客户专门定制的一个方案"；22:29："99%都是一致的"</td>
+<td>忠实</td>
+<td>合理：P0 餐饮单店模板；vendor 21:21 "难度不高，效果需共同调优"</td>
+<td>差异：客户希望"及时的发出来"，PRD 要求人工确认后导出/分享；vendor 说可能以 agent/工作流形式而非 CRM 形式</td>
+</tr>
+<tr>
+<td>R05</td>
+<td>258 与回访提醒</td>
+<td>22:34–23:32</td>
+<td>22:34："我们现在分层是用258这个分层来分层的，就是有意向的，没意向的，意向有多高的，就用20%、50%、80%成交率来定位的……比如说我这个客户三天我该回访了，七天该回访了，他会给销售一个这种提醒"</td>
+<td>忠实（保留 20/50/80，标注三天/七天为举例）</td>
+<td>合理：P0；vendor 23:15 "标准化功能，把标准告诉我们直接设"</td>
+<td>PRD 新增"未知""无当前意向"两层——其中"没意向"实为客户口径，PRD 6.1 应改标"客户明确"而非纯产品建议；按商机存储须 LBS 确认</td>
+</tr>
+<tr>
+<td>R06</td>
+<td>街道客户清单与避免重复拜访</td>
+<td>23:32–26:37</td>
+<td>23:32："我录入这个街之后，它可以自动弹出来，我这条街我有哪些是新开的？有哪些是已经在合作的？……最近几天有过客诉……停做的有多少……近期有没有回访过……同一个客户，我们连续一周去了两次、三次"</td>
+<td>忠实（合作/停做/客诉/近期拜访/新开店/重复提示，7.1 亦用"一马路"）</td>
+<td>合理：P0；vendor 24:42 "基于客户地址关键词筛选，不难，定制化展示"</td>
+<td><strong>客户（说话人5）25:42 确认为地推部门需求</strong>（vendor 25:32 只是提问）；vendor 26:22 建议按部门提炼共性展示、说话人5 26:37 认同，PRD 未显式写入；PRD 用标准街道 ID 严于 vendor 的地址关键词</td>
+</tr>
+<tr>
+<td>R07</td>
+<td>区域产出与门店转化分析</td>
+<td>26:42–27:20</td>
+<td>26:42："希望有一个他们的拜访记录汇总，比如说哪个区域产出高？哪类门店的转化率高？……给销售一些改进的建议"</td>
+<td>忠实</td>
+<td>合理：P0 基础指标与固定问数，P1 收入/毛利/回款；vendor 26:58 "问数功能可以做"</td>
+<td>PRD 把"产出"默认为签约金额、未接入时不推算，为产品建议（Q10）</td>
+</tr>
+<tr>
+<td>R08</td>
+<td>销冠问答知识库</td>
+<td>27:20–28:33</td>
+<td>27:20："先把这些问题全搜集出来，然后问问各个地区的销售精英……形成一个知识库……现场就会给他答案"；28:33："我哪个该去了，以及我当时马上会有方案，以及客户提出的问题，我能马上解答……整套一个闭环"</td>
+<td><strong>忠实</strong>（复核更正：客户四要素全部承接，且客户本人把问答与扫街/方案视为同一闭环，PRD 共用入口与客户口径一致）</td>
+<td>合理：P0 审核 FAQ（PRD 主动纳入，vendor 说"功能不难"）</td>
+<td>vendor 27:51/28:26 建议"自建知识库+智能客服，两套系统，不放 CRM 里，保密等级高"——PRD 未记录该理由，作为冲突项单独登记（第 5 节）</td>
+</tr>
+<tr>
+<td>R09</td>
+<td>拍照识别虫害及习性、来源、危害</td>
+<td>29:36–30:03</td>
+<td>说话人6（邓）29:36："我看到这种虫害，是什么虫害？我拍个照片，通过 AI 能识别习性来源，包括有什么危害"</td>
+<td>忠实</td>
+<td>合理：P1 受控试点（vendor 30:03 建议与知识库同属自建内部库+机器人，PRD 更保守要求标注样本）</td>
+<td>PRD 未含 vendor "内部库不够时联网搜索"兜底；AI 纪要增补的"对应解决方案"客户未说</td>
+</tr>
+<tr>
+<td>R10</td>
+<td>手机按类别出报价</td>
+<td>30:46–31:42</td>
+<td>30:46："大部分地推销售在外边很多都不是提着电脑的，都是拿一个手机"；30:58："单店，那我出一个简约的一个报价方案……连锁餐饮……食品工厂……按照每个类别的同时有这种比较专业对口的这种报价"</td>
+<td>忠实</td>
+<td>合理：P1 先单店后连锁/工厂；vendor 31:42 "新做一个智能体，至少 500 份训练量，不知道你们数据够不够"</td>
+<td>PRD 走规则算价+AI 解释，不以 500 份为前置，与 vendor 32:46 自己给的"没有量就规定格式和必含内容"兜底一致；但客户强调的"及时"在 P0 无任何承接（见第 3 节）</td>
+</tr>
+<tr>
+<td>R11</td>
+<td>优质方案模板复用</td>
+<td>32:24–32:46</td>
+<td>32:24："某个地区……单个餐饮做这种报价方案确实比较好，然后我们把这个报价方案直接调到 AI 数据库里面，然后大家都去可以借鉴这种模板去复制运用"</td>
+<td>部分忠实（复核更正依据：客户说的是含价格的"报价方案"，PRD F06 P0 模板复用明确"移除个别报价"且"不含自动定价"，价格复用被拆到 F09 P1，5.1 标题也去掉了"报价"二字；"AI 挖掘规律"是 vendor 技术解释而非客户诉求，不作扣分理由）</td>
+<td>合理：P0 审核模板库</td>
+<td>模板去客户信息后发布的做法与 vendor "规定格式与必含内容"路径一致</td>
+</tr>
+<tr>
+<td>R12</td>
+<td>合同一键生成审批</td>
+<td>34:08–34:35</td>
+<td>34:08："合同能不能一键生成，在 CRM 系统里面……就不用自己再私下再做了"；34:24："所有合同的全部内容都会录入进去，而且是完完整的正确的内容，我希望有一个一键生成，然后一键去审批，就不用在别的系统再去审批"</td>
+<td>忠实（一键审批=一键发起而非自动通过；"不再切系统"写成完整验收）</td>
+<td>合理但为 PRD 主动保守：vendor 34:35 "这个有的"指其产品内审批，客户要的是不再去 LBS 现有审批系统，取决于接口</td>
+<td>demo 可用模拟审批流并标 P1、"待人工提交"</td>
+</tr>
+</tbody>
+</table>
+<p><strong>AI 智能纪要相对逐字稿的偏差（PRD 未照搬，demo 文案也不得沿用）</strong>：258 与四象限被合并为"结合 258 自动完成四象限分类"（四象限是 vendor 00:11:04 自家 demo 的利润×增长分类）；"低于 60 分重新提交"写成标准化功能（vendor 预设）；"按销售所在位置筛选"（实为录入街道后按地址关键词）；DJ 团队"明确周度月度指标"（原话仅"应该是有"）；"合同一键生成并触发内部审批、无需跨系统"（vendor 未确认与 LBS 审批打通）；"服务团队完成首次勘察、设备安装后转入常规服务"把可能项写成固定流程；"集团客户按区域、业务需求分配"为纪要推断；纪要功能条目"可自定义展示"与关键决策"按部门配置不开放个人自定义"自相矛盾；"按客户类别自动生成方案"误归说话人5（实为说话人6 的报价诉求）；"众人提及群成员未加入"仅说话人3、说话人4 各一句。</p>
+<hr />
+<h2 id="3-prd">3. 会议提到但 PRD 未覆盖 / 覆盖不足的点</h2>
+<table>
+<thead>
+<tr>
+<th>时间</th>
+<th>原话（说话人）</th>
+<th>重要性</th>
+<th>建议处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>00:19:29 / 00:20:48</td>
+<td>说话人5："目前我们地推销售每天拜访的客户是非常多的，二三十家"；"他一天拜访20多家客户，他一边要录入这个 CRM 系统，一边我又要一家一家的做方案"</td>
+<td><strong>中</strong>：PRD 只写"一天多店陌拜"，13.2 的 P95（采集≤30 秒、方案≤90 秒）与 F03 逐条确认交互均未按每人每天 20–30 条记录核算，无批量/队列上传、延后合并确认设计</td>
+<td>纳入 P0 设计约束；demo 展示：今日工作台显示"今日已记录 18/25 家"、拜访确认可"先存草稿稍后批量确认"、上传任务队列</td>
+</tr>
+<tr>
+<td>00:30:58 / 00:19:29</td>
+<td>说话人6："因为及时给客户出一个方案报价呢，可能真的是需要有一些 AI 去借助"；说话人5："我希望我们有一个简单的方案，可以及时的出来"</td>
+<td><strong>中</strong>：PRD 把全部定价放 P1，P0 方案"不含自动定价、显示报价待审批"，没有任何现场即时报价的降级路径（参考价区间、价目表查询）</td>
+<td>纳入 P1 但 demo 展示：方案工作台标"报价待审批"，并在周四评审提出"是否允许 P0 展示已审核价目表/参考价区间（非自动算价）"作为决策项；demo 中不显示任何假价格</td>
+</tr>
+<tr>
+<td>00:29:16</td>
+<td>说话人3："我们就先收集这些需求，然后先做一版 demo 出来。然后周四"</td>
+<td><strong>中</strong>：会议唯一正式决策，PRD 全文无对应（第 16 节反而写"不写死交付日期"）</td>
+<td>仅记录 + 在 PRD 2.1/16 节补一句"S1 决策：周四 demo 评审"；本文第 9 节即为该 demo 范围</td>
+</tr>
+<tr>
+<td>00:05:26 / 00:19:29 / 00:15:04 / 00:34:24</td>
+<td>说话人2："我们现在系统应该是自己弄"；说话人5："加上我们现在新上这个 CRM 系统"；vendor："我们这个系统现在就可以实现"</td>
+<td><strong>中</strong>：vendor 推介的是其自有销售管理系统，客户口中的 CRM 是 LBS 自研且新上线；PRD 1.1 定位"现有 CRM 的销售增强入口"仅标为建议，demo 若沿用 vendor 系统形态会与该定位打架</td>
+<td>demo 展示：登录/我的页明确"演示环境 · 与 LBS CRM 的接口未接入"；评审确认系统主体（Q14）</td>
+</tr>
+<tr>
+<td>00:01:15</td>
+<td>说话人1："客户他有个心理的预期价格嘛，但是我们也有一个核算出来的价格……领导就会根据这个核算出来的结果去预估说我们到底要不要去推行这个价格，或者是说我必须要提更高的价格"</td>
+<td>中：F09 只有成本/毛利/建议售价，无"客户预期价/目标价"字段与"领导要求提价"审批动作；PRD 无"心理"一词</td>
+<td>纳入 P1（F09 增字段）；demo P1 预览卡显示"客户预期价：待录入"占位</td>
+</tr>
+<tr>
+<td>00:06:34</td>
+<td>说话人2："通常拜访次数越多，你成交越难，但是可能后期的流失是越不容易……这些数据都很珍贵，也会成为后续这些客户管理或者销售管理上面的重要的一个参考"</td>
+<td>中：第 12 节无"成交前拜访次数 × 续约/流失/客诉"分析维度，PRD 无"流失"一词</td>
+<td>纳入 P1（指标扩展）；demo 仅记录，不展示</td>
+</tr>
+<tr>
+<td>00:26:22–00:26:41</td>
+<td>vendor："以部门的形式……共性的这种需要展示的东西，提炼出来"；说话人5："也有风险的，特别是对于新销售来说"</td>
+<td>中：会上少数形成的具体共识，PRD F02/Web 配置台未写"按部门配置展示字段、不开放个人自定义"，PRD 无"部门"一词</td>
+<td>纳入 P0（补入 F02 与 Web 配置台）；demo 展示：街道卡片字段固定，标注"地推部门模板"</td>
+</tr>
+<tr>
+<td>00:23:32 / 00:24:42</td>
+<td>说话人5："同一个客户，我们连续一周去了两次、三次"；vendor："近7天内有没有？近30天内有没有？拜访"</td>
+<td>低：F02 重复拜访提示无判定窗口</td>
+<td>纳入 P0 规则：demo 用"近 7 天内已有有效拜访"触发提示，标"演示规则"</td>
+</tr>
+<tr>
+<td>00:05:48</td>
+<td>说话人2："他一定会分成首次拜访，或者是说陌生拜访，或者是说增加服务拜访，或者是说一些这种深挖拜访"</td>
+<td>低：LBS 自研 CRM 已有拜访类型枚举，F03 未列出</td>
+<td>纳入 P0：demo 拜访类型取值直接用 首次拜访/陌生拜访/增加服务拜访/深挖拜访</td>
+</tr>
+<tr>
+<td>00:00:01 / 00:03:23 / 00:04:04</td>
+<td>说话人1/2："有害生物防治，有卫生间深度清洁，油烟机等等"；"可能有勘察，或者是说我的设备安装"；"应急服务或者升级服务或额外服务"</td>
+<td>低：PRD 通篇只用抽象"服务线"，未枚举真实业务线与服务类型</td>
+<td>demo 展示：模拟数据服务线用 有害生物防治/卫生间深度清洁/油烟机清洗，服务类型用 勘察/设备安装/定期服务/应急服务</td>
+</tr>
+<tr>
+<td>00:19:29 / 00:22:29</td>
+<td>说话人5："我们的方案对于餐饮客户来说都是大同小异的"；"99%都是一致的"</td>
+<td>低：R04/R11 走单一模板+换图路线的核心依据，F06 却按通用模板库设计</td>
+<td>demo 展示：P0 只放一套"餐饮单店·有害生物防治"审核模板，其他客群灰置</td>
+</tr>
+<tr>
+<td>00:04:04</td>
+<td>说话人2："每个月或每个季度就要跟客户做一个回顾……匹配的上，那就能完成交付嘛，那就可以下一步去谈收款，那我们就开票收款"</td>
+<td>低：F12 只接"回款状态"，无"定期回顾"任务类型；PRD 无"回顾""开票"</td>
+<td>纳入 P1；demo 仅记录</td>
+</tr>
+<tr>
+<td>00:30:03</td>
+<td>vendor："一种是他只看企业内部的知识库。如果不够的话，你还可以点击让他联网去搜索"</td>
+<td>低：vendor 方案而非客户硬需求；F07/F13 无联网选项，PRD 无"联网"</td>
+<td>仅记录；demo 识虫入口灰置，不展示联网开关</td>
+</tr>
+<tr>
+<td>00:34:24</td>
+<td>说话人5："我们 CRM 系统里头……所有合同的全部内容都会录入进去，而且是完完整的正确的内容"</td>
+<td>低：意味着合同一键生成是纯字段填充，Q09 仍把"合同模板"列为未知项</td>
+<td>仅记录；评审时作为降低 R12 门槛的事实提出</td>
+</tr>
+<tr>
+<td>00:22:34</td>
+<td>说话人5："有意向的，没意向的，意向有多高的"</td>
+<td>低："没意向"是客户口径，PRD 6.1 "无当前意向"层未标"客户明确"</td>
+<td>纳入 P0 标注修正；demo 258 五档保留"无当前意向"</td>
+</tr>
+<tr>
+<td>00:02:40</td>
+<td>说话人2："销售的信息，跟合同上的信息，要在服务之前要交付给服务团队。那服务团队透过他的派单系统收到这些信息"</td>
+<td>低：PRD F12/10.1 已定义派单系统为只读摘要、源系统执行，交接包如何进入派单为 P1 细节</td>
+<td>仅记录（P1 已覆盖）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-prd">4. PRD 新增而会议未讨论的内容</h2>
+<table>
+<thead>
+<tr>
+<th>PRD 位置</th>
+<th>内容</th>
+<th>PRD 自标</th>
+<th>demo 展示建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.3 / Q01 / 第 7 节</td>
+<td>微信小程序载体；底部导航 今日｜客户｜工作助手｜我的；Web 配置台</td>
+<td>产品建议（Q01 待确认）</td>
+<td>可展示，以手机小程序风格纯前端呈现，<strong>不宣称"微信小程序已定"</strong></td>
+</tr>
+<tr>
+<td>6.1</td>
+<td>三组状态分开（合作状态/商机阶段/意向分层）；258 按商机存储；增加"未知""无当前意向"层；80%≠成交</td>
+<td>产品建议（须 LBS 确认；"没意向"实为客户口径）</td>
+<td>必须展示（核心规则）</td>
+</tr>
+<tr>
+<td>6.2</td>
+<td>地推 Playbook 七阶段及退出证据</td>
+<td>产品建议 + 经验复用（神码）</td>
+<td>必须展示，标"建议阶段"</td>
+</tr>
+<tr>
+<td>6.3</td>
+<td>KA Playbook 增补字段（使用方/决策方/采购方、AIB 审核、勘查结论、账期、首服交接）</td>
+<td>产品建议（部分来自 00:00:01–04:41 现状）</td>
+<td>可展示于 KA 客户详情（P1 预览）</td>
+</tr>
+<tr>
+<td>6.4</td>
+<td>回访日期优先级；Demo 示例周期 20%=7天/50%=3天/80%=1天；有效跟进定义</td>
+<td>产品建议（三天/七天为举例）</td>
+<td>必须展示，标"演示规则"</td>
+</tr>
+<tr>
+<td>F01</td>
+<td>客户转交与离职接续、申请协作不抢占归属</td>
+<td>经验复用（神码客户资产与责任地盘）</td>
+<td>必须展示（承载 U01/U08）</td>
+</tr>
+<tr>
+<td>F03</td>
+<td>状态机 本地草稿→上传中→AI处理中→待确认→已保存/待同步→同步成功；弱网草稿恢复；<strong>不采用"低于 60 分拒收"</strong></td>
+<td>产品建议（60 分为 vendor demo 预设的有意取舍，非客户需求冲突）</td>
+<td>展示状态机与"缺口提示"；<strong>周四演示若基于 vendor 现有 demo 会出现评分门槛，需二选一并向客户说明</strong></td>
+</tr>
+<tr>
+<td>F05</td>
+<td>未结客诉优先"先了解服务问题"，不由 AI 直接建增值商机；逾期升级阈值可配置</td>
+<td>产品建议</td>
+<td>展示于甲店</td>
+</tr>
+<tr>
+<td>F06</td>
+<td>方案六段结构；输入快照/模板版本/确认人；P0 不含自动定价显示"报价待审批"；导出≠已发送</td>
+<td>产品建议</td>
+<td>必须展示</td>
+</tr>
+<tr>
+<td>F07</td>
+<td>FAQ 审核流程、对客表达 vs 内部提示、反馈队列</td>
+<td>产品建议</td>
+<td>展示</td>
+</tr>
+<tr>
+<td>F09</td>
+<td>规则算价 + AI 解释；毛利率公式；报价状态机；<strong>不以 500 份样本为前置</strong>（复核：该数字出自本次会议 vendor，PRD 第 3 节误放在"神码经验"表中）</td>
+<td>产品建议（须财务确认）</td>
+<td>P1 预览，不显示价格；评审时说明 PRD 走模板+规则路线，AI 学"什么是好方案"延后</td>
+</tr>
+<tr>
+<td>F10</td>
+<td>差异阻断"确认正式版本/提交审批"；差异四态</td>
+<td>产品建议（vendor 只说提醒或补申请待定）</td>
+<td>P1 预览，不宣称全局阻断</td>
+</tr>
+<tr>
+<td>第 3 节 / 5.2 包 C</td>
+<td>四象限延后 P2（复核：PRD 的四象限来自神码 S4"关系深度×客户潜力"，与 vendor demo 的"利润×增长"是不同模型，二者均非客户需求）；投标/AI 周会/资源调度不纳入；飞书主入口不复用</td>
+<td>产品建议 / 经验复用</td>
+<td><strong>demo 展示 258，不展示任何四象限</strong></td>
+</tr>
+<tr>
+<td>6.5</td>
+<td>AI 不生成销售个人能力排名或自动绩效结论（vendor 16:26 征集"销售个体能力评估"、11:04 demo 管理者看每个销售拜访；客户 17:12 反而担心"只是对领导层的管理有帮助"）</td>
+<td>产品建议（方向与客户关切一致）</td>
+<td>团队工作台不做排名，去掉旧六维/评价</td>
+</tr>
+<tr>
+<td>第 12 节</td>
+<td>覆盖门店数、有效拜访、回访按期完成率、方案反馈率、客群转化率（30 天观察窗）、签约产出、销售周期、续约率</td>
+<td>产品建议（Q10 待确认口径）</td>
+<td>团队工作台/问数展示，回答附期间/口径/样本量/更新时间</td>
+</tr>
+<tr>
+<td>13.1/13.2、15.2</td>
+<td>权限矩阵；P95 与 RPO/RTO；试点量化目标</td>
+<td>产品建议</td>
+<td>不展示</td>
+</tr>
+<tr>
+<td>第 3 节</td>
+<td>神码 S2/S3/S4 复用评估与"纠错方式"（优先纠正事实、保留 AI 原建议、主管独立结论）</td>
+<td>经验复用（复用成熟度判断：未做代码审计——本文第 6–7 节即补此项）</td>
+<td>纠错方式可在推进卡"拒绝建议并说明"体现</td>
+</tr>
+<tr>
+<td>10.2 / 11</td>
+<td>权威源、去重请求 ID、演示/试点/正式分级验收、降级方案</td>
+<td>产品建议</td>
+<td>"我的"页同步异常入口体现</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-prd-ai">5. PRD 与会议 / AI 纪要冲突点及处理建议</h2>
+<p>经复核，真正成立的冲突为以下 6 条；被驳回的 5 条（60 分拒收、四象限、500 份样本、微信小程序、销售个体能力评估）均为 vendor demo 既有能力/征集举例或未讨论的设计假设，PRD 已以明确标注的决策处理，已归入第 4 节。</p>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>会议说法</th>
+<th>PRD 说法</th>
+<th>评估与处理建议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>知识库/识虫是否放 CRM 内</td>
+<td>vendor 27:51/28:26/30:03：自建知识库+智能客服，"两套系统"，"不放 CRM 里"，保密等级高</td>
+<td>R08 "与 CRM 共用入口和身份，可独立知识服务"；工作助手为底部 Tab；F13 与方案共享上下文</td>
+<td>入口层面相反，后端可独立并不矛盾；客户 28:33 期望问答与扫街/方案同一闭环。<strong>建议</strong>：PRD 补记 vendor 保密理由，决策"前端同入口、后端独立知识服务"；demo 在小程序内放工作助手 Tab 可接受</td>
+</tr>
+<tr>
+<td>街道筛选粒度与展示字段配置</td>
+<td>vendor 24:42 地址关键词筛选、"可自定义"；26:22–26:41 双方共识按部门提炼、不开放个人</td>
+<td>F02 行政区+标准街道 ID、无标准街道进待治理；字段固定；未提"按部门"</td>
+<td>PRD 更严格（真实接入需地址治理）。<strong>建议</strong>：F02 补"按部门配置展示字段、不开放个人自定义"；demo 用地址关键词"一马路"即可</td>
+</tr>
+<tr>
+<td>方案生成后是否自动发送</td>
+<td>说话人5 20:48 "他就会及时的发出来"</td>
+<td>F06 导出/分享由人触发，不自动发给客户；导出≠已收到</td>
+<td>PRD 责任边界合理。<strong>建议</strong>：demo 保留"确认并分享"一步并记录"人工标记发送"事件，体现"及时"</td>
+</tr>
+<tr>
+<td>合同一键审批的落地判断</td>
+<td>vendor 34:35 "这个有的"；纪要"无需跨系统"</td>
+<td>F11 P1：一键审批=发起指定审批；无接口只能标"待人工提交"；只有状态查询不满足验收</td>
+<td>PRD 更准确。<strong>建议</strong>：demo 用模拟审批流并标 P1 与"待人工提交"</td>
+</tr>
+<tr>
+<td>AI 自动识别分层 vs 建议+人工确认</td>
+<td>说话人5 22:34 "分层 AI 就会识别出来"；vendor 23:15 "直接设"</td>
+<td>F04 AI 建议不覆盖正式值，一次确认阶段/分层/任务草稿</td>
+<td>治理粒度差异，合理。<strong>建议</strong>：demo 把"一键确认"做得足够轻（一屏一按钮）</td>
+</tr>
+<tr>
+<td>虫害识别联网兜底与预期</td>
+<td>vendor 30:03 "完全完美可以解决……不够时联网搜索"</td>
+<td>F13 P1 受控试点，仅审核知识库，无法识别返回未知，无联网</td>
+<td>PRD 保守负责，但与 vendor 现场给客户的预期有落差。<strong>建议</strong>：评审时对齐预期；demo 识虫入口灰置标"试点未开放"</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6">6. 现有「销售智助」代码能力盘点</h2>
+<p>代码根：<code>/tmp/claude-0/-home-user-Prompt-dog/9c3d0ab2-a255-5f2c-b2d7-47b3ff818b0a/scratchpad/code/销售智助-开发</code></p>
+<table>
+<thead>
+<tr>
+<th>能力</th>
+<th>状态</th>
+<th>文件证据</th>
+<th>对 LBS 的可复用性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>三角色演示登录（sales/supervisor/manager，密码 123456，服务端身份校验）</td>
+<td>已接真实 API</td>
+<td><code>frontend/miniprogram/pages/login/index.js</code>、<code>app.js</code>、<code>utils/apiClient.js</code>（401 刷新单飞）</td>
+<td>高：role-selector 分段直接改为 地推销售/KA 销售/主管 的 demo 角色切换</td>
+</tr>
+<tr>
+<td>服务端 RLS 三级数据范围</td>
+<td>已接真实 API</td>
+<td><code>database/migrations/V004__security_and_views.sql:105-209</code>、<code>backend/src/sales_backend/agent/policy.py</code></td>
+<td>中：demo 无后端，前端按角色过滤模拟；scope-pill 与 403 文案可复用</td>
+</tr>
+<tr>
+<td>语音拜访录入（录音权限三态、分段预览转写、终稿、可编辑）</td>
+<td>已接真实 API</td>
+<td><code>pages/visit-entry/index.js:59,214,240,180</code>、<code>pages/index/index.js</code></td>
+<td>高：voice-card/process-card/transcript-state 整体复用；仅音频上传，<strong>无 chooseImage/OCR</strong></td>
+</tr>
+<tr>
+<td>拜访 16(+4) 字段结构化确认 + 别名/金额/时长/日期规范化 + 草稿恢复</td>
+<td>已接真实 API</td>
+<td><code>pages/visit-confirm/index.js:9-29,163,351,451</code>、<code>utils/visitFieldNormalizer.js</code>、<code>backend/.../prompts.py:124</code></td>
+<td>高（骨架）：field-row + editor-layer 抽屉复用；字段清单为 ToB 版需整体替换；<strong>AI 胶囊只标在首访 4 字段（js:201-204），16 个标准 AI 抽取字段无来源标记</strong></td>
+</tr>
+<tr>
+<td>跟进记录 5 维评分 + &lt;70 分禁止归档 + 下一步硬审</td>
+<td>已接真实 API</td>
+<td><code>pages/visit-confirm/index.js:61-66,94,374</code></td>
+<td>低：与 PRD "缺口提示不拒收"冲突，<strong>demo 必须移除阻断</strong>；下一步含时间+目标的校验思路可保留</td>
+</tr>
+<tr>
+<td>商机草案 Agent（create/update、probability 10/30/50/70/90、rationale、missing_fields）</td>
+<td>已接真实 API</td>
+<td><code>pages/opportunity-create/index.js:24,115-122</code>、<code>prompts.py:151-157</code></td>
+<td>高（骨架）：decision-card + rationale + 选项网格改为 258 五档；阶段与概率绑死（<code>customer_mutations.py:141-152</code> 硬映射，V021 CHECK 仅限取值），分层需新增独立字段</td>
+</tr>
+<tr>
+<td>客户列表/搜索/chip 筛选/客户卡</td>
+<td>已接真实 API</td>
+<td><code>pages/customers/index.js:145-149,185,221-253</code>、<code>index.wxml</code></td>
+<td>高：customer-card + 搜索 + filters 复用为街道清单；<strong>无街道/地址字段（grep 零命中）</strong>；"当年产出/长期运作"为前端演示分类需移除</td>
+</tr>
+<tr>
+<td>客户详情（hero、三 tab、联系人角色、拜访时间线、5/6 步 pipeline、AI 建议卡）</td>
+<td>已接真实 API</td>
+<td><code>pages/customer-detail/index.wxml</code>、<code>utils/customerDetail.js:131</code></td>
+<td>高：结构复用；<strong>两套不一致阶段数组</strong>（utils 6 阶段、页面 5 阶段硬编码 <code>customer-detail/index.js:56</code>、<code>customers/index.js:358</code>）只保留一个来源</td>
+</tr>
+<tr>
+<td>客户作战地图四象限 + 战斗卡 + 六维雷达</td>
+<td>已接真实 API</td>
+<td><code>pages/customers/battle-map.wxss</code>、<code>utils/quadrant.js</code>、<code>backend/database/V022</code></td>
+<td>不复用（PRD 用 258 + 七阶段，四象限 P2）</td>
+</tr>
+<tr>
+<td>任务：创建/接受/拒绝/完成/重发、六态状态机、visit_follow_up 按拜访唯一、30 分钟巡检 dedupe_key 去重</td>
+<td>已接真实 API</td>
+<td><code>pages/tasks</code>、<code>pages/task-detail/index.js:23,35-37,83-96</code>、<code>V014:4-7</code>、<code>V018:55-61,100</code></td>
+<td>高：task-card/task-tabs/detail-hero/info-card 复用；动作改为 完成/改期/转交申请；<strong>无规则型回访周期、无改期原因、无结构化计划日期</strong></td>
+</tr>
+<tr>
+<td>通知轮询转消息卡（7 种模板）</td>
+<td>已接真实 API</td>
+<td><code>pages/index/index.js</code>、<code>V024–V026</code></td>
+<td>中：demo 用本地模拟；PRD 只要求工作台始终显示任务</td>
+</tr>
+<tr>
+<td>ChatBI 文字/语音问数（输出 scope/data_as_of + 指标口径）</td>
+<td>已接真实 API</td>
+<td><code>pages/index/index.js:1203-1230</code>、<code>constants.py:33-35</code></td>
+<td>高（容器）：business-card tone-cyan 复用；<strong>输入框被 <code>managementTaskMode||visitRecordingMode</code> 门控（index.wxml:105），闲置态不可达，复用需去掉门控</strong>；无固定问题模板</td>
+</tr>
+<tr>
+<td>即时总结 Agent + report-detail 页</td>
+<td>已接真实 API</td>
+<td><code>pages/report-detail</code>、<code>prompts.py:113</code></td>
+<td>低：功能不带入；section-card 分区版式复用为方案预览</td>
+</tr>
+<tr>
+<td>团队工作台（summary 大卡、看板卡、成员进度、团队/销售 picker）</td>
+<td>已接真实 API</td>
+<td><code>pages/workbench/index.js:12-32,74-80</code>、<code>index.wxml:38-45</code></td>
+<td>高（骨架）：指标改为覆盖门店/有效拜访/跟进超期；<strong>成员行去掉 rank 与 openMemberGrowth 六维入口，按姓名排序</strong></td>
+</tr>
+<tr>
+<td>BI 季度驾驶舱（纯 CSS 环图/漏斗/柱图/区域卡/口径说明；样本回退；确收/回款按 0.38/0.84 估算）</td>
+<td>演示兜底</td>
+<td><code>pages/bi/index.js:373-379</code>、<code>utils/dataSource.js</code></td>
+<td>中：图表与 data-note/planning-tag 复用；<strong>估算与样本回退违反 PRD"缺失显示未接入、不推算"，必须删除</strong></td>
+</tr>
+<tr>
+<td>六维能力画像/成长曲线/评价排名/AI 教练</td>
+<td>已接真实 API</td>
+<td><code>pages/profile</code>、<code>pages/member-growth</code>、<code>V016</code></td>
+<td>不复用（PRD 6.5）</td>
+</tr>
+<tr>
+<td>风险中心（列表/详情/证据/≥5 字解除、personal_risks Agent）</td>
+<td>已接真实 API</td>
+<td><code>pages/risks</code>、<code>pages/risk-detail</code>、<code>V015/V020</code></td>
+<td>低：功能不带入；evidence-card 编号证据版式复用为承诺差异/建议来源</td>
+</tr>
+<tr>
+<td>客户下发抽屉（两处复制）、语音建档 + 管理者建档核对页（硬编码 89% 两处：<code>index.wxml:88</code>、<code>customer-assign-confirm/index.wxml:3</code>）</td>
+<td>已接真实 API / 遗留</td>
+<td><code>pages/index</code>、<code>pages/workbench</code>、<code>pages/customer-assign-confirm</code></td>
+<td>中：底部 sheet 骨架（handle/eyebrow/×/scroll-view/footer 1fr 1.45fr，来源仅 assignment-layer）改造成"申请协作/转交/改期原因"抽屉；89% 一并移除</td>
+</tr>
+<tr>
+<td>事实与 AI 派生分离（数据层）</td>
+<td><strong>partial</strong>（复核更正）</td>
+<td><code>V003:86-88,260,279-285</code> 建表；<code>persist.py:87-108</code> 仅 INSERT artifact；<code>grep agent.confirmation/UPDATE agent.artifact</code> 后端 0 命中；<code>repositories/visits.py:223-236</code> 归档统一写 source_type='user'</td>
+<td>中：库表为拒绝原因/置信度/快照替代/文件资产/审计预留了字段（<code>V003:150-155,265-268,279-282</code>、<code>ops.file_asset</code>、<code>ops.audit_log</code>）但代码未用，demo 模拟数据形状可直接对齐</td>
+</tr>
+<tr>
+<td>有效跟进计时基于已确认/归档拜访</td>
+<td><strong>partial</strong>（复核更正）</td>
+<td><code>repositories/customers.py:36-45</code>（latest_visit_at 只取 confirmed/archived）、<code>fallbacks.py:440-460</code>（14 天停滞）、<code>customer_mutations.py:104</code>（资料 PATCH 仅触发象限重算）</td>
+<td>高：规则已在数据层成立；缺"最近有效拜访 vs 资料更新"双时间戳、"已发送"事件</td>
+</tr>
+<tr>
+<td>客户/商机精确名称去重（409）</td>
+<td>已接真实 API</td>
+<td><code>customer_mutations.py:277-287,202-214</code>；<code>crm.customer_duplicate_candidate</code> 表无 API</td>
+<td>中：409 冲突提示交互可沿用；候选去重交互需新建</td>
+</tr>
+<tr>
+<td>外部 CRM ID 映射列</td>
+<td>数据模型已有</td>
+<td><code>V002:27-28,47-48,70,85,92,109</code>（external_*_id 唯一约束）</td>
+<td>中：缺同步写入/映射查询；demo 客户对象带 external_id 字段即可</td>
+</tr>
+<tr>
+<td>Agent 配置后台 admin.html、微信云开发初始化、cloudTipModal</td>
+<td>已接 / 遗留</td>
+<td><code>backend/api/admin.py</code>、<code>app.js wx.cloud.init</code></td>
+<td>不复用</td>
+</tr>
+</tbody>
+</table>
+<p><strong>设计资产提炼注意</strong>：旧样式无 CSS 变量（<code>var(--</code> 0 处），色板高度碎片化（品牌蓝十余个近似值，成功绿 #35a77a、警示橙 #df6b43 各仅出现一次，tasks/risks 页另用绿橙），887 条 font-size 声明中 40.8% ≤17rpx、56.5% &lt;20rpx。demo 应重新定义 token 并放大基准字号，而非"沿用旧 token"。</p>
+<hr />
+<h2 id="7">7. 增量分析</h2>
+<table>
+<thead>
+<tr>
+<th>PRD 功能/页面/规则</th>
+<th>优先级</th>
+<th>已有/部分/新增</th>
+<th>缺口说明</th>
+<th>demo 优先级</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F01 客户、门店、商机与协作</td>
+<td>P0</td>
+<td>部分</td>
+<td>缺集团/签约主体/门店三层、门头 OCR 候选去重交互、申请协作入口、转交保留历史的 UI；external_*_id 列已有但无同步</td>
+<td><strong>must</strong>（承载 U01/U08：无权门店最小信息卡 + 申请协作抽屉 + 转交历史；三层建模与 OCR 去重可 should）</td>
+</tr>
+<tr>
+<td>F02 街道客户与访前准备</td>
+<td>P0</td>
+<td>部分</td>
+<td>无街道/地址筛选、合作状态/客诉/更新时间字段、"未接入/数据待更新"规则、新开店/停做/近期拜访视图、重复拜访提示、待补地址</td>
+<td>must</td>
+</tr>
+<tr>
+<td>F03 照片/语音/文字拜访留痕</td>
+<td>P0</td>
+<td>部分</td>
+<td>无照片采集与 OCR；字段为 ToB 版；全字段必填无渐进追问；无状态机可视化；&lt;70 分阻断需移除；AI 抽取字段默认无来源胶囊</td>
+<td>must</td>
+</tr>
+<tr>
+<td>F04 阶段、258 与下一步</td>
+<td>P0</td>
+<td>部分</td>
+<td>无独立 258 五档、七阶段、拒绝建议记录、一次确认三写、成交须权威事件</td>
+<td>must</td>
+</tr>
+<tr>
+<td>F05 回访任务与提醒</td>
+<td>P0</td>
+<td>部分</td>
+<td>无规则型周期任务、改期原因、周期关闭/开启、升级阈值、客诉优先行动</td>
+<td>must</td>
+</tr>
+<tr>
+<td>F06 餐饮单店方案与模板库</td>
+<td>P0</td>
+<td>新增</td>
+<td>全仓库无方案模板/PDF/文档模板</td>
+<td>must</td>
+</tr>
+<tr>
+<td>F07 销售问答与经验知识</td>
+<td>P0</td>
+<td>新增</td>
+<td>无 knowledge/faq 实体</td>
+<td><strong>must</strong>（承载 U06；工作助手 Tab 之一）</td>
+</tr>
+<tr>
+<td>F08 团队管理与问数</td>
+<td>P0</td>
+<td>部分</td>
+<td>无固定问题模板、地推/KA 分开、未接入/暂无数据处理；BI 估算需删</td>
+<td>must</td>
+</tr>
+<tr>
+<td>F09 按类别报价</td>
+<td>P1</td>
+<td>新增</td>
+<td>无价目/成本/审批/状态机</td>
+<td>p1_preview（只读"报价待审批"卡，不显示价格）</td>
+</tr>
+<tr>
+<td>F10 承诺—方案—报价—合同一致性</td>
+<td>P1</td>
+<td>新增</td>
+<td>无承诺实体与比对</td>
+<td>p1_preview（承诺清单区块 + 三处证据差异卡）</td>
+</tr>
+<tr>
+<td>F11 合同生成与审批接入</td>
+<td>P1</td>
+<td>新增</td>
+<td>无合同模板/审批接口</td>
+<td>p1_preview（"待人工提交"状态 + 灰置发起按钮）</td>
+</tr>
+<tr>
+<td>F12 履约、回款、续约及 KA 经营</td>
+<td>P1</td>
+<td>新增</td>
+<td>无服务摘要接入；旧 BI 回款估算不可用</td>
+<td>p1_preview（服务状态/未结客诉/合同到期，缺数据显示"未接入"）</td>
+</tr>
+<tr>
+<td>F13 虫害拍照辅助识别</td>
+<td>P1</td>
+<td>新增</td>
+<td>无图像识别</td>
+<td>skip（灰置入口"试点未开放"）</td>
+</tr>
+<tr>
+<td>页面：今日工作台</td>
+<td>P0</td>
+<td>部分</td>
+<td>现为聊天流优先；缺四分组、空态入口、我的/团队切换</td>
+<td>must</td>
+</tr>
+<tr>
+<td>页面：团队工作台</td>
+<td>P0</td>
+<td>部分</td>
+<td>缺卡点/未跟进/待复核清单、客群筛选；需去排名与六维</td>
+<td>must</td>
+</tr>
+<tr>
+<td>页面：客户列表/街道模式</td>
+<td>P0</td>
+<td>部分</td>
+<td>缺三级筛选、合作/客诉状态、待补地址；需去散点图/战斗卡</td>
+<td>must</td>
+</tr>
+<tr>
+<td>页面：客户详情</td>
+<td>P0</td>
+<td>部分</td>
+<td>缺集团/门店层级、合作状态、承诺清单、方案版本、混合时间线、四按钮底栏</td>
+<td>must</td>
+</tr>
+<tr>
+<td>页面：拜访采集与确认</td>
+<td>P0</td>
+<td>部分</td>
+<td>缺商机选择、照片区、承诺突出确认、状态机；去评分环</td>
+<td>must</td>
+</tr>
+<tr>
+<td>页面：商机推进卡</td>
+<td>P0</td>
+<td>部分</td>
+<td>缺正式值 vs 建议值并排、动作 checklist、拒绝原因</td>
+<td>must</td>
+</tr>
+<tr>
+<td>页面：方案工作台</td>
+<td>P0</td>
+<td>新增</td>
+<td>整页新建</td>
+<td>must</td>
+</tr>
+<tr>
+<td>页面：工作助手</td>
+<td>P0</td>
+<td>部分</td>
+<td>只有问数容器（且门控隐藏）；缺知识问答、反馈、转技术协助、固定问题模板</td>
+<td><strong>must</strong>（承载 U06/U07）</td>
+</tr>
+<tr>
+<td>页面：任务/审批详情</td>
+<td>P0</td>
+<td>部分</td>
+<td>缺改期/转交申请、证据区、P1 审批视图</td>
+<td>must</td>
+</tr>
+<tr>
+<td>页面：我的</td>
+<td>P0</td>
+<td>部分</td>
+<td>缺草稿/上传任务/同步异常/通知设置；需去六维/评价</td>
+<td><strong>must</strong>（承载 U09 重试入口；demo 角色切换入口）</td>
+</tr>
+<tr>
+<td>页面：Web 配置台</td>
+<td>P0</td>
+<td>部分</td>
+<td>仅 Agent 配置页，无业务配置界面</td>
+<td>skip（"我的"页灰置菜单项说明）</td>
+</tr>
+<tr>
+<td>规则：三组状态分离</td>
+<td>P0</td>
+<td>部分</td>
+<td>缺独立意向分层字段、合作状态口径</td>
+<td>must</td>
+</tr>
+<tr>
+<td>规则：地推 Playbook 七阶段</td>
+<td>P0</td>
+<td>部分</td>
+<td>现六阶段 ToB 版；无退出证据、跳级/退回原因</td>
+<td>must</td>
+</tr>
+<tr>
+<td>规则：258 建议+依据+缺失项</td>
+<td>P0</td>
+<td>部分</td>
+<td>缺五档文案、置信度、不一致复核队列</td>
+<td>must</td>
+</tr>
+<tr>
+<td>规则：回访日期优先级</td>
+<td>P0</td>
+<td>新增</td>
+<td>无结构化计划日期与三级优先级</td>
+<td><strong>must</strong>（承载 U04；7.1 故事收尾）</td>
+</tr>
+<tr>
+<td>规则：有效跟进不被资料编辑重置</td>
+<td>P0</td>
+<td><strong>部分</strong>（复核更正）</td>
+<td>数据层已成立；缺双时间戳展示、"已发送"事件、否定事实降层</td>
+<td>nice（"已发送"灰色事件由 F06 必做；仅双时间戳为 nice）</td>
+</tr>
+<tr>
+<td>规则：事实与 AI 派生分离</td>
+<td>P0</td>
+<td><strong>部分</strong>（复核更正）</td>
+<td>缺人工确认落库、artifact 关联、字段级来源保留、规则版本展示、人工结论并排 UI</td>
+<td>must（每个 AI 派生值带"AI 建议"胶囊 + 依据 + 缺失项 + 规则版本 + 来源拜访链接）</td>
+</tr>
+<tr>
+<td>规则：权限最小避重提示</td>
+<td>P0</td>
+<td>部分</td>
+<td>只有服务端 RLS 与 403 弹窗；无街道列表精简卡</td>
+<td><strong>must</strong>（承载 U01）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>统计</strong>：31 项 = existing 0 / partial 22 / new 9。demo 优先级：must 24 / nice 1 / p1_preview 4 / skip 2。按 R 需求看：R03/R05/R06/R07 vendor 称"现在就可以/标准化/不难"，旧代码分别为 partial/partial/new/partial——即 vendor 所谓"已有"在这份代码里只有语音录入与问数容器是真的现成，街道清单与 258 周期提醒都需新建。</p>
+<hr />
+<h2 id="8-lbs-demo">8. 旧产品中 LBS 未要求的功能（建议不带入 demo 或降级）</h2>
+<table>
+<thead>
+<tr>
+<th>旧功能</th>
+<th>证据</th>
+<th>处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>客户作战地图四象限散点/战斗卡/象限判断依据</td>
+<td><code>pages/customers battle-map</code>、<code>utils/quadrant.js</code>、<code>V022</code></td>
+<td>不带入（PRD 四象限 P2，且模型不同）</td>
+</tr>
+<tr>
+<td>客户六维画像雷达、10 行战斗卡字段、潜力/关系分</td>
+<td><code>utils/customerDetail.js customerProfile</code></td>
+<td>不带入</td>
+</tr>
+<tr>
+<td>销售六维能力画像、30 天成长曲线、AI 教练、每日复盘</td>
+<td><code>pages/profile</code>、<code>pages/member-growth</code>、<code>V016</code></td>
+<td>不带入（PRD 6.5）</td>
+</tr>
+<tr>
+<td>营销成熟度/效率评价与成员排名</td>
+<td><code>pages/profile evaluation</code></td>
+<td>不带入</td>
+</tr>
+<tr>
+<td>拜访 5 维质量评分 + &lt;70 分禁归档</td>
+<td><code>pages/visit-confirm:94,374</code></td>
+<td>降级为"缺口提示"banner，不评分不阻断</td>
+</tr>
+<tr>
+<td>风险中心与解除流程、personal_risks 9 类风险</td>
+<td><code>pages/risks</code>、<code>pages/risk-detail</code></td>
+<td>不带入；仅保留"服务风险提醒""重复拜访提示"</td>
+</tr>
+<tr>
+<td>客户下发抽屉（主管指派）</td>
+<td><code>pages/index</code>、<code>pages/workbench assignment-layer</code></td>
+<td>改造为"申请协作/转交（接收人确认）"抽屉</td>
+</tr>
+<tr>
+<td>任务接受/拒绝/重发</td>
+<td><code>pages/task-detail respondTask</code></td>
+<td>改为 完成/改期/转交申请</td>
+</tr>
+<tr>
+<td>即时总结 Agent + report-detail</td>
+<td><code>pages/index operating_report</code></td>
+<td>不带入；版式复用为方案预览</td>
+</tr>
+<tr>
+<td>商机概率 10/30/50/70/90 与阶段绑死</td>
+<td><code>opportunity-create</code>、<code>customer_mutations.py:141-152</code></td>
+<td>改为 258 五档独立于七阶段</td>
+</tr>
+<tr>
+<td>BI 季度驾驶舱：ACV/签单方式/排名/倒计时/确收回款估算/18 条样本回退</td>
+<td><code>pages/bi</code></td>
+<td>只保留图表原子与口径说明；估算与样本回退删除</td>
+</tr>
+<tr>
+<td>当年产出/长期运作切换、A/B 客户级别、客户总毛利/历史订单</td>
+<td><code>pages/customers operation-switch</code>、<code>customerDetail.js:105 level</code></td>
+<td>不带入；客户数据形状去掉 level</td>
+</tr>
+<tr>
+<td>ToB 16 字段（合作伙伴、线索来源、联系人类别、达成预期六档、饭局/聚会）与首访预算</td>
+<td><code>visit-confirm FIELD_EDITORS</code>、<code>visit-entry isFirstVisit</code></td>
+<td>整体替换为地推字段（拜访类型、接触对象角色、需求/异议、现场观察、承诺、结果、下一步、计划日期、材料证据）；陌拜不强填预算</td>
+</tr>
+<tr>
+<td>语音建档 + 管理者建档下发核对页（89% 硬编码两处）</td>
+<td><code>customer-create</code>、<code>customer-assign-confirm</code>、<code>index.wxml:88</code></td>
+<td>简化为"新店草稿"；89% 移除</td>
+</tr>
+<tr>
+<td>通知 10s 轮询 7 种模板</td>
+<td><code>pages/index</code></td>
+<td>demo 本地模拟一条即可</td>
+</tr>
+<tr>
+<td>三角色总监/总经理体系与 Agent 配置后台</td>
+<td><code>login</code>、<code>admin.py</code></td>
+<td>角色改为 地推销售/KA 销售/主管；后台不带入</td>
+</tr>
+<tr>
+<td>微信云开发初始化、cloudTipModal、云模板图</td>
+<td><code>app.js</code>、<code>components/cloudTipModal</code></td>
+<td>删除</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9-demo">9. Demo 范围建议</h2>
+<h3 id="91-prd">9.1 页面清单（底部导航按 PRD：今日｜客户｜工作助手｜我的）</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>页面</th>
+<th>层级</th>
+<th>PRD 引用</th>
+<th>必须体现</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S00 login</td>
+<td>演示登录/角色切换</td>
+<td>辅助</td>
+<td>1.3、Q01、第 4 节角色</td>
+<td>地推销售/KA 销售/主管三角色；"演示环境 · 接口未接入 · 载体待确认"说明</td>
+</tr>
+<tr>
+<td>S01 today</td>
+<td>今日工作台</td>
+<td>P0</td>
+<td>页面表、F05、1.2</td>
+<td>今日约访(丙店)/超期回访/待确认记录(草稿)/服务风险提醒(甲店客诉)四分组；"今日已记录 N/25 家"；无任务空态显示选街道入口；主管 我的/团队 切换</td>
+</tr>
+<tr>
+<td>S02 street</td>
+<td>客户列表·街道模式</td>
+<td>P0</td>
+<td>F02、R06、7.1</td>
+<td>输入"一马路"筛选；甲店 服务中+未结客诉；乙店 两天前已拜访→重复拜访提示（非阻断，可填原因）；丙店 今日约访；丁店 无权最小信息卡+申请协作；戊店 待补地址；己店 停做；客诉字段对未接入门店显示"未接入"；卡片字段标"地推部门模板"</td>
+</tr>
+<tr>
+<td>S03 customer</td>
+<td>客户详情</td>
+<td>P0</td>
+<td>页面表、F01、6.1</td>
+<td>合作状态/主商机阶段/258 三胶囊分色；联系人角色；混合时间线（拜访/任务/方案/承诺）；承诺清单区块；方案版本区块；底栏 记录/发起方案/问答/建任务</td>
+</tr>
+<tr>
+<td>S04 capture</td>
+<td>拜访采集</td>
+<td>P0</td>
+<td>F03、R03</td>
+<td>选择客户+商机；门头照片→"门头识别：丙店（候选）"chip 仅候选；现场照片（后厨）；口述录音/文字；拜访类型取 首次/陌生/增加服务/深挖；状态机步骤条</td>
+</tr>
+<tr>
+<td>S05 confirm</td>
+<td>结构化事实确认</td>
+<td>P0</td>
+<td>F03、7.1</td>
+<td>AI 草稿字段默认带"AI 建议"胶囊，确认/修改后切"事实"胶囊；关键承诺/日期单独橙色高亮组；缺口提示 banner（不评分不拒收）；回访日期结构化行；保存草稿/确认</td>
+</tr>
+<tr>
+<td>S06 opp</td>
+<td>商机推进卡</td>
+<td>P0</td>
+<td>F04、6.2、6.4</td>
+<td>七阶段步骤条显示正式阶段"需求确认"；AI 建议卡：建议阶段/258 建议 50%/置信度中/依据/缺失项/规则版本；已完成 ✓ 与缺失 ○ 动作 checklist；底栏 确认变更/拒绝并说明/安排下步；一次确认写阶段+分层+任务草稿</td>
+</tr>
+<tr>
+<td>S07 proposal</td>
+<td>方案工作台</td>
+<td>P0</td>
+<td>F06、R04、R11</td>
+<td>唯一模板"餐饮单店·有害生物防治 v1"，其他客群灰置；输入确认预填已确认需求与照片位置；生成进度；六段预览含丙店门头与后厨照片；"报价待审批"占位；版本；修改/重新生成/确认导出；"人工标记发送"事件；专业项缺失→转技术复核</td>
+</tr>
+<tr>
+<td>S08 task</td>
+<td>任务/回访详情</td>
+<td>P0</td>
+<td>F05、6.4</td>
+<td>来源标签 客户约定(下周老板到店)/已接受任务/分层周期·演示规则；完成/改期(原因)/转交申请；证据行链接来源拜访；同商机同周期只一条</td>
+</tr>
+<tr>
+<td>S09 team</td>
+<td>团队工作台（主管）</td>
+<td>P0</td>
+<td>F08、第 12 节</td>
+<td>覆盖门店/有效拜访/跟进超期；卡点/未跟进/待复核三卡；成员行按姓名排序无排名；地推/KA 分开；下钻到客户证据；趋势用纯 CSS 图</td>
+</tr>
+<tr>
+<td>S10 assistant</td>
+<td>工作助手</td>
+<td>P0</td>
+<td>F07、F08、R07、R08</td>
+<td>销售：FAQ 命中卡（建议对客表达/依据来源/适用限制/内部提示分区/有帮助·不准确·已过期）与未收录问题"待核实 + 转技术协助"；主管：固定问题 chip 问数，回答附统计期间/口径/样本量/更新时间，金额未接入显示"未接入"</td>
+</tr>
+<tr>
+<td>S11 me</td>
+<td>我的</td>
+<td>P0</td>
+<td>页面表、F03、U09</td>
+<td>身份卡；通知设置；草稿(N)；上传任务列表含失败环节与重试；同步异常入口；角色切换；退出；"Web 配置台（管理员）"灰置</td>
+</tr>
+<tr>
+<td>S12 collab</td>
+<td>申请协作/转交抽屉</td>
+<td>辅助</td>
+<td>F01、U08</td>
+<td>申请协作不抢占归属；转交保留历史责任人与未结任务，接收人确认生效</td>
+</tr>
+<tr>
+<td>P1-1 quote</td>
+<td>报价（待审批）预览</td>
+<td>P1预览</td>
+<td>F09、R10</td>
+<td>参数行、状态胶囊"待审批"、客户预期价"待录入"；<strong>不显示任何价格数字</strong></td>
+</tr>
+<tr>
+<td>P1-2 commit</td>
+<td>承诺一致性预览</td>
+<td>P1预览</td>
+<td>F10、R02</td>
+<td>"一年两次风险勘查"三处证据（拜访有/报价无/合同无）+ 补入方案/例外批准；不宣称全局阻断</td>
+</tr>
+<tr>
+<td>P1-3 contract</td>
+<td>合同审批预览</td>
+<td>P1预览</td>
+<td>F11、R12</td>
+<td>状态"待人工提交"、灰置"发起审批"说明接口未接入；已批准≠已签署</td>
+</tr>
+<tr>
+<td>P1-4 service</td>
+<td>履约/续约摘要预览</td>
+<td>P1预览</td>
+<td>F12</td>
+<td>服务状态/未结客诉/合同到期/回款：无来源显示"未接入"，不估算</td>
+</tr>
+</tbody>
+</table>
+<h3 id="92-prd-71-u01u09">9.2 黄金演示路径（对齐 PRD 7.1 与 U01–U09）</h3>
+<ol>
+<li>以"地推销售"登录 → 今日工作台显示"丙店 今日约访"、"甲店 未结客诉·先了解服务问题"、"已记录 18/25 家"。</li>
+<li>客户 Tab 输入"一马路" → 看到甲店（服务中+未结客诉）、乙店（两天前已拜访，进入时弹重复拜访提示可填"已约定复访"继续）、丙店（今日约访）、丁店（无权：仅"该门店已有负责人跟进 · 近 7 天有触达"+申请协作，U01）、戊店（待补地址）。</li>
+<li>进入丙店 → 拍门头（识别"丙店"仅为候选 chip）、拍后厨照片 → 口述："店长王女士，下周老板到店，后厨发现疑似鼠迹，希望先看每月服务方案。"</li>
+<li>待确认事实：联系人 王女士·店长；老板=待核实决策人（<strong>不填姓名</strong>）；沟通时间 下周；风险="销售描述的疑似鼠迹"（<strong>不改成确定虫害</strong>）；预算 留空不追问；需求 每月服务方案；缺口提示"未记录老板姓名/联系方式（可选）"。回访日期行：客户约定"下周"（老板到店）。销售确认。</li>
+<li>商机推进卡：正式阶段 需求确认；AI 建议 258=50%、置信度中、依据（有明确需求+关键人待核实）、缺失项（决策人、时间）、规则版本 v-demo；一次确认写阶段+分层+任务草稿；可演示"拒绝并说明"。</li>
+<li>发起方案 → 选唯一审核模板"餐饮单店·有害生物防治" → 预填需求与丙店照片 → 生成六段预览，"报价待审批"占位 → 修改一处 → 确认导出 → 人工标记发送（导出≠客户已收到；<strong>仅生成方案不推进阶段</strong>）。</li>
+<li>任务：回访任务日期来源"客户约定·下周"优先于"50% 分层 3 天·演示规则"，同商机同周期只一条（U04）；演示改期需填原因。</li>
+<li>工作助手：问"客户说已经自己放了粘鼠板还需要服务吗"→ FAQ 命中卡（对客表达+依据+适用限制+内部提示）；问一个未收录问题 → "待核实 + 转技术协助"（U06）。</li>
+<li>切换"主管"→ 团队工作台：卡点/未跟进/待复核（丙店 AI 建议与正式分层待确认）→ 下钻丙店证据；问数"本周哪些客户逾期"回答附期间/口径/样本量/更新时间；"哪个区域产出高"→ 签约金额未接入，说明不可计算并展示有效触达（U07）。</li>
+<li>我的 → 上传任务列表一条"丙店后厨照片 上传失败 · 网络中断"→ 重试成功且不重复建记录（U09）；演示转交丙店给同事保留历史（U08）。</li>
+<li>收尾展示四张 P1 预览（报价待审批、承诺差异、合同待人工提交、履约未接入），口头说明为第二交付包。</li>
+</ol>
+<h3 id="93">9.3 模拟数据种子</h3>
+<ul>
+<li>街道：一马路（城市/区域可用占位"X 市·Y 区"）。</li>
+<li>甲店：餐饮单店，合作状态"服务中"（有害生物防治·月度），未结客诉 1 条（"9/3 后厨发现蟑螂"），行动依据"先了解/协调服务问题"，不生成增值商机。</li>
+<li>乙店：未合作，2 天前已有有效拜访（陌生拜访，未见关键人），进入触发重复拜访提示。</li>
+<li>丙店：未合作，今日约访，联系人 王女士（店长），老板（待核实决策人，无姓名），下周到店，后厨疑似鼠迹（销售描述），需求 每月服务方案；商机"丙店·有害生物防治·月度服务"，正式阶段 需求确认，正式分层 待判断，AI 建议 50%。</li>
+<li>丁店：已归属其他销售，当前用户无权，近 7 天有触达。</li>
+<li>戊店：无地址，进入"待补地址"。</li>
+<li>己店：曾合作已停做（卫生间深度清洁）。</li>
+<li>服务线：有害生物防治、卫生间深度清洁、油烟机清洗；服务类型：勘察、设备安装、定期服务、应急服务。</li>
+<li>拜访类型：首次拜访/陌生拜访/增加服务拜访/深挖拜访。</li>
+<li>258 五档：未知/无当前意向/20%/50%/80%；演示周期 20%=7 天、50%=3 天、80%=1 天，全部标"演示规则"。</li>
+<li>模板：仅"餐饮单店·有害生物防治 v1"（审核人/版本/适用地区占位）。</li>
+<li>FAQ：4–6 条餐饮虫害异议卡（自行放置粘鼠板、价格比同行贵、只需要一次性处理、担心药物影响食品安全、AIB/审核要求等）。</li>
+<li>主管数据：2 名地推 + 1 名 KA 的覆盖门店/有效拜访/超期数，签约金额一律"未接入"。</li>
+<li>所有对象带 external_id、data_updated_at、source_visit_id、rule_version 字段以对齐库表。</li>
+</ul>
+<h3 id="94">9.4 必须体现的业务规则</h3>
+<ol>
+<li>三组状态分开：合作状态（绿/灰）、商机阶段（蓝步骤条）、258 分层（橙胶囊），分层挂在商机上。</li>
+<li>地推七阶段含每阶段"要确认的事实"与"退出证据"；仅生成方案不推进阶段；无人接待保留待触达。</li>
+<li>AI 只给建议：建议+依据+缺失项+置信度+规则版本；不覆盖正式值；不一致进"待复核"；可拒绝并记录原因。</li>
+<li>回访日期优先级：客户约定 &gt; 已接受任务 &gt; 分层周期（演示规则）；同商机同周期去重；改期保留原因。</li>
+<li>重复拜访是风险提示非阻断（近 7 天窗口，演示规则）。</li>
+<li>客诉未接入显示"未接入"，同步过期显示"数据待更新"，绝不显示"无客诉"。</li>
+<li>低质量记录给缺口提示，不评分、不拒收。</li>
+<li>门头 OCR 仅候选，不自动合并门店；照片不推断电话/价格/法人。</li>
+<li>事实与 AI 派生分离：AI 值带胶囊，确认后切事实；结论可查看来源拜访。</li>
+<li>无权门店只给最小避重提示 + 申请协作；转交保留历史。</li>
+<li>方案：导出≠已发送≠已接受，三事件分记；模板复用去客户信息；"报价待审批"占位。</li>
+<li>问数：回答附期间/口径/样本量/更新时间；金额未接入不推算，不用商机预估替代收入；分母为零不显示 0%。</li>
+<li>一键审批=发起审批，不是自动通过；无接口标"待人工提交"。</li>
+<li>地推日拜访 20–30 家的量纲：工作台计数、草稿延后批量确认、上传队列。</li>
+</ol>
+<h3 id="95">9.5 绝不能造假的点</h3>
+<ul>
+<li>不显示任何假价格、成本、毛利数字（报价卡只有"待审批"占位）。</li>
+<li>不自动赢单：拜访多、发了方案、AI 热情都不推进到签约；签约只由权威事件产生。</li>
+<li>客诉未接入显示"未接入"，不显示"无客诉"。</li>
+<li>不编造老板姓名、联系方式、预算；"疑似鼠迹"不写成确定虫害。</li>
+<li>不展示四象限、评分门槛、六维画像、销售排名。</li>
+<li>不展示 BI 估算的确收/回款与样本回退。</li>
+<li>不宣称"微信小程序已定"、"与 LBS CRM 已打通"、"一键审批已接入"。</li>
+<li>不自动发送方案给客户；"已导出"不等于"客户已收到"。</li>
+<li>问数不用商机预估额冒充"产出"。</li>
+<li>门头 OCR 只标候选；识虫入口标"试点未开放"，不给出虫种结论。</li>
+<li>无权门店不泄露联系人/附件/详情。</li>
+</ul>
+<hr />
+<h2 id="10-lbs">10. 周四评审前需 LBS 确认的问题</h2>
+<p><strong>引自 PRD Q01–Q13 中最关键的：</strong></p>
+<ol>
+<li>Q01 载体：微信/企微/飞书/其他小程序？企业身份如何绑定？（demo 按手机小程序风格，不预设微信）</li>
+<li>Q03 258：证据定义、按客户还是按商机存储、人工复核权限、各层回访周期（demo 用 7/3/1 天演示规则；"没意向"层是否即客户口径的"无当前意向"）</li>
+<li>Q05 数据接口：自研 CRM 的客户/组织/历史拜访/停做/客诉读写接口与时效；地推 CRM 新上线后历史数据完备性</li>
+<li>Q06 P0 餐饮方案模板：用哪一版、哪些参数固定、哪些须技术确认（客户称 99% 一致，能否首期只做一套）</li>
+<li>Q04 客户/门店/集团/商机 ID 与重复客户处理（门头识别只作候选）</li>
+<li>Q07 FAQ 共享范围与跨地区适用；Q08/Q09 报价成本口径、合同模板与审批接口（决定 F09/F11 何时可从预览转为真实）</li>
+<li>Q10 "产出"正式口径与协作归因（问数默认签约金额，未接入不推算）</li>
+<li>Q13 包 B（报价/合同/承诺核对）是否必须与包 A 同时验收</li>
+</ol>
+<p><strong>本次比对新发现，需补充确认：</strong></p>
+<ol start="9">
+<li>Q14 系统主体：demo 与后续交付是 vendor 自有销售管理系统，还是作为 LBS 自研 CRM 的"增强入口"？两者对接口、数据权威源和"不再切系统"验收的含义不同。</li>
+<li>Q15 知识库/识虫部署形态：接受 vendor 建议的"独立知识库 + 智能客服、两套系统"（保密考虑）但前端共用小程序入口？是否需要联网搜索兜底？</li>
+<li>Q16 拜访评分：是否接受 PRD 的"缺口提示、不设 60/70 分拒收门槛"，还是沿用 vendor demo 的评分规则？（周四演示必须二选一）</li>
+<li>Q17 街道展示字段是否按部门（地推/KA）配置、不开放个人自定义；重复拜访提示窗口取 7 天还是 30 天？</li>
+<li>Q18 "及时出方案报价"：P0 是否允许展示已审核价目表/参考价区间（非自动算价）作为现场降级方案？</li>
+<li>Q19 地推每天 20–30 家的录入节奏：是否接受"现场只拍照+口述存草稿、收工前批量确认"的交互？</li>
+<li>Q20 现有拜访类型（首次/陌生/增加服务/深挖）与真实服务线/服务类型清单，请提供正式枚举供模拟数据与模板对齐。</li>
+<li>Q21 KA 报价审批是否需要"客户心理预期价/目标价"字段与"领导要求提价"动作；成交前拜访次数×流失/续约是否作为后续分析维度。</li>
+<li>Q22 周四 demo 评审的范围确认：本文第 9 节 P0 闭环 + 4 张 P1 预览，是否符合 00:29:16 决策的预期；参会人（含尚未入群的佳欣）与演示环境 key 由谁准备。</li>
+</ol>
+</main>
+</div>
+</body>
+</html>
