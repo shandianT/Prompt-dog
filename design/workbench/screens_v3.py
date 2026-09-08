@@ -15,8 +15,20 @@ KCOL = {"human": AMBER, "dog": AMBER, "skill": LO, "know": OK, "data": "#94a3b8"
 FCOL = {"block": HI, "missing": AMBER, "pending": LO}
 ECOL = {"seq": "#9aa4af", "data": "#64748b", "pending": LO, "loop": OK, "back": HI}
 
+def _x(v):
+    return XS.get(v, round(12 + (v - 20) * 160 / 170))
+
+def _y(v):
+    if v in YS:
+        return YS[v]
+    if v < 440:
+        return round(38 + (v - 60) * 0.62)
+    if v < 720:
+        return round(290 + (v - 500) * 0.97)
+    return 472
+
 def _pos(n):
-    return XS[n["x"]], YS[n["y"]]
+    return _x(n["x"]), _y(n["y"])
 
 def _node(n):
     x, y = _pos(n)
@@ -92,7 +104,7 @@ report_main = (
     f'<div style="display:flex;align-items:flex-end;gap:26px">'
     f'<div style="display:flex;flex-direction:column;gap:5px;min-width:0">'
     f'<span style="font-size:12px;font-weight:800;letter-spacing:.08em;color:{AMBER}">本质</span>'
-    f'<span style="font-size:23px;font-weight:800;letter-spacing:-.01em">按评分表答题，让评标专家无处扣分</span></div>'
+    f'<span style="font-size:23px;font-weight:800;letter-spacing:-.01em">{flow.ESSENCE}</span></div>'
     f'<div style="margin-left:auto">{five}</div></div>'
     f'{diagram}'
     f'<div style="display:flex;gap:12px">'
@@ -100,7 +112,7 @@ report_main = (
     + _fix(HI, "卡点 · 报价", "等财务出成本，整条流程常卡两天。接 ERP 成本口径后先自动出报价框架，人只定折扣。")
     + _fix(AMBER, "缺口 · 素材库", "历史业绩缺扫描件、人员证书没入库。补齐后每次投标回填，命中率越用越高。")
     + '</div></main>')
-report_right = (f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:8px;border:1px solid {LINE};background:{WHITE};color:{SUB};font-size:13px;font-weight:600">{ico("download",16,SUB)}导出 PNG</span>'
+report_right = (f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:8px;border:1px solid {LINE};background:{WHITE};color:{SUB};font-size:13px;font-weight:600;white-space:nowrap">{ico("download",16,SUB)}导出 PNG / PDF</span>'
                 f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;background:{AMBER};color:#ffffff;font-size:13px;font-weight:700">{ico("bolt",16,"#ffffff",2)}先打通招标平台</span>')
 REPORT = HEAD + frame(COLS2, sidebar(flow_active=True) +
     topbar("投标流程 · 汇报模式", chips=("只读", "19 个节点 · 23 条线", "示例数据"), right=report_right) + report_main) + TAIL
@@ -171,26 +183,31 @@ cd_main = (
 cd_right = (
     f'<div style="border:1px solid {LINE};border-radius:12px;padding:12px 15px;display:flex;flex-direction:column;gap:8px">'
     f'<div style="display:flex;align-items:center;gap:7px"><span style="font-size:12px;font-weight:800;color:{SUB};letter-spacing:.06em">改一处，全局同步</span></div>'
-    f'<div style="font-size:12.5px;line-height:1.65;color:{INK}">这只狗被 2 条流程引用。改它的环节提示词，两条流程下次运行都会用新版；<b>不设审批，回归测试当门槛</b>。</div></div>'
+    f'<div style="font-size:12.5px;line-height:1.65;color:{INK}">这只狗被 2 条流程引用。改它的环节提示词，两条流程下次运行都会用新版。是否需要审批仍<b>待拍板</b>；★ 建议不设审批，回归测试当门槛。</div></div>'
     f'<div style="display:flex;flex-direction:column"><div style="font-size:12px;font-weight:800;letter-spacing:.06em;color:{SUB};padding-bottom:4px">发布前必过</div>'
     + ''.join(f'<div style="display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-top:1px solid {LINE};font-size:12.5px;line-height:1.5">'
               f'{ico("check",15,OK,2.2)}<span>{t}</span></div>' for t in
               ["回归测试：2 份历史合同重跑，漏审 0", "每环节 ≥1 条按类型必带的验收项", "引用法条附可追溯来源", "人工确认点只在交付生成前"])
     + '</div>'
     f'<div style="background:{FIXBG};border:1px solid {OK};border-radius:12px;padding:11px 14px;font-size:12.5px;line-height:1.6">'
-    f'<b style="color:{OK}">回归达标</b>　2026-09-07 跑过，2 / 2 通过，可日常使用。</div>')
+    f'<b style="color:{OK}">v1.2 回归达标</b>　2 / 2 通过，日常在用。<br><span style="color:{AMBER};font-weight:700">v1.3 候选</span> 正在回归中，未过门槛前不发布——见 10 复盘与回归。</div>')
 COMPONENT_DETAIL = HEAD + frame(COLS3, sidebar(kennel_active=True) +
-    topbar("组件库 · 合同审查", chips=("工作狗", "7 环节", "v1.2")) + cd_main +
+    topbar("组件库 · 合同审查", chips=("工作狗", "7 环节", "v1.2 已发布", "示例数据")) + cd_main +
     right_col(right_head("资产状态"), cd_right)) + TAIL
 
 # ===================================================================== 10 复盘与回归
-def _metric(k, v, base, good, note):
-    c = OK if good else HI
-    arrow = "↓" if good else "↑"
+def _metric(k, v, base, note):
+    a, b = int(v), int(base)
+    if a == b:
+        c, delta = (OK if a == 0 else SUB), f"持平 上期 {base}"
+    elif a < b:
+        c, delta = OK, f"↓ 上期 {base}"
+    else:
+        c, delta = HI, f"↑ 上期 {base}"
     return (f'<div style="border:1px solid {LINE};border-radius:11px;padding:12px 15px;display:flex;flex-direction:column;gap:5px">'
             f'<span style="font-size:12px;color:{SUB}">{k}</span>'
             f'<div style="display:flex;align-items:baseline;gap:7px"><span style="font-size:26px;font-weight:800;line-height:1;color:{c}">{v}</span>'
-            f'<span style="font-size:12px;color:{c};font-weight:700">{arrow} 上期 {base}</span></div>'
+            f'<span style="font-size:12px;color:{c};font-weight:700;white-space:nowrap">{delta}</span></div>'
             f'<span style="font-size:11.5px;color:{SUB};line-height:1.5">{note}</span></div>')
 def _reg(name, exp, got, ok):
     ic = ico("check", 15, OK, 2.2) if ok else ico("warn", 15, HI, 1.9)
@@ -206,10 +223,10 @@ retro_main = (
     f'<span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 11px;border-radius:8px;'
     f'background:#fff1f2;border:1px solid {HI};color:{HI};font-size:12.5px;font-weight:700;white-space:nowrap">{ico("warn",15,HI,1.9)}不达标 · 1 项待修，暂不发布</span></div>'
     f'<div style="display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:12px">'
-    + _metric("漏审", "1", "2", True, "§9.3 验收期限风险未报，律师人工补")
-    + _metric("误报", "3", "1", False, "违约金条款连报 3 次，实际行业惯例")
-    + _metric("定位失败", "0", "0", True, "风险点与原文位置全部对得上")
-    + _metric("虚构来源", "0", "0", True, "法条链接逐条可追溯")
+    + _metric("漏审", "1", "2", "示例：§9.3 验收期限风险未报，律师人工补")
+    + _metric("误报", "3", "1", "违约金条款连报 3 次，实际是行业惯例")
+    + _metric("定位失败", "0", "0", "风险点与原文位置全部对得上")
+    + _metric("虚构来源", "0", "0", "法条链接逐条可追溯")
     + '</div>'
     f'<div style="display:flex;flex-direction:column;gap:8px">'
     f'<div style="display:flex;align-items:center;gap:9px"><span style="font-size:12px;font-weight:800;letter-spacing:.06em;color:{SUB}">回归对照 · 2 份历史样本</span>'
@@ -258,5 +275,5 @@ retro_right = (
     f'<div style="margin-top:auto;border:1px solid {LINE};border-radius:12px;padding:11px 14px;font-size:12px;color:{SUB};line-height:1.6">'
     f'数据来自这只狗自己的 <span style="font-family:{MONO}">复盘/日志.md</span> 与 <span style="font-family:{MONO}">验收清单.json</span>，不经过任何服务端。</div>')
 RETRO = HEAD + frame(COLS3, sidebar(kennel_active=True) +
-    topbar("复盘与回归 · 合同审查", chips=("对照期 2026-08", "23 份", "回归 1 / 2")) + retro_main +
+    topbar("复盘与回归 · 合同审查", chips=("对照期 2026-08", "候选 v1.3", "回归 1 / 2", "示例数据")) + retro_main +
     right_col(right_head("回流与规律"), retro_right)) + TAIL

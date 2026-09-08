@@ -12,6 +12,8 @@ OUT = gen.OUT
 NW, NH, CW, CH = 150, 64, 1220, 1024
 
 # ---------------------------------------------------------------- 犬舍工作狗的子流程（钻取用）
+ESSENCE = "按评分表答题，让评标专家无处扣分"
+FLOW_NAME = "投标流程"
 DOGS = {
     "合同审查": ["文件解析", "事实提取", "风险扫描", "法律核查", "条款建议", "对抗审查", "交付生成"],
     "标书撰写": ["招标解析与废标项", "评分拆解与应答矩阵", "分章撰写", "合规自查与模拟评审"],
@@ -43,7 +45,7 @@ NODES = [
     N("n6", "skill", "auto", "素材检索", "技能 · 资质 / 业绩 / 人员", 530, 200, note="按应答矩阵从素材库取材料，缺的标【待补材料】。", was="human", reuse=2),
     N("s3", "data", "", "素材库", "资质 · 业绩 · 技术模块", 530, 780, "missing", "历史业绩缺扫描件，人员证书没入库，素材命中率低。", "补齐业绩扫描件与人员证书；每次投标后新章节回填，越用越全。", was="manual", method="file", dir="rw", target=dict(flag="ok")),
     N("n7", "dog", "auto", "分章撰写", "标书撰写 · 环节 3", 700, 60, note="篇幅跟着分值走，只引用素材库真实材料。", was="human", reuse=1),
-    N("n8", "dog", "auto", "合同条款审查", "合同审查 · 复用 · 7 环节", 700, 200, note="复用合同审查工作狗审招标文件里的合同条款，给偏离表依据。双击可钻进去看 7 个环节。", was="human", reuse=3, children=dog_children("合同审查", "n8")),
+    N("n8", "dog", "auto", "合同条款审查", "合同审查 · 复用 · 7 环节", 700, 200, note="复用合同审查工作狗审招标文件里的合同条款，给偏离表依据。双击可钻进去看 7 个环节。", was="human", reuse=2, children=dog_children("合同审查", "n8")),
     N("n9", "human", "decide", "报价", "财务 · 成本核算", 700, 500, "block", "等财务出成本，整条流程常卡在这里。", "ERP 成本只读接口 + 报价模板，先自动出报价框架，人只定折扣，这一步从人定变人审。", owner="财务", sla="2 天", target=dict(role="review", flag="ok", sub="ERP 成本 + 报价模板 · 人只定折扣")),
     N("s4", "data", "", "ERP 成本", "物料 · 人工 · 历史报价", 700, 780, "pending", "成本口径在财务手里，每次现算。", "只读接口拉成本口径与历史报价。", was="manual", method="manual", dir="read", target=dict(flag="ok", method="api")),
     N("n10", "skill", "auto", "合规自查与模拟评审", "对抗审查 + 废标项清单", 870, 120, note="切换成挑剔的评标专家，只找扣分点。", was="human", reuse=3),
@@ -262,7 +264,7 @@ def stat(label, hole, dot=None):
     return f'<span class="stat">{d}{label} <b>{{{{{hole}}}}}</b></span>'
 
 TOPBAR_RIGHT = ('<div style="display:flex;gap:6px;align-items:center">'
-                + stat("自动化率", "stRate") + stat("人", "stHuman") + stat("卡点", "stBlock", "block") + stat("缺口", "stMissing", "missing") + stat("待打通", "stPending", "pending")
+                + stat("自动", "stAuto") + stat("人", "stHuman") + stat("卡点", "stBlock", "block") + stat("缺口", "stMissing", "missing") + stat("待打通", "stPending", "pending")
                 + '<span style="width:6px"></span>'
                 + f'<button class="tb-btn" type="button" onClick="{{{{btnUndo}}}}" title="撤销上一步">{ico("refresh",15,SUB)}撤销</button>'
                 + f'<button class="tb-btn {{{{diffOn}}}}" type="button" onClick="{{{{btnDiff}}}}" title="标出每个节点原来怎么做">{ico("flag",15,SUB)}对照现状</button>'
@@ -548,7 +550,7 @@ class Component extends DCLogic {
     var v = {
       nodes: nodes, edges: edges, palette: palette, pq: S.pq, setPq: function (e) { S.pq = e.target.value; self.refresh(); },
       blocks: blocks, missings: missings, pendings: pendings, sug: sug,
-      stRate: (steps.length ? Math.round(100 * autos.length / steps.length) : 0) + '%', stHuman: g.nodes.filter(function (n) { return n.kind === 'human'; }).length,
+      stAuto: autos.length, stRate: (steps.length ? Math.round(100 * autos.length / steps.length) : 0) + '%', stHuman: g.nodes.filter(function (n) { return n.kind === 'human'; }).length,
       stBlock: blocks.length, stMissing: missings.length, stPending: pendings.length,
       showDiag: !S.sel && !S.build, showBuild: !S.sel && S.build, showNode: !!selN, showEdge: !!selE,
       selKind: '', selKindLabel: '', selId: '', selName: '', selSub: '', selNote: '', selFix: '', selOwner: '', selSla: '', selKids: '', selReuse: 0, selHasKids: false,

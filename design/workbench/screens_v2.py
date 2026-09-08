@@ -173,7 +173,7 @@ ok_badge = f'<span style="display:inline-flex;align-items:center;gap:5px;font-si
 stop_badge = f'<span style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:{HI};font-weight:600">{ico("warn",15,HI,1.8)}止损 1 次 · 卡点报告待处理</span>'
 new_badge = f'<span style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:{SUB};font-weight:600">{ico("clock",15,SUB)}尚未运行 · 下次：周一 09:00</span>'
 cards = [
-    dog_card2("⚖️", "合同审查助手", "七环节初审，三件套交付", "v1.2",
+    dog_card2("⚖️", "合同审查", "七环节初审，三件套交付", "v1.2",
               [stat("上次运行", "昨天 16:20"), stat("累计审查", "23 份"), stat("漏审 / 虚构来源", "0 / 0", OK)], ok_badge, flows="用于 2 条流程"),
     dog_card2("📑", "标书撰写", "按评分点写，废标项逐条核对", "v1.2",
               [stat("上次运行", "3 天前 · 环节 3 止损"), stat("累计应标", "6 个"), stat("待补材料", "4 项", AMBER)], stop_badge, flows="用于 1 条流程 · 投标"),
@@ -228,7 +228,7 @@ run_stream = (
     + stages_panel("审查流水线 · 验收清单.json · 15 / 15 通过", law_rows)
     + confirm_point)
 RUN = HEAD + frame(COLS3,
-    sidebar("law") + topbar("合同审查助手", chips=("环节 7 / 7", "第 7 轮 · 一轮一环节", "停机：待确认"),
+    sidebar("law") + topbar("合同审查", chips=("环节 7 / 7", "第 7 轮 · 一轮一环节", "停机：待确认"),
                             right=f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:8px;color:{SUB};font-size:13px">{ico("flow",18,SUB)}<span>它在流程画布的节点 n8</span></span>') +
     chat_col(run_stream, inputbar("回「A」通过，或「B」退回环节 3；也可以说「R-002 改成…」直接改报告")) +
     right_col(right_head("交付物预览 · 合同风险审查报告", "done"), gen.run_right_body)) + TAIL

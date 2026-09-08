@@ -70,7 +70,7 @@ TAIL = '''</x-dc>
 
 AGENTS = [
     ("dog",  "🐕", "提示狗",     "提示词 · SOP · 工作流"),
-    ("law",  "⚖️", "合同审查助手", "粘贴合同，自动初审"),
+    ("law",  "⚖️", "合同审查", "粘贴合同，自动初审"),
     ("bid",  "📑", "标书撰写",    "招标文件 → 投标初稿"),
     ("mkt",  "✍️", "内容营销",    "素材库 → 多平台文案"),
     ("comp", "📈", "竞品分析",    "每周一 · 竞品周报"),
@@ -350,7 +350,7 @@ ok_badge = f'<span style="display:inline-flex;align-items:center;gap:5px;font-si
 warn_badge = f'<span style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:{AMBER};font-weight:600">{ico("warn",15,AMBER,1.8)}改版后未跑回归</span>'
 new_badge = f'<span style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;color:{SUB};font-weight:600">{ico("clock",15,SUB)}尚未运行 · 下次：周一 09:00</span>'
 cards = [
-    dog_card("⚖️", "合同审查助手", "七环节初审，三件套交付", "v1.2",
+    dog_card("⚖️", "合同审查", "七环节初审，三件套交付", "v1.2",
              [stat("上次运行", "昨天 16:20"), stat("累计审查", "23 份"), stat("漏审 / 虚构来源", "0 / 0", OK)], ok_badge),
     dog_card("📑", "标书撰写", "按评分点写，废标项逐条核对", "v1.1",
              [stat("上次运行", "3 天前"), stat("累计应标", "6 个"), stat("待补材料", "4 项", AMBER)], warn_badge),
@@ -422,7 +422,7 @@ run_right_body = (
            "异地仲裁维权成本高、程序不可上诉。",
            "谈判改为我方所在地法院管辖【待律师确认策略】。"))
 RUN = HEAD + frame(COLS3,
-    sidebar("law") + topbar("合同审查助手", chips=("立场：甲方风险优先", "委托方：华南智造", "设备采购合同.pdf")) +
+    sidebar("law") + topbar("合同审查", chips=("立场：甲方风险优先", "委托方：华南智造", "设备采购合同.pdf")) +
     chat_col(run_stream, inputbar("审查中… 完成后可说「环节 3 漏掉了验收风险」或「输出改成只要报告和 JSON」")) +
     right_col(right_head("交付物预览 · 合同风险审查报告", "live"), run_right_body)) + TAIL
 
