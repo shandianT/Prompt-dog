@@ -76,50 +76,101 @@ AGENTS = [
     ("comp", "📈", "竞品分析",    "每周一 · 竞品周报"),
 ]
 
-def sidebar(active="dog", kennel_active=False, flow_active=False, design_active=False):
+# IMPORTS=True: 屏幕通过 <dc-import> 引用 Sidebar / Topbar / InputBar 三个真组件（改一处全站变）；
+# False: 内联同样的标记（无编辑器的静态截图用）。两种输出来自同一份函数，不会漂移。
+IMPORTS = False
+SIDE_KEYS = ("dog", "law", "bid", "mkt", "comp", "flow", "design", "kennel", "library", "retro")
+
+def sidebar_key(active="dog", kennel_active=False, flow_active=False, design_active=False):
+    if kennel_active: return "kennel"
+    if flow_active: return "flow"
+    if design_active: return "design"
+    return active if active in SIDE_KEYS else "dog"
+
+def sidebar(active="dog", kennel_active=False, flow_active=False, design_active=False, h=900):
+    key = sidebar_key(active, kennel_active, flow_active, design_active)
+    if IMPORTS:
+        return (f'<div style="grid-row:1 / span 2;display:grid;min-height:0">'
+                f'<dc-import name="Sidebar" active="{key}" h="{h}" hint-size="240px,{h}px"></dc-import></div>')
+    return sidebar_inline(key, h)
+
+def sidebar_inline(key, h=900):
     items = []
-    for key, av, name, sub in AGENTS:
-        on = (key == active) and not kennel_active and not flow_active and not design_active
+    for k, av, name, sub in AGENTS:
+        on = (k == key)
         bg = SIDE_ON if on else "transparent"
         col = "#ffffff" if on else SIDE_TXT
         new = ''
-        if key == "comp":
+        if k == "comp":
             new = f'<span style="margin-left:auto;font-size:11px;font-weight:700;color:{AMBER};background:{SIDE_AV};border-radius:6px;padding:2px 7px">新</span>'
         items.append(
             f'<div style="display:flex;gap:11px;align-items:center;min-height:48px;padding:6px 10px;border-radius:10px;background:{bg};color:{col};font-size:14px;line-height:1.3">'
             f'<span style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;background:{SIDE_AV};flex-shrink:0">{av}</span>'
             f'<span style="display:flex;flex-direction:column;gap:2px;min-width:0"><span style="font-weight:600;white-space:nowrap">{name}</span>'
             f'<span style="font-size:11.5px;color:{SIDE_SMALL};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{sub}</span></span>{new}</div>')
-    kbg = SIDE_ON if kennel_active else "transparent"
-    kcol = "#ffffff" if kennel_active else SIDE_TXT
+    def row(k, icon, label, tail):
+        on = (k == key)
+        return (f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;background:{SIDE_ON if on else "transparent"};color:{"#ffffff" if on else SIDE_TXT};font-size:14px">'
+                f'{ico(icon,20)}<span style="font-weight:600">{label}</span>{tail}</div>')
+    cnt = lambda n: f'<span style="margin-left:auto;font-size:12px;color:{SIDE_SMALL}">{n}</span>'
     return (
-        f'<aside style="grid-row:1 / span 2;background:{SIDE};color:{SIDE_TXT};padding:16px 12px 14px;display:flex;flex-direction:column;gap:6px;overflow:hidden">'
+        f'<aside style="grid-row:1 / span 2;min-height:{h}px;background:{SIDE};color:{SIDE_TXT};padding:16px 12px 14px;display:flex;flex-direction:column;gap:6px;overflow:hidden">'
         f'<div style="display:flex;align-items:center;gap:9px;padding:2px 8px 10px;color:#ffffff;font-weight:800;font-size:16px"><span style="font-size:20px;line-height:1">🐕</span><span>PromptDog</span></div>'
         f'<div style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border-radius:10px;background:{AMBER};color:#ffffff;font-weight:700;font-size:14px;padding:0 14px">{ico("plus",18)}<span>造一只工作狗</span></div>'
         f'<div style="font-size:11px;letter-spacing:.1em;color:{SIDE_SEC};padding:14px 10px 6px;font-weight:700">我的数字员工</div>'
         f'<div style="display:flex;flex-direction:column;gap:2px">{"".join(items)}</div>'
         f'<div style="font-size:11px;letter-spacing:.1em;color:{SIDE_SEC};padding:14px 10px 6px;font-weight:700">组织</div>'
-        f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;background:{SIDE_ON if flow_active else "transparent"};color:{"#ffffff" if flow_active else SIDE_TXT};font-size:14px">{ico("flow",20)}<span style="font-weight:600">流程画布</span><span style="margin-left:auto;font-size:12px;color:{SIDE_SMALL}">3</span></div>'
-        f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;background:{SIDE_ON if design_active else "transparent"};color:{"#ffffff" if design_active else SIDE_TXT};font-size:14px">{ico("book",20)}<span style="font-weight:600">设计</span><span style="margin-left:auto;font-size:12px;color:{SIDE_SMALL}">1</span></div>'
-        f'<div style="font-size:11px;letter-spacing:.1em;color:{SIDE_SEC};padding:12px 10px 6px;font-weight:700">犬舍</div>'
-        f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;background:{kbg};color:{kcol};font-size:14px">{ico("grid",20)}<span style="font-weight:600">全部工作狗</span><span style="margin-left:auto;font-size:12px;color:{SIDE_SMALL}">4</span></div>'
-        f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;color:{SIDE_TXT};font-size:14px">{ico("puzzle",20)}<span style="font-weight:600">组件库</span><span style="margin-left:auto;font-size:12px;color:{SIDE_SMALL}">12</span></div>'
-        f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;color:{SIDE_TXT};font-size:14px">{ico("refresh",20)}<span style="font-weight:600">复盘与回归</span><span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:{AMBER}"></span></div>'
-        f'<div style="flex-grow:1"></div>'
+        + row("flow", "flow", "流程画布", cnt(3)) + row("design", "book", "设计", cnt(1))
+        + f'<div style="font-size:11px;letter-spacing:.1em;color:{SIDE_SEC};padding:12px 10px 6px;font-weight:700">犬舍</div>'
+        + row("kennel", "grid", "全部工作狗", cnt(4)) + row("library", "puzzle", "组件库", cnt(12))
+        + row("retro", "refresh", "复盘与回归", f'<span style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:{AMBER}"></span>')
+        + f'<div style="flex-grow:1"></div>'
         f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;color:{SIDE_TXT};font-size:13px;border-top:1px solid {SIDE_AV}">{ico("gear",20)}<span>我的工作区</span></div>'
         f'</aside>')
 
-def topbar(title, badge=None, chips=(), right=None):
-    b = f'<span style="font-size:11px;background:{AMBER};color:#ffffff;border-radius:5px;padding:2px 8px;font-weight:700">{badge}</span>' if badge else ''
-    c = ''.join(f'<span style="display:inline-flex;align-items:center;height:28px;border:1px solid {LINE};background:{CHATBG};border-radius:8px;padding:0 11px;font-size:12.5px;color:{SUB}">{t}</span>' for t in chips)
+ACT_ICONS = ("bolt", "download", "flow", "plus", "check", "book", "clock", "help", "refresh", "grid", "edit", "search")
+DEFAULT_ACTIONS = (("历史会话", "text", "clock"), ("帮助", "text", "help"))
+
+def action_html(label, kind="text", icon=None):
+    """顶栏右侧动作：primary 琥珀实底 / ghost 白底线框 / amber 琥珀线框 / text 纯文字。"""
+    if kind == "primary":
+        i = ico(icon, 16, "#ffffff", 2) if icon else ''
+        return f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;background:{AMBER};color:#ffffff;font-size:13px;font-weight:700;white-space:nowrap">{i}{label}</span>'
+    if kind == "amber":
+        i = ico(icon, 16, AMBER, 2) if icon else ''
+        return f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:8px;border:1px solid {AMBER};background:{WHITE};color:{AMBER};font-size:13px;font-weight:600;white-space:nowrap">{i}{label}</span>'
+    if kind == "ghost":
+        i = ico(icon, 16, SUB, 1.8) if icon else ''
+        return f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:8px;border:1px solid {LINE};background:{WHITE};color:{SUB};font-size:13px;font-weight:600;white-space:nowrap">{i}{label}</span>'
+    i = ico(icon, 18, SUB, 1.8) if icon else ''
+    return f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:8px;color:{SUB};font-size:13px;white-space:nowrap">{i}{label}</span>'
+
+def topbar(title, badge=None, chips=(), right=None, actions=None):
+    """actions = [(label, kind, icon)]；right = 自定义 HTML（只有 07 画布用，永远内联）。"""
+    if actions is None and right is None:
+        actions = DEFAULT_ACTIONS
+    if IMPORTS and right is None:
+        payload = json.dumps({"title": title, "badge": badge or "", "chips": [{"t": c} for c in chips],
+                              "actions": [{"label": l, "kind": k, "icon": i or ""} for l, k, i in actions]}, ensure_ascii=False)
+        return (f'<div style="grid-column:2 / -1;display:grid;min-height:0">'
+                f"<dc-import name=\"Topbar\" data='{payload.replace(chr(39), '&#39;')}' hint-size=\"1200px,56px\"></dc-import></div>")
     if right is None:
-        right = (f'<div style="display:flex;gap:6px;align-items:center;height:36px;padding:0 12px;border-radius:8px;color:{SUB};font-size:13px">{ico("clock",18)}<span>历史会话</span></div>'
-                 f'<div style="display:flex;gap:6px;align-items:center;height:36px;padding:0 12px;border-radius:8px;color:{SUB};font-size:13px">{ico("help",18)}<span>帮助</span></div>')
-    return (f'<header style="grid-column:2 / -1;background:{WHITE};border-bottom:1px solid {LINE};display:flex;align-items:center;gap:10px;padding:0 20px">'
-            f'<span style="font-weight:700;font-size:15px">{title}</span>{b}<div style="display:flex;gap:8px;align-items:center">{c}</div>'
+        right = ''.join(action_html(*a) for a in actions)
+    return topbar_inline(title, badge, chips, right)
+
+def topbar_inline(title, badge, chips, right):
+    b = f'<span style="font-size:11px;background:{AMBER};color:#ffffff;border-radius:5px;padding:2px 8px;font-weight:700">{badge}</span>' if badge else ''
+    c = ''.join(f'<span style="display:inline-flex;align-items:center;height:28px;border:1px solid {LINE};background:{CHATBG};border-radius:8px;padding:0 11px;font-size:12.5px;color:{SUB};white-space:nowrap">{t}</span>' for t in chips)
+    return (f'<header style="grid-column:2 / -1;height:56px;background:{WHITE};border-bottom:1px solid {LINE};display:flex;align-items:center;gap:10px;padding:0 20px">'
+            f'<span style="font-weight:700;font-size:15px;white-space:nowrap">{title}</span>{b}<div style="display:flex;gap:8px;align-items:center">{c}</div>'
             f'<div style="margin-left:auto;display:flex;gap:4px;align-items:center">{right}</div></header>')
 
 def inputbar(placeholder, value=None, direct=False):
+    if IMPORTS:
+        return (f'<dc-import name="InputBar" placeholder="{placeholder}" value="{value or ""}" direct="{1 if direct else 0}" hint-size="720px,72px"></dc-import>')
+    return inputbar_inline(placeholder, value, direct)
+
+def inputbar_inline(placeholder, value=None, direct=False):
     txt = value if value else placeholder
     col = INK if value else SUB
     dbg = AMBER_SOFT if direct else CHATBG
@@ -702,44 +753,23 @@ COMPONENTS = HEAD + (
 
 # ---- write files + canvas.json ----
 W, H, GX, GY = 1440, 900, 120, 160
-def build(extra_files=None, extra_boards=None, extra_notes=None):
-  files = {"Main.dc.html": MAIN, "Confirm.dc.html": CONFIRM, "ProcessRebuild.dc.html": REBUILD, "Deliver.dc.html": DELIVER, "Kennel.dc.html": KENNEL, "WorkdogRun.dc.html": RUN, "Components.dc.html": COMPONENTS}
-  files.update(extra_files or {})
+def build(files, boards, notes, pages=None, launch=None, out_dir=None):
+  """files: {name: html}; boards / notes / pages 直接写进 canvas.json。out_dir 缺省写到本目录。"""
+  out_dir = out_dir or OUT
+  os.makedirs(out_dir, exist_ok=True)
   import re as _re
   def canon(html):  # expand self-closing SVG children so the template parser sees canonical HTML
     return _re.sub(r'<(path|circle|rect|line|polyline|polygon)(\b[^>]*?)\s*/>', r'<\1\2></\1>', html)
   for name, html in files.items():
-    with open(os.path.join(OUT, name), "w", encoding="utf-8") as f:
+    with open(os.path.join(out_dir, name), "w", encoding="utf-8") as f:
         f.write(canon(html))
-  canvas = {
-    "artboards": [
-        {"file": "Main.dc.html",           "x": 0,              "y": 0,      "w": W, "h": H, "title": "01 首页 · 四个入口，一个输入框"},
-        {"file": "Confirm.dc.html",        "x": W + GX,         "y": 0,      "w": W, "h": H, "title": "02 可选纠错卡 · 预填交付（只问架构级，产物已在生成）"},
-        {"file": "ProcessRebuild.dc.html", "x": 2 * (W + GX),   "y": 0,      "w": W, "h": H, "title": "02b 流程重构 · 确认卡之后、构建之前"},
-        {"file": "Deliver.dc.html",        "x": 3 * (W + GX),   "y": 0,      "w": W, "h": H, "title": "03 资产包交付 · 入犬舍 / 在画布中查看 · 未达标清单链到缺口"},
-        {"file": "Kennel.dc.html",         "x": 0,              "y": H + GY, "w": W, "h": H, "title": "04 犬舍 · 状态来自 验收清单.json · 每只狗知道服务哪些流程"},
-        {"file": "WorkdogRun.dc.html",     "x": W + GX,         "y": H + GY, "w": W, "h": H, "title": "05 工作狗上岗 · 合同审查 · 停在人工确认点"},
-        {"file": "Components.dc.html",     "x": 0,              "y": 2 * (H + GY), "w": W, "h": 1700, "title": "06 组件表 · 所有屏幕由这些组件拼装"},
-    ],
-    "annotations": [
-        {"id": "brief", "x": 0, "y": -230, "w": 640,
-         "text": "PromptDog 工作台 · 8 屏静态高保真 + 1 张组件表 + 1 个可交互的流程画布 · v2（按产品目标重做 01–05）\n产品目标：画布是中心，聊天窗口不是；四个入口（一句话 / 贴提示词 / 一段流程 / 产品想法）汇入同一个主循环；先按 ★ 做出来再纠错；上岗进度来自 验收清单.json，只在不可逆动作前停；复盘数据回到图上\n上排 01→02→02b→03 是「一句话造工作狗」主流程；中排 04 犬舍、05 上岗、11 设计；下排 06 组件表、07 流程画布（可拖拽、拼接、连线）\n视觉沿用官网：琥珀 #d97706 / 浅琥珀 #fdf0dd / 侧栏 #1b1f27 / 分割线 #e5e8ee / 圆角 14·10·8；文案与数字均为示例"},
-        {"id": "components-note", "x": W + GX, "y": 2 * (H + GY), "w": 560,
-         "text": "06 组件表：组件化落在两层\n产品层——工作狗 = 模块（步骤）× 组件（技能 / 工作狗 / know-how / 你的输入）；组件进库，改一处全站变；侧栏新增「组件库」入口\n设计层——13 个 UI 组件覆盖全部六屏，每个标了 token；前端按这张表建组件库即可，屏幕只是组合"},
-        {"id": "rebuild-note", "x": 2 * (W + GX), "y": -260, "w": 640,
-         "text": "02b 流程重构：左栏「装进流程的东西」按四类来源列清单（技能 = 蓝 / 工作狗 = 琥珀 / 行业 know-how = 绿 / 你的输入 = 暖灰），右侧双泳道（AI 自动 / 人）每一步挂同色标签，标签即来源，右列写明用在第几步\n装配优先级：复用犬舍 > 行业库 > 新写；你的材料与回答覆盖默认值\n人审可退回、发送前设人工确认点、复盘回填到具体步骤——这三条把 SKILL 的规则画进了流程"},
-        {"id": "rule-card", "x": 3 * (W + GX), "y": -150, "w": 520,
-         "text": "规则对应：卡片是纠错窗口不是审批——02 只问会改变架构的两题，其余转 H，产物同时在右侧生成，不回复也交付；03 的假设清单带「改」，未达标清单链到画布上的缺口节点，出口是「入犬舍」与「在画布中查看」；05 的进度来自 验收清单.json，一轮一环节，只在对外发送前停下来等人（待确认）；输入栏常驻「直接做」即无人值守入口"},
-    ],
-    "launch": {"view": "canvas"},
-  }
-  canvas["artboards"] += (extra_boards or [])
-  canvas["annotations"] += (extra_notes or [])
-  with open(os.path.join(OUT, "canvas.json"), "w", encoding="utf-8") as f:
+  canvas = {"artboards": boards, "annotations": notes, "launch": launch or {"view": "canvas"}}
+  if pages:
+    canvas["pages"] = pages
+  with open(os.path.join(out_dir, "canvas.json"), "w", encoding="utf-8") as f:
     json.dump(canvas, f, ensure_ascii=False, indent=2)
+  total = 0
   for name, html in files.items():
-    print(f"{name}: {len(html.encode('utf-8'))/1024:.1f} KB")
-  print("canvas.json written")
-
-if __name__ == "__main__":
-  build()
+    kb = len(html.encode('utf-8')) / 1024; total += kb
+    print(f"{name}: {kb:.1f} KB")
+  print(f"{len(files)} files · {total/1024:.2f} MB · {len(boards)} artboards · {len(notes)} notes → {out_dir}")

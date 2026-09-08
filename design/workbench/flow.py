@@ -51,7 +51,7 @@ NODES = [
     N("n10", "skill", "auto", "合规自查与模拟评审", "对抗审查 + 废标项清单", 870, 120, note="切换成挑剔的评标专家，只找扣分点。", was="human", reuse=3),
     N("n11", "human", "review", "领导审批", "分管领导", 870, 500, note="看自查清单与报价，通过才递交；不通过退回报价。", owner="分管领导", sla="1 天"),
     N("s5", "data", "", "OA 审批", "流程 · 签章", 870, 780, "pending", "审批在 OA 里另起一单，结果要人回来告诉流程。", "审批单自动发起与回写，审批结果直接推进到递交。", was="manual", method="manual", dir="rw", target=dict(flag="ok", method="api")),
-    N("n12", "human", "decide", "递交", "人工确认点", 1040, 500, note="不可逆动作，递交前暂停等人确认。", owner="商务", sla="截止前 1 天"),
+    N("n12", "human", "decide", "递交", "人工确认点", 1040, 500, note="不可逆动作，递交前暂停等人确认。", owner="商务", sla="截止前 1 天", irreversible=True),
     N("n13", "skill", "auto", "复盘回填", "中标结果 → 素材库", 1040, 200, note="中标 / 落标结果、评审意见、新写章节回填素材库。", was="new", reuse=4),
 ]
 # (from, to, kind, label, dtype)  kind: seq 顺序 / data 数据 / pending 待打通 / loop 回填 / back 退回
@@ -97,6 +97,8 @@ NODE_CSS = r'''
     .fl.block { background: #dc2626; } .fl.missing { background: #d97706; } .fl.pending { background: #2563eb; }
     .df { position: absolute; top: -9px; left: 8px; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px; letter-spacing: .04em; background: #1e232b; color: #ffffff; }
     .df.new { background: #16a34a; }
+    .rb { position: absolute; left: 8px; bottom: -10px; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 4px; background: #ffffff; border: 1px solid #e5e8ee; color: #68707c; white-space: nowrap; }
+    .rb.ok { border-color: #16a34a; color: #16a34a; } .rb.run { border-color: #d97706; color: #d97706; background: #fdf0dd; } .rb.wait { border-color: #d97706; color: #d97706; }
     .kids { position: absolute; right: 8px; bottom: -9px; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: #ffffff; border: 1px solid #e5e8ee; color: #68707c; }
     .port { position: absolute; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: #ffffff; border: 2px solid #9aa4af; cursor: crosshair; }
     .port.in { left: -7px; } .port.out { right: -7px; }
@@ -216,10 +218,11 @@ FLOW_NODE = helmet(NODE_CSS) + '''<div class="node k-{{kind}} f-{{flag}} {{cls}}
   <div class="nn">{{name}}</div>
   <div class="ns">{{sub}}</div>
   <sc-if value="{{hasKids}}" hint-placeholder-val="{{false}}"><span class="kids">{{kids}}</span></sc-if>
+  <sc-if value="{{hasRb}}" hint-placeholder-val="{{false}}"><span class="rb {{rbCls}}">{{rb}}</span></sc-if>
   <span class="port out t-{{otype}}" onMouseDown="{{portDown}}" title="按住拖到另一个节点连线；拖到空白处新建"></span>
 </div>
 </x-dc>
-<script data-dc-script data-props='{"node":{"editor":null},"selected":{"editor":null},"connecting":{"editor":null},"running":{"editor":null},"dim":{"editor":null},"diff":{"editor":null},"onDown":{"editor":null},"onPort":{"editor":null},"onRole":{"editor":null},"onMenu":{"editor":null},"onOpen":{"editor":null},"kind":{"editor":"enum","options":["human","dog","skill","know","data"],"default":"dog","section":"变体预览"},"role":{"editor":"enum","options":["auto","review","decide"],"default":"auto","section":"变体预览"},"flag":{"editor":"enum","options":["ok","block","missing","pending"],"default":"ok","section":"变体预览"},"$preview":{"width":150,"height":64}}'>
+<script data-dc-script data-props='{"node":{"editor":null},"selected":{"editor":null},"connecting":{"editor":null},"running":{"editor":null},"dim":{"editor":null},"diff":{"editor":null},"rb":{"editor":null},"onDown":{"editor":null},"onPort":{"editor":null},"onRole":{"editor":null},"onMenu":{"editor":null},"onOpen":{"editor":null},"kind":{"editor":"enum","options":["human","dog","skill","know","data"],"default":"dog","section":"变体预览"},"role":{"editor":"enum","options":["auto","review","decide"],"default":"auto","section":"变体预览"},"flag":{"editor":"enum","options":["ok","block","missing","pending"],"default":"ok","section":"变体预览"},"$preview":{"width":150,"height":64}}'>
 class Component extends DCLogic {
   renderVals() {
     var p = this.props || {};
@@ -238,6 +241,7 @@ class Component extends DCLogic {
       hasFlag: flag !== 'ok', hasRole: n.kind !== 'data' && !!n.role,
       hasDiff: !!p.diff, diff: p.diff || '', diffCls: (p.diff === '新增') ? 'new' : '',
       hasKids: kids > 0, kids: kids + ' 环节 · 双击打开',
+      hasRb: !!p.rb, rb: p.rb ? p.rb.text : '', rbCls: p.rb ? p.rb.cls : '',
       itype: n.kind === 'data' ? 'sys' : 'struct', otype: OT[n.kind] || 'struct',
       cls: (p.selected ? 'sel ' : '') + (p.connecting ? 'connecting ' : '') + (p.running ? 'running ' : '') + (p.dim ? 'dim' : ''),
       down: p.onDown || noop, portDown: p.onPort || noop, roleDown: stop, roleClick: p.onRole || noop, menu: p.onMenu || noop, open: p.onOpen || noop
@@ -269,7 +273,7 @@ TOPBAR_RIGHT = ('<div style="display:flex;gap:6px;align-items:center">'
                 + f'<button class="tb-btn" type="button" onClick="{{{{btnUndo}}}}" title="撤销上一步">{ico("refresh",15,SUB)}撤销</button>'
                 + f'<button class="tb-btn {{{{diffOn}}}}" type="button" onClick="{{{{btnDiff}}}}" title="标出每个节点原来怎么做">{ico("flag",15,SUB)}对照现状</button>'
                 + f'<button class="tb-btn {{{{labelsOn}}}}" type="button" onClick="{{{{btnLabels}}}}" title="显示每条线上流动的产物">{ico("file",15,SUB)}产物</button>'
-                + f'<button class="tb-btn" type="button" onClick="{{{{btnRun}}}}" title="按顺序点亮自动节点">{ico("bolt",15,SUB,2)}试跑</button>'
+                + f'<button class="tb-btn {{{{runOn}}}}" type="button" onClick="{{{{btnRun}}}}" title="把 验收清单.json 的打钩数放回图上">{ico("bolt",15,SUB,2)}运行态</button>'
                 + f'<button class="tb-btn primary" type="button" onClick="{{{{btnBuild}}}}">{ico("check",16,"#ffffff",2.2)}按这个建</button></div>')
 
 PALETTE_TPL = ('<input class="psearch" value="{{pq}}" onChange="{{setPq}}" placeholder="搜组件，或在画布空白处双击">'
@@ -289,7 +293,7 @@ CANVAS_TPL = ('<div class="cwrap">'
               + '<sc-for list="{{edges}}" as="e" hint-placeholder-count="3"><div class="ew"><svg class="esvg" viewBox="0 0 1220 1024"><path class="hit" d="{{e.d}}" onMouseDown="{{e.pick}}"></path><path class="{{e.cls}}" d="{{e.d}}"></path></svg><div class="elabh {{e.lcls}}" style="left: {{e.lx}}px; top: {{e.ly}}px">{{e.label}}</div></div></sc-for>'
               + '<sc-if value="{{hasTemp}}" hint-placeholder-val="{{false}}"><svg class="esvg" viewBox="0 0 1220 1024"><path class="edge temp" d="{{tempD}}"></path></svg></sc-if>'
               + '<sc-for list="{{nodes}}" as="n" hint-placeholder-count="6"><div class="nw" style="left: {{n.x}}px; top: {{n.y}}px">'
-              + '<dc-import name="FlowNode" node="{{n}}" selected="{{n.selected}}" connecting="{{n.connecting}}" running="{{n.running}}" dim="{{n.dim}}" diff="{{n.diff}}" on-down="{{n.down}}" on-port="{{n.port}}" on-role="{{n.roleCycle}}" on-menu="{{n.menu}}" on-open="{{n.open}}" hint-size="150px,64px"></dc-import>'
+              + '<dc-import name="FlowNode" node="{{n}}" selected="{{n.selected}}" connecting="{{n.connecting}}" running="{{n.running}}" dim="{{n.dim}}" diff="{{n.diff}}" rb="{{n.rb}}" on-down="{{n.down}}" on-port="{{n.port}}" on-role="{{n.roleCycle}}" on-menu="{{n.menu}}" on-open="{{n.open}}" hint-size="150px,64px"></dc-import>'
               + '</div></sc-for>'
               + '<sc-if value="{{hasMarquee}}" hint-placeholder-val="{{false}}"><div class="mq" style="left: {{mqX}}px; top: {{mqY}}px; width: {{mqW}}px; height: {{mqH}}px"></div></sc-if>'
               + '<sc-if value="{{hasQuick}}" hint-placeholder-val="{{false}}"><div class="quick" style="left: {{quickX}}px; top: {{quickY}}px" onMouseDown="{{stop}}" onDoubleClick="{{stop}}">'
@@ -364,6 +368,8 @@ OVERLAY_TPL = ('<sc-if value="{{placing}}" hint-placeholder-val="{{false}}"><div
 # ---------------------------------------------------------------- 逻辑
 LOGIC = r'''
 var NW = 150, NH = 64, CW = 1220, CH = 1024;
+var RUN_STATE = { n3: { cls: 'ok', text: '✓ 2 / 2' }, n5: { cls: 'ok', text: '✓ 3 / 3' }, n7: { cls: 'run', text: '● 1 / 3 · 第 3 轮' }, n10: { cls: '', text: '0 / 2' }, n8: { cls: 'ok', text: '✓ 15 / 15' }, n6: { cls: 'ok', text: '✓ 2 / 2' }, n13: { cls: '', text: '未到' },
+  n1: { cls: 'ok', text: '✓ 已录入' }, n2: { cls: 'ok', text: '✓ 已下载' }, n4: { cls: 'ok', text: '✓ 已定：投' }, n9: { cls: 'wait', text: '等财务' }, n11: { cls: '', text: '未到' }, n12: { cls: 'wait', text: '确认点 · 未到' } };
 var KIND = { human: '人', dog: '🐾 工作狗', skill: '技能', know: 'know-how', data: '数据 / 系统' };
 var OT = { human: 'decision', dog: 'struct', skill: 'struct', know: 'text', data: 'sys' };
 var DEF_LABEL = { decision: '决定', struct: '结构化产物', text: '要点', sys: '系统数据', file: '文件', event: '事件' };
@@ -373,7 +379,7 @@ class Component extends DCLogic {
     if (this.S) return this.S;
     var D = __DATA__; try { window.__flow = this; } catch (err) {}
     this.S = { root: { nodes: clone(D.nodes), edges: clone(D.edges) }, palette: D.palette, stack: [], sel: null, multi: [], connecting: null, drag: null, marquee: null,
-      placing: null, ghost: { x: 0, y: 0 }, quick: null, menu: null, zoom: 1, diff: false, labels: false, running: null, build: false, pq: '', hist: [], toast: '', seq: 100 };
+      placing: null, ghost: { x: 0, y: 0 }, quick: null, menu: null, zoom: 1, diff: false, labels: false, running: null, runOn: false, build: false, pq: '', hist: [], toast: '', seq: 100 };
     return this.S;
   }
   graph() { var S = this.init(); var g = S.root; for (var i = 0; i < S.stack.length; i++) { var n = g.nodes.filter(function (x) { return x.id === S.stack[i]; })[0]; if (!n || !n.children) { S.stack = []; return S.root; } g = n.children; } return g; }
@@ -440,6 +446,7 @@ class Component extends DCLogic {
     var n = this.byId(id); if (!n) return; var cy = n.y + NH / 2; var lane = cy < 440 ? 'ai' : (cy < 720 ? 'human' : 'data');
     if (n.kind === 'data') { if (lane !== 'data') { n.y = 780; this.say('系统节点留在「数据与系统」泳道'); } return; }
     if (lane === 'data') { n.y = 630; this.say('步骤节点不能放进数据泳道'); return; }
+    if (n.kind === 'human' && n.role === 'decide' && n.irreversible && lane === 'ai') { n.y = 500; this.say('「' + n.name + '」是不可逆动作前的人定节点，不能改成自动——留在人泳道'); return; }
     if (n.kind === 'human' && lane === 'ai') { n.kind = 'skill'; n.role = 'auto'; n.flag = 'missing'; n.was = 'human'; n.sub = '原：' + (n.owner || '人做') + ' · 待配组件'; n.fix = n.fix || '给这一步配一个组件（技能 / 工作狗），或从组件库拖一个替换。'; this.say('「' + n.name + '」标为要自动化：还缺一个组件来做它（缺口）'); return; }
     if (n.kind !== 'human' && lane === 'human' && n.role === 'auto') { n.role = 'review'; this.say('「' + n.name + '」改为人审'); }
   }
@@ -495,13 +502,12 @@ class Component extends DCLogic {
     var S = this.init(), g = this.graph(); var n = this.byId(id); if (!n || !n.target) return; this.snap();
     var t = n.target; if (t.role && t.role !== n.role) n.was = n.kind === 'human' ? 'human' : n.was; if (t.kind) n.kind = t.kind; if (t.role) n.role = t.role; if (t.sub) n.sub = t.sub; if (t.method) n.method = t.method; n.flag = t.flag || 'ok';
     if (n.kind === 'data') { g.edges.forEach(function (e) { if ((e.from === id || e.to === id) && e.kind === 'pending') e.kind = 'data'; }); }
-    if (n.kind !== 'human' && n.y > 440) n.y = 300;
+    if (n.kind !== 'human' && n.kind !== 'data' && n.y > 440) n.y = 300;
     delete n.target; this.say('已应用：「' + n.name + '」变成打通后的样子（对照现状可看变化）');
   }
   run() {
-    var S = this.init(), self = this; var g = this.graph(); var seq = g.nodes.filter(function (n) { return n.kind !== 'data' && n.role === 'auto'; }).sort(function (a, b) { return a.x - b.x || a.y - b.y; }); if (!seq.length) { this.say('没有自动节点可试跑'); return; }
-    clearInterval(this._run); var i = 0; S.running = seq[0].id; this.refresh();
-    this._run = setInterval(function () { i++; if (i >= seq.length) { clearInterval(self._run); S.running = null; self.say('试跑完成：' + seq.length + ' 个自动节点按顺序执行（示例，不含真实调用）'); return; } S.running = seq[i].id; self.refresh(); }, 420);
+    var S = this.init(); S.runOn = !S.runOn; S.running = null;
+    this.say(S.runOn ? '运行态：来自 验收清单.json（示例：标书撰写 · 第 3 轮 · 验收 6 / 13）；狗在 05 上岗，画布只把打钩数放回图上' : '已回到编辑态'); this.refresh();
   }
   edgePath(a, b, kind) {
     var ax = a.x, ay = a.y, bx = b.x, by = b.y;
@@ -518,7 +524,7 @@ class Component extends DCLogic {
     var WAS = { human: '原：人做', manual: '原：手工搬', 'new': '新增' };
     var nodes = g.nodes.map(function (n) {
       var isSel = !!(selN && selN.id === n.id) || S.multi.indexOf(n.id) >= 0;
-      return Object.assign({}, n, { selected: isSel, connecting: !!(S.connecting && S.connecting.from === n.id), running: S.running === n.id,
+      return Object.assign({}, n, { selected: isSel, connecting: !!(S.connecting && S.connecting.from === n.id), running: S.running === n.id || (S.runOn && RUN_STATE[n.id] && RUN_STATE[n.id].cls === 'run'), rb: S.runOn ? (RUN_STATE[n.id] || null) : null,
         dim: S.diff && !n.was, diff: S.diff ? (WAS[n.was] || '') : '',
         down: function (e) { self.nodeDown(e, n.id); }, port: function (e) { self.portDown(e, n.id); }, roleCycle: function (e) { self.roleCycle(e, n.id); }, menu: function (e) { self.menuOpen(e, n.id); }, open: function (e) { self.openNode(e, n.id); } });
     });
@@ -566,7 +572,7 @@ class Component extends DCLogic {
       hasMulti: S.multi.length >= 2, multiN: S.multi.length, btnGroup: function () { self.group(); self.refresh(); }, btnDelMulti: function () { self.delMulti(); self.refresh(); }, btnClearMulti: function () { S.multi = []; self.refresh(); },
       inScope: !!scopeNode, scopeName: scopeNode ? scopeNode.name : '', scopeSub: scopeNode ? ('· ' + scopeNode.sub) : '', goRoot: function () { S.stack = []; S.sel = null; S.multi = []; self.refresh(); },
       zoom: S.zoom, zoomPct: Math.round(S.zoom * 100) + '%', zoomIn: function () { S.zoom = Math.min(1.6, +(S.zoom + 0.1).toFixed(2)); self.refresh(); }, zoomOut: function () { S.zoom = Math.max(0.5, +(S.zoom - 0.1).toFixed(2)); self.refresh(); }, zoomReset: function () { S.zoom = 1; self.refresh(); }, zoomFit: function () { S.zoom = 0.8; self.refresh(); },
-      diffOn: S.diff ? 'on' : '', labelsOn: S.labels ? 'on' : '', btnDiff: function () { S.diff = !S.diff; self.refresh(); }, btnLabels: function () { S.labels = !S.labels; self.refresh(); },
+      diffOn: S.diff ? 'on' : '', runOn: S.runOn ? 'on' : '', labelsOn: S.labels ? 'on' : '', btnDiff: function () { S.diff = !S.diff; self.refresh(); }, btnLabels: function () { S.labels = !S.labels; self.refresh(); },
       btnUndo: function () { self.undo(); }, btnRun: function () { self.run(); },
       btnBuild: function () { S.sel = null; S.multi = []; S.build = true; self.refresh(); },
       btnReset: function () { self.S = null; self.init(); self.say('已恢复示例流程'); },
@@ -611,46 +617,126 @@ class Component extends DCLogic {
 }
 '''
 
-FLOW_CANVAS = helmet(NODE_CSS + CANVAS_CSS) + (
-    f'<div class="fc" style="width:1920px;height:1080px;display:grid;grid-template-columns:240px minmax(0, 1fr);grid-template-rows:56px minmax(0, 1fr);overflow:hidden;background:{CHATBG};color:{INK};position:relative">'
-    + sidebar(flow_active=True)
-    + topbar("投标流程 · 组织流程画布", chips=(), right=TOPBAR_RIGHT)
-    + '<div class="main"><div class="pal">' + PALETTE_TPL + '</div>' + CANVAS_TPL + INSPECTOR_TPL + '</div>'
-    + OVERLAY_TPL + '</div>\n</x-dc>\n'
-    + '<script data-dc-script data-props=\'{"$preview":{"width":1920,"height":1080}}\'>\n'
-    + LOGIC.replace('__DATA__', json.dumps({"nodes": NODES, "edges": EDGE_OBJS, "palette": PALETTE}, ensure_ascii=False))
-    + '\n</script>\n</body>\n</html>\n')
+def flow_canvas_html():
+    return helmet(NODE_CSS + CANVAS_CSS) + (
+        f'<div class="fc" style="width:1920px;height:1080px;display:grid;grid-template-columns:240px minmax(0, 1fr);grid-template-rows:56px minmax(0, 1fr);overflow:hidden;background:{CHATBG};color:{INK};position:relative">'
+        + sidebar(flow_active=True, h=1080)
+        + topbar("投标流程 · 组织流程画布", chips=(), right=TOPBAR_RIGHT)
+        + '<div class="main"><div class="pal">' + PALETTE_TPL + '</div>' + CANVAS_TPL + INSPECTOR_TPL + '</div>'
+        + OVERLAY_TPL + '</div>\n</x-dc>\n'
+        + '<script data-dc-script data-props=\'{"$preview":{"width":1920,"height":1080}}\'>\n'
+        + LOGIC.replace('__DATA__', json.dumps({"nodes": NODES, "edges": EDGE_OBJS, "palette": PALETTE}, ensure_ascii=False))
+        + '\n</script>\n</body>\n</html>\n')
+FLOW_CANVAS = flow_canvas_html()
 
-FLOW_Y = 2 * (H + GY)
-FLOW_X = W + GX
+# ====================================================================== 画布排版
+# 页「每个功能每一步」：每一行一个功能，从左到右是用户走的顺序；行首便签是这一行的评审（逐步评审.md）。
+# 页「组件」：真组件（可传参）+ 每个组件一张状态表 + 06 组件表。
+W, H, GX, GY = gen.W, gen.H, gen.GX, gen.GY
+CX, RY = W + GX, H + GY
+NOTE_X, NOTE_W = -(W // 2 + 100), W // 2 + 20
+
+def board(file, x, y, title, w=W, h=H, page="steps", **kw):
+    b = {"file": file, "x": x, "y": y, "w": w, "h": h, "title": title, "page": page}
+    b.update(kw)
+    return b
+
+def note(id, x, y, w, text, page="steps"):
+    return {"id": id, "x": x, "y": y, "w": w, "text": text, "page": page}
+
+STRIPS = [
+    # (行号, 行内画板 [(file, title, w, h, extra)], 便签 id, 便签文本)
+    ("总览", [("Journey.dc.html", "12 用户旅程 · 每一步（屏号已对齐：01.2 / 07.3 / 05.4 …）"), ("Onboarding.dc.html", "00 首次引导 · 从 0 到 1（第一周把一条流程跑起来）")],
+     "row-overview", "总览\n12 用户旅程是团队看的规格视图（不是产品内的屏），00 首次引导是第一屏。\n全流程只有三个停机点：① 按这个建（07.3 / 11.2）② 人工确认点（05.3）③ 改版 / 不改版（10.2）；只有 ② 不回复会一直停。\n三条示例线：投标流程 → 标书撰写（07 / 08 / 05.5）· 合同审查（05 / 09 / 10，被投标流程 n8 复用）· 竞品分析（02 / 03 / 04）。"),
+    ("A 入口", [("Main.dc.html", "01.1 首页 · 空态（四个入口，一个输入框）"), ("EntryTyping.dc.html", "01.2 输入中 · 已识别入口（发送前就能换）"), ("EntryGenerating.dc.html", "01.3 生成中（= 07.1）· 每步计数，图在右栏成形")],
+     "row-a", "A · 入口　01.1 → 01.2 → 01.3\n合理：一个输入框承接四种进法，靠识别不靠菜单；「贴材料」比「直接做」显眼，因为材料决定现状图八成质量。\n缺少（已补）：01.2 识别条——发送前就看到识别为哪个入口，点一下换，比事后回「我要的是图」省一轮；01.3 生成中——每步带数字，图在右栏成形，屏底列出其他入口的生成步骤。这一步没有按钮：没有可以按的。\n没用（已删）：右栏虚线卡「拿不准方向时才会先出一张卡」与副标题重复；换成第四张预览卡「评分 + 改进版」，四个入口四张卡。"),
+    ("B 诊断", [("DiagnosePaste.dc.html", "13.1 贴入 · 识别为贴现有提示词"), ("DiagnoseScore.dc.html", "13.2 评分与改法 · 十维在右，三条建议在左，只在真有分歧时附一题"), ("DiagnoseCompare.dc.html", "13.3 改进版对照 · 改动加粗标建议号 · 回归对照 · 三个出口")],
+     "row-b", "B · 诊断（贴提示词）　13.1 → 13.2 → 13.3　整条线原来一屏都没有\n合理：零提问——先十维打分再给改进版（references/diagnose.md），只在改法真有分歧时附一题；改进必须可验证，所以有回归对照。\n缺少（已补）：三屏全部新画；改进版改动加粗并标建议号，头部带 H。\n没用（不设）：单独的打分明细屏——十维本身就是明细；「入犬舍」——单条提示词的家是组件库（14），犬舍只放资产包。\n停机点：无。"),
+    ("C 新建", [("Confirm.dc.html", "02.1 可选纠错卡 · 预填交付（新增换形态逃生口）"), ("ConfirmApplied.dc.html", "02.2 生效复述 · 回「1C」后只重出受影响的环节"), ("Deliver.dc.html", "03.1 资产包交付 · 真实计数 + 怎么用它 + 未达标链到缺口"), ("DeliverPrompt.dc.html", "03.2 单提示词交付 · L1 / L2 不出资产包"), ("Kennel.dc.html", "04 犬舍 · 状态来自 验收清单.json")],
+     "row-c", "C · 新建 / 工作流　02.1 → 02.2 → 03.1 / 03.2 → 04\n合理：卡片是纠错窗口不是审批关卡——最多两题架构级，其余转 H，产物同时在右侧生成，不回复也交付。\n缺少（已补）：02.1 判级旁的换形态逃生口（只要一条提示词 / 我要的是图，complexity-routing 允许用户覆盖判级）；02.2 生效复述——回复后只重出受影响的环节 2、5，其余不动；03.1 「怎么用它」卡（启动指令一行 + 无人上岗）；03.2 L1 单提示词交付——判为 L1 时不能硬塞资产包目录树，出口是组件库。\n没用（已换）：03.1 「四道保险」四个绿勾是宣传语不是状态，换成真实计数（试跑 5/6 · 环节 5 · 假设 2 · 未达标 1）。"),
+    ("D 流程重构", [("CanvasEmpty.dc.html", "07.0 空态 · 三条进法（说 / 导入 JSON / 行业模板）"), ("FlowCanvas.dc.html", "07 流程画布（可交互）· 拖连线 · 框选打包 · 钻取 · 对照 · 运行态", 1920, 1080, {"is_interactive": True, "expand": "fill"}),
+                    ("CanvasDrag.dc.html", "07.2 拖拽反馈 · 人的步骤进 AI 泳道标缺口 · n12 受保护"), ("CanvasBuild.dc.html", "07.3 构建预览 · 停机点① 按下前看得见会得到什么"), ("CanvasDiff.dc.html", "07.4 对照现状 · 变过的标出来，没变的压暗，卡点 2 → 0"), ("CanvasRun.dc.html", "07.5 运行态 · 验收清单.json 的打钩数回到图上"), ("Report.dc.html", "08 汇报模式 · 主按钮改为老板的决定")],
+     "row-d", "D · 流程重构　07.0 → 07 → 07.2 → 07.3 → 07.4 → 07.5 → 08\n合理：泳道 + 三种标记 + 五个数字回答五问；拖过泳道边界改「谁来做」；诊断建议一键「应用」。\n缺少（已补）：07.0 空态——画布是中心，中心不能是一片空白点阵；07.2 拖拽反馈——两条提示原来只写在规格里，n12 递交受保护这条规则原型里也没实现，已补进 laneRule；07.3 构建预览——停机点①按下前必须看到会建成什么；07.4 对照现状与 07.5 运行态——原来只在原型里靠开关出现，逐步看时应是独立一屏。\n没用（已改）：工具栏「试跑」按顺序点亮节点，像画布能跑——改名「运行态」，读 验收清单.json 把打钩数放回图上（原型同步改）；08 主按钮「先打通招标平台」是给 IT 的动作，改成老板要拍的板「同意：先建标书撰写」。\n原型修正：应用建议后数据节点不再跳出数据泳道。"),
+    ("E 设计", [("DesignScreen.dc.html", "11.1 产品定义 · 五问首行 + 一页定义 + 找茬结果条"), ("DesignStories.dc.html", "11.2 故事清单 · stories.json 的界面 · 按这个建 S07"), ("DesignReview.dc.html", "11.3 四视角找茬 · 每条反驳三选一处理 · 门槛 12 / 12")],
+     "row-e", "E · 设计　11.1 → 11.2 → 11.3\n合理：五问首行即验收，动笔前先填；一页产品定义写不下就是范围没收住。\n缺少（已补）：11.2 故事清单——stories.json 是搭建者的开工单，不画等于没交付；passes 由搭建者置 true，不驱动上岗；只有「转主循环」的故事按这个建进 02。11.3 四视角找茬——老板 / 搭建者 / 执行者 / 反方各至少一条反驳，处理三选一（采纳并改 / 写入 H / 驳回附理由），门槛 12 项逐条打钩。\n没用（不画）：SPEC 是可选件（design-mode.md），保留 tab 不画屏。"),
+    ("F 上岗", [("RunStart.dc.html", "05.1 启动 · 只要材料，参数来自资产包"), ("RunRunning.dc.html", "05.2 运行中 · 一轮一环节，右栏中间产物"), ("WorkdogRun.dc.html", "05.3 人工确认点 · 停机点②（删了 promise 标记）"), ("RunDone.dc.html", "05.4 完成 · 交付就是完成，下一步三选一"), ("RunStop.dc.html", "05.5 止损 · 同时给已达标 / 未达标 / 卡点报告")],
+     "row-f", "F · 上岗　05.1 → 05.2 → 05.3 → 05.4 → 05.5\n合理：一轮一环节，每轮新上下文；进度来自 验收清单.json 不是进度条动画；只在对外发送前停。\n缺少（已补）：05.1 启动（拖材料就开始，不要参数表单，参数在资产包里）；05.2 运行中（右栏显示已完成环节的中间产物）；05.4 完成（三件套落盘 + 写回三处，下一步复盘 / 再跑 / 回画布）；05.5 止损（一轮不增加即止损，三样同时给；标书撰写示例，落点是 04 的「止损待处理」）。\n没用（已删）：05.3 卡片里的 <promise>待确认</promise> 是给脚本看的停机标记，不该出现在业务界面；B 选项补「重跑 3–7」。"),
+    ("G 复盘与资产", [("Retro.dc.html", "10.1 复盘 · 不达标（门槛拦住，暂不发布）"), ("RetroPass.dc.html", "10.2 复盘 · 达标发布 · 停机点③ 改版 / 不改版"), ("Library.dc.html", "14 组件库 · 侧栏「组件库 12」的落点 · 三处来源汇合"), ("ComponentDetail.dc.html", "09 组件详情 · 契约 · 复用 · 版本")],
+     "row-g", "G · 复盘与资产　10.1 → 10.2 · 14 → 09\n合理：回归没过就不许发布，门槛是硬的；组件即资产，改一处全局同步。\n缺少（已补）：10.2 达标发布——停机点③「改版 / 不改版」必须有它的界面，发布是不可逆动作；14 组件库列表——侧栏有入口没有页是最明显的断链，诊断存入的提示词、犬舍的狗、行业库的 know-how 在这里汇合。\n没用（已移出画布）：02b 旧「流程重构」屏早已并入 07（SPEC §5），仍挂着只会误导。"),
+]
+
+def layout():
+    boards, notes = [], []
+    y = 0
+    for i, (name, items, nid, text) in enumerate(STRIPS):
+        x, row_h = 0, H
+        for it in items:
+            file, title = it[0], it[1]
+            w = it[2] if len(it) > 2 else W
+            h = it[3] if len(it) > 3 else H
+            extra = it[4] if len(it) > 4 else {}
+            boards.append(board(file, x, y, title, w, h, **extra))
+            x += w + GX
+            row_h = max(row_h, h)
+        notes.append(note(nid, NOTE_X, y, NOTE_W, text))
+        y += row_h + GY
+    notes.append(note("brief", 0, -320, 1500,
+        "PromptDog 工作台 · 每个功能每一步 v3（2026-09-08）· 38 屏 + 1 个可交互画布 + 组件页\n"
+        "怎么读：每一行是一个功能，从左到右是用户走的顺序；行首便签是这一行的评审——合理 / 缺少（已补）/ 没用（已删）/ 决定，全文见 design/workbench/逐步评审.md。\n"
+        "屏号：两位数是功能屏，小数点后是同一屏的状态（05.3 = 上岗停在人工确认点）；新增功能屏 13 诊断、14 组件库。\n"
+        "组件：切到「组件」页——侧栏 / 顶栏 / 输入栏 / 节点是可传参的真组件（屏幕用 <dc-import> 引用，改一处所有屏跟着变）；其余组件每个一张画板列全部状态；开发映射见 组件清单.md。\n"
+        "视觉沿用官网 token：琥珀 #d97706 / 侧栏 #1b1f27 / 分割线 #e5e8ee / 圆角 14·10·8。文案与数字均为示例。"))
+    return boards, notes
+
+def components_layout():
+    import components_page as cp
+    boards = [board("Components.dc.html", 0, 0, "06 组件表 · token 与基础件（色板 / 字号 / 按钮 / 输入栏 …）", W, 1700, page="components"),
+              board("Sidebar.dc.html", CX, 0, "Sidebar · 真组件（active 用属性面板切）", 240, 900, page="components"),
+              board("Topbar.dc.html", CX + 360, 0, "Topbar · 真组件（title / badge / chips / actions）", 1200, 56, page="components"),
+              board("InputBar.dc.html", CX + 360, 200, "InputBar · 真组件（placeholder / value / direct）", 720, 72, page="components"),
+              board("FlowNode.dc.html", CX + 360, 400, "FlowNode · 真组件（kind / role / flag 用属性面板切）", 150, 64, page="components")]
+    order = [["CompCorrectionCard.dc.html", "CompStages.dc.html", "CompDiag.dc.html"], ["CompRows.dc.html", "CompPreview.dc.html", "CompChips.dc.html"],
+             ["CompTiles.dc.html", "CompFlowEdge.dc.html", "CompMessage.dc.html"], ["CompFlowNode.dc.html", "CompDogCard.dc.html", "CompJourney.dc.html"]]
+    titles = {"CompCorrectionCard.dc.html": "纠错卡 · 5 种用法", "CompStages.dc.html": "流水线 · 5 种行状态", "CompDiag.dc.html": "诊断条目 · 4 处复用", "CompRows.dc.html": "行 · 6 种",
+              "CompPreview.dc.html": "预览卡与入口卡", "CompChips.dc.html": "标签与识别条", "CompTiles.dc.html": "指标块 · 4 种数字", "CompFlowEdge.dc.html": "连线 · 5 种关系",
+              "CompMessage.dc.html": "消息气泡", "CompFlowNode.dc.html": "节点状态矩阵", "CompDogCard.dc.html": "工作狗卡 · 4 态", "CompJourney.dc.html": "旅程卡"}
+    y = 1700 + GY
+    for row in order:
+        x, row_h = 0, 0
+        for f in row:
+            w, h = cp.SIZES[f]
+            boards.append(board(f, x, y, titles[f], w, h, page="components"))
+            x += 1120
+            row_h = max(row_h, h)
+        y += row_h + GY
+    notes = [note("comp-brief", 0, -300, 1400,
+        "组件 · 两层\n真组件（可传参，屏幕用 <dc-import> 引用，改一处所有屏跟着变）：Sidebar（active）· Topbar（title / badge / chips / actions）· InputBar（placeholder / value / direct）· FlowNode（kind / role / flag）。\n"
+        "状态表（每个组件一张画板，列全部状态；每一块由生成屏幕的同一个 Python 函数产出，屏幕与组件表不会漂移）：纠错卡 · 流水线 · 消息 · 工作狗卡 · 诊断条目 · 指标块 · 标签 · 行 · 预览卡 · 连线 · 节点矩阵 · 旅程卡。\n"
+        "06 组件表：token 与基础件。开发映射（props · 状态 · 用在哪些屏 · 用什么开源件承接）见 design/workbench/组件清单.md。", page="components")]
+    return boards, notes
+
+def all_files():
+    import chrome_components, screens_v2, screens_v3, design_screen, onboarding_screen, journey_screen
+    import steps_entry, steps_diagnose, steps_canvas, steps_design, steps_run, steps_retro, library_screen, components_page
+    files = {"FlowCanvas.dc.html": flow_canvas_html(), "FlowNode.dc.html": FLOW_NODE, "Components.dc.html": gen.COMPONENTS,
+             "DesignScreen.dc.html": design_screen.DESIGN, "Onboarding.dc.html": onboarding_screen.ONBOARDING, "Journey.dc.html": journey_screen.JOURNEY,
+             **{f"{k}.dc.html": getattr(screens_v3, v) for k, v in (("Report", "REPORT"), ("ComponentDetail", "COMPONENT_DETAIL"), ("Retro", "RETRO"))},
+             **{f"{k}.dc.html": getattr(screens_v2, v) for k, v in (("Main", "MAIN"), ("Confirm", "CONFIRM"), ("Deliver", "DELIVER"), ("Kennel", "KENNEL"), ("WorkdogRun", "RUN"))}}
+    for m in (chrome_components, steps_entry, steps_diagnose, steps_canvas, steps_design, steps_run, steps_retro, library_screen, components_page):
+        files.update(m.FILES)
+    return files
+
 if __name__ == "__main__":
-    gen.build(
-        extra_files={"FlowCanvas.dc.html": FLOW_CANVAS, "FlowNode.dc.html": FLOW_NODE, "DesignScreen.dc.html": __import__("design_screen").DESIGN, "Onboarding.dc.html": __import__("onboarding_screen").ONBOARDING,
-                     "Journey.dc.html": __import__("journey_screen").JOURNEY,
-                     **{f"{k}.dc.html": getattr(__import__("screens_v3"), v) for k, v in (("Report", "REPORT"), ("ComponentDetail", "COMPONENT_DETAIL"), ("Retro", "RETRO"))},
-                     **{f"{k}.dc.html": getattr(__import__("screens_v2"), v) for k, v in (("Main", "MAIN"), ("Confirm", "CONFIRM"), ("Deliver", "DELIVER"), ("Kennel", "KENNEL"), ("WorkdogRun", "RUN"))}},
-        extra_boards=[
-            {"file": "Onboarding.dc.html", "x": -(W + GX), "y": 0, "w": W, "h": H, "title": "00 首次引导 · 从 0 到 1（第一周把一条流程跑起来）"},
-            {"file": "Journey.dc.html", "x": -(W + GX), "y": H + GY, "w": W, "h": H, "title": "12 用户旅程 · 每一步（在哪屏 · 你做什么 · 它做什么 · 停不停）"},
-            {"file": "ComponentDetail.dc.html", "x": 3 * (W + GX), "y": H + GY, "w": W, "h": H, "title": "09 组件详情 · 合同审查（组件即资产：契约 · 复用 · 版本）"},
-            {"file": "Retro.dc.html", "x": 4 * (W + GX), "y": H + GY, "w": W, "h": H, "title": "10 复盘与回归 · 四指标回填 + 回归门槛 + 回流建议"},
-            {"file": "Report.dc.html", "x": W + GX, "y": 3980, "w": W, "h": H, "title": "08 汇报模式 · 给老板看的一屏（五问 30 秒答完）"},
-            {"file": "DesignScreen.dc.html", "x": 2 * (W + GX), "y": H + GY, "w": W, "h": H, "title": "11 设计 · 从一个想法到能开工的三件套（产品定义 · 故事 · 图）"},
-            {"file": "FlowCanvas.dc.html", "x": FLOW_X, "y": FLOW_Y, "w": 1920, "h": 1080, "title": "07 流程画布 · 投标流程（拖连线 · 框选打包 · 钻取 · 对照 · 试跑）", "is_interactive": True, "expand": "fill"},
-            {"file": "FlowNode.dc.html", "x": FLOW_X + 1920 + GX, "y": FLOW_Y, "w": 150, "h": 64, "title": "FlowNode · 节点组件（变体用上方调节）"},
-        ],
-        extra_notes=[
-            {"id": "journey-note", "x": -(W + GX), "y": H + GY - 230, "w": 660,
-             "text": "12 用户旅程（新）· 把「用户怎么用」的每一步摊开\n四个阶段十二步，每步写清：在哪屏 · 你做什么 · 它做什么 · 停不停\n三条贯穿规则：先做出来再纠错（不先问问题）· 纠错只有一种语法（说编号）· 只在不可逆动作前停（其余走 ★ 默认）\n全流程只有三个地方会停：按这个建 / 人工确认点 / 改版不改版；其中只有人工确认点在不回复时会一直停着\n逐步规格（含每步的产物、异常路径、出错怎么办）见 design/workbench/交互流程.md"},
-            {"id": "new-screens-note", "x": 3 * (W + GX), "y": H + GY - 250, "w": 700,
-             "text": "09 组件详情 / 10 复盘与回归（新）· 补齐 SPEC §5 里已列规格但没画的屏\n09 回答原则 3「组件即资产」：一只工作狗的输入输出契约、参数、7 环节子图、复用于哪两条流程与节点号、版本与改动；右栏是「改一处全局同步」与发布前必过项\n10 是飞轮的操作面：四指标回填（漏审 / 误报 / 定位失败 / 虚构来源，带上期对比）、2 份历史样本的回归对照、不达标就不许发布、右栏给出到达触发条件的回流建议与已知规律\n两屏的数据都来自狗自己的 复盘/日志.md 与 验收清单.json，不经服务端"},
-            {"id": "report-note", "x": W + GX, "y": 3980 - 250, "w": 700,
-             "text": "08 汇报模式（新）· 原则 1「先读懂再动手」的直接产物\n与 07 流程画布同一份数据（flow.py 的 NODES / EDGES），只读、放大、隐藏组件库与属性面板\n一屏要能 30 秒答完五问：哪些自动 · 人在哪 · 卡在哪 · 缺什么 · 打通什么——所以顶部固定五个数字，图上只保留卡点 / 缺口 / 待打通三种标记与人审 / 人定徽章\n底部三张卡是诊断结论，每条写「怎么解」与「解完变成什么」；主按钮只有一个：先打通招标平台"},
-            {"id": "onboarding-note", "x": -(W + GX), "y": -190, "w": 640,
-             "text": "00 首次引导 · 使用逻辑（从 0 到 1）\n第一周只做一条流程、一只狗：画出现状（30 分钟）→ 建第一只狗（30 分钟）→ 上岗一次（1 小时，只在递交前停）→ 复盘（15 分钟）→ 回到图上（10 分钟，卡点 2 → 0）\n每一步有输入、产出、屏幕、耗时、停在哪；用户只做纠错，不写文档、不整理材料、不一次建多只狗\n文档：design/workbench/使用逻辑.md · 图：design/figures/first-run.svg · QUICKSTART 第八节"},
-            {"id": "design-note", "x": 2 * (W + GX), "y": H + 30, "w": 640,
-             "text": "11 设计（新）· 入口「设计」：一个产品想法 → 三件套 + 图，不判级\n五问首行（为谁 / 解决什么 / 怎么算成功 / 不做什么 / 先做哪条）是验收，动笔前先填；答不出的转 H\n一页产品定义骨架固定：一句话 · 用户表 · ★ 决定 · 核心场景 · 非目标 · H 与验法 · 里程碑 · 指标 · 待拍板\n右栏图从同一份 flow JSON 渲染，档位由环境决定（高保真 / Mermaid / 泳道表），写成 H\n交付前四视角找茬：老板 / 搭建者 / 执行者 / 反方；唯一一张卡只问深度与楔子，不回复即 ★ 生效\n方法：references/design-mode.md · 范例：design/workbench/ 三件套"},
-            {"id": "flow-note", "x": FLOW_X, "y": FLOW_Y - 300, "w": 720,
-             "text": "07 流程画布（可交互）· 八条设计原则的落点\n1 先读懂再动手：泳道 + 三种标记回答五个问题（哪些自动 / 人在哪 / 卡在哪 / 缺什么 / 打通什么）\n2 两条线不混：顺序线（灰实）/ 数据线（深灰实）/ 待打通（蓝虚）/ 退回（红虚）/ 回填（绿虚），线上标产物\n3 节点即组件：工作狗 = 子图，双击钻取；框选多个 = 打包成新工作狗\n4 类型化端口：端口颜色 = 产物类型，新连线自动带默认产物与契约\n5 一张图三种看法：目标态（默认）/ 对照现状（每个节点标「原：人做 / 手工搬 / 新增」）/ 试跑（按顺序点亮）\n6 人机边界可拖：人的步骤拖进 AI 泳道 = 要自动化并标缺口；AI 拖进人泳道 = 改人审\n7 默认值先行：AI 先给出图，人只纠错；诊断建议一键「应用」变成打通后的样子\n8 最短路径：从端口拖到空白 = 新建并连上；双击空白搜组件；右键菜单；撤销"},
-        ],
-    )
+    import sys
+    args = sys.argv[1:]
+    gen.IMPORTS = "--inline" not in args          # 默认给编辑器用（dc-import 真组件）；--inline 内联，给无编辑器的静态截图用
+    out_dir = args[args.index("--out") + 1] if "--out" in args else None
+    boards, notes = layout()
+    cboards, cnotes = components_layout()
+    used = {b["file"] for b in boards + cboards}
+    files = {k: v for k, v in all_files().items() if k in used}
+    missing = used - set(files)
+    assert not missing, f"画板缺文件：{missing}"
+    gen.build(files, boards + cboards, notes + cnotes,
+              pages=[{"id": "steps", "name": "每个功能每一步"}, {"id": "components", "name": "组件"}],
+              launch={"view": "canvas", "page": "steps"}, out_dir=out_dir)

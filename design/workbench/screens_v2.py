@@ -51,7 +51,7 @@ home_right_body = (
     + preview_card("flow", "泳道流程图", "一段流程 → 自动 / 人 / 数据与系统三条道，标卡点 · 缺口 · 待打通，附打包建议", "五问 30 秒：哪些自动、人在哪、卡在哪、缺什么、打通什么")
     + preview_card("book", "三件套", "一个产品想法 → 五问首行 + 一页产品定义 + 按依赖排序的故事清单", "先做哪条故事，★ 已选好")
     + preview_card("folder", "资产包", "一句话 → 路由 · 主控 · 各环节提示词 · 启动指令 · 验收清单.json", "拖进任意工作区即上岗，无人也能跑完")
-    + f'<div style="margin-top:auto;border:1.5px dashed {LINE};border-radius:12px;padding:12px 14px;font-size:12.5px;color:{SUB};line-height:1.6">拿不准方向时才会先出一张卡，最多两轮；说「直接做」连这一轮都省。</div>')
+    + preview_card("edit", "评分 + 改进版", "贴现有提示词 → 十维打分 + 三条建议 + 改进版全文 + 回归对照", "零提问：先打分再改，通常一题都不出"))
 MAIN = HEAD + frame(COLS3,
     sidebar("dog") + topbar("提示狗 · 新会话") +
     chat_col(home_stream, '') +
@@ -93,7 +93,10 @@ confirm_right_body = (
     f'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;font-weight:800;color:{AMBER};letter-spacing:.08em">判级</span>'
     f'<span style="font-weight:700;font-size:14.5px">L3 · 提示链 · 资产包</span><span style="margin-left:auto;font-size:12px;color:{SUB}">六信号 7 / 12 · 重复使用</span></div>'
     f'<div style="font-size:13.5px;line-height:1.6;color:{INK}">定时触发、多来源采集、周环比成稿——拆成环节，环节之间只传显式产物；每周都跑，所以建资产包并带状态文件。</div>'
-    f'<div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:{SUB};min-height:32px">{ico("chev",16,SUB)}<span>展开打分明细</span></div></div>'
+    f'<div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:{SUB};min-height:32px">{ico("chev",16,SUB)}<span>展开打分明细</span></div>'
+    f'<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-top:1px solid {LINE};padding-top:10px"><span style="font-size:12px;color:{SUB}">判错了？换形态：</span>'
+    f'<span style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:8px;border:1px solid {LINE};background:{CHATBG};font-size:12px;color:{SUB}">只要一条提示词（L1）</span>'
+    f'<span style="display:inline-flex;align-items:center;height:28px;padding:0 10px;border-radius:8px;border:1px solid {LINE};background:{CHATBG};font-size:12px;color:{SUB}">我要的是图</span></div></div>'
     + stages_panel("竞品分析Agent / 资产包 · 生成中", gen_rows)
     + f'<div style="font-size:12.5px;color:{SUB};line-height:1.6;padding:0 4px">生成完成后：入犬舍，并在流程画布上占一个节点；服务流程与节点号写进主控文件，复盘时数据回到图上。</div>')
 CONFIRM = HEAD + frame(COLS3,
@@ -142,11 +145,14 @@ deliver_right_body = (
     f'<div style="font-size:12.5px;color:{SUB}">L3 提示链 · 5 环节 · 含状态文件与复盘飞轮 · v1.0 · 2026-09-08</div></div>'
     f'<div style="font-family:{MONO};font-size:12.5px;line-height:1.55;background:{CHATBG};border:1px solid {LINE};border-radius:12px;padding:10px 16px;overflow:hidden">'
     + ''.join(tree_row(t, c, d) for t, c, d in TREE) + '</div>'
-    + tiles([("✓", "验收标准先行", OK), ("✓", "来源强制引用", OK), ("✓", "闭环有终点", OK), ("✓", "无人也能跑完", OK)])
+    + tiles([("5 / 6", "试跑验收", OK), ("5", "环节", INK), ("2", "假设", INK), ("1", "未达标", AMBER)])
+    + f'<div style="border:1px solid {LINE};border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:5px;font-size:13px">'
+      f'<div style="display:flex;align-items:center;gap:8px"><span style="font-weight:700">怎么用它</span><span style="margin-left:auto;font-size:12px;color:{AMBER};font-weight:600">复制启动指令</span></div>'
+      f'<div style="font-family:{MONO};font-size:12.5px;background:{CHATBG};border-radius:8px;padding:6px 10px">跑竞品周报</div>'
+      f'<div style="font-size:12px;color:{SUB};line-height:1.5">每周一说这一句；无人值守用 <span style="font-family:{MONO}">上岗.sh</span>，只在对外发送前停。</div></div>'
     + gap_card
     + f'<div style="display:flex;flex-direction:column"><div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:{SUB};padding-bottom:6px">{ico("flag",16,SUB)}<span>生效假设</span><span style="font-weight:500">不符请指出编号</span></div>'
     + assumption("H1", "报告语言为中文，周一 09:00 生成", "对话语言 · 「每周」")
-    + assumption("H2", "数据以公开信息为限", "未提及内部数据源")
     + '</div>')
 DELIVER = HEAD + frame(COLS3,
     sidebar("dog") + topbar("提示狗 · 竞品分析工作流", chips=("L3 提示链", "已交付 v1.0", "试跑 5 / 6")) +
@@ -196,7 +202,7 @@ kennel_main = (
     f'<div style="display:flex;gap:8px;align-items:center">{filters}</div>'
     f'<div style="display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:18px">{"".join(cards)}</div></main>')
 kennel_right = (f'<div style="display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 16px;border-radius:10px;background:{AMBER};color:#ffffff;font-weight:700;font-size:14px">{ico("plus",18,"#ffffff",2)}造一只工作狗</div>')
-KENNEL = HEAD + frame(COLS2, sidebar(kennel_active=True) + topbar("犬舍", chips=("4 只工作狗", "1 只止损待处理"), right=kennel_right) + kennel_main) + TAIL
+KENNEL = HEAD + frame(COLS2, sidebar(kennel_active=True) + topbar("犬舍", chips=("4 只工作狗", "1 只止损待处理"), actions=[("造一只工作狗", "primary", "plus")]) + kennel_main) + TAIL
 
 # =====================================================================
 # 05 工作狗上岗 · 合同审查 · 停在人工确认点（一轮一环节，进度来自 验收清单.json）
@@ -217,10 +223,9 @@ law_rows = [
 confirm_point = (
     f'<div style="align-self:stretch;background:{WHITE};border:1.5px solid {AMBER};border-radius:14px;padding:14px 18px 12px;display:flex;flex-direction:column;gap:10px">'
     f'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12.5px;color:{AMBER};font-weight:800;letter-spacing:.04em">人工确认点 · 对外发送前</span>'
-    f'<span style="font-size:12.5px;color:{SUB}">流程里唯一停下来等人的地方；不回复不会自动发送</span>'
-    f'<span style="margin-left:auto;font-family:{MONO};font-size:11.5px;color:{SUB}">&lt;promise&gt;待确认&lt;/promise&gt;</span></div>'
+    f'<span style="font-size:12.5px;color:{SUB}">流程里唯一停下来等人的地方；不回复不会自动发送</span></div>'
     f'<div style="font-size:13.5px;line-height:1.5">3 项标【待律师核查】，报告与批注已在右侧。发给委托方前请定一下：</div>'
-    + question("", [option("A. 通过：生成三件套并落盘 输出/", "推荐：待核查项已标注在正文", True), option("B. 退回环节 3：补扫一遍验收与交付风险"), option("C. 先看报告，暂不发送")])
+    + question("", [option("A. 通过：生成三件套并落盘 输出/", "推荐：待核查项已标注在正文", True), option("B. 退回环节 3：补扫一遍验收与交付风险（重跑 3–7）"), option("C. 先看报告，暂不发送")])
     + f'<div style="font-size:12px;color:{SUB}">回复后重跑同一环节；这是第 7 轮，一轮一环节，进度都在 验收清单.json 里。</div></div>')
 run_stream = (
     user_msg(filechip("设备采购合同.pdf · 2.4 MB") + "<div>审查这份合同。立场：<b>甲方风险优先</b>，委托方：华南智造。</div>")
@@ -228,7 +233,6 @@ run_stream = (
     + stages_panel("审查流水线 · 验收清单.json · 15 / 15 通过", law_rows)
     + confirm_point)
 RUN = HEAD + frame(COLS3,
-    sidebar("law") + topbar("合同审查", chips=("环节 7 / 7", "第 7 轮 · 一轮一环节", "停机：待确认"),
-                            right=f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:8px;color:{SUB};font-size:13px">{ico("flow",18,SUB)}<span>它在流程画布的节点 n8</span></span>') +
+    sidebar("law") + topbar("合同审查", chips=("环节 7 / 7", "第 7 轮 · 一轮一环节", "停机：待确认"), actions=[("它在流程画布的节点 n8", "text", "flow")]) +
     chat_col(run_stream, inputbar("回「A」通过，或「B」退回环节 3；也可以说「R-002 改成…」直接改报告")) +
     right_col(right_head("交付物预览 · 合同风险审查报告", "done"), gen.run_right_body)) + TAIL

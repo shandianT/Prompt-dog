@@ -101,6 +101,6 @@ right_body = (
 
 design_actions = (f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;background:{AMBER};color:#ffffff;font-size:13px;font-weight:700">{ico("bolt",16,"#ffffff")}按这个建</span>')
 DESIGN = HEAD + frame(COLS3,
-    sidebar("dog", design_active=True) + topbar("设计 · 小餐馆排班工具", chips=("五问 5/5", "故事 7 · 0 通过", "H 假设 5"), right=design_actions) +
+    sidebar("dog", design_active=True) + topbar("设计 · 小餐馆排班工具", chips=("五问 5/5", "故事 7 · 0 通过", "H 假设 5"), actions=[("按这个建", "primary", "bolt")]) +
     main_col +
     right_col(right_head("图 · 假设 · 纠错", None, f'<span style="margin-left:auto;font-size:12px;color:{SUB}">复用 07 画布只读态</span>'), right_body)) + TAIL

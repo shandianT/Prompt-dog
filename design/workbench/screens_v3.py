@@ -108,14 +108,14 @@ report_main = (
     f'<div style="margin-left:auto">{five}</div></div>'
     f'{diagram}'
     f'<div style="display:flex;gap:12px">'
-    + _fix(HI, "卡点 · 获取招标文件", "商务每天刷平台，常漏标。打通招标平台后改关键词监控自动拉取，这一步从人定变自动。")
+    + _fix(HI, "卡点 · 获取招标文件", "商务每天刷平台，常漏标。怎么解：先打通招标平台，改关键词监控自动拉取，这一步从人定变自动。")
     + _fix(HI, "卡点 · 报价", "等财务出成本，整条流程常卡两天。接 ERP 成本口径后先自动出报价框架，人只定折扣。")
     + _fix(AMBER, "缺口 · 素材库", "历史业绩缺扫描件、人员证书没入库。补齐后每次投标回填，命中率越用越高。")
     + '</div></main>')
 report_right = (f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:8px;border:1px solid {LINE};background:{WHITE};color:{SUB};font-size:13px;font-weight:600;white-space:nowrap">{ico("download",16,SUB)}导出 PNG / PDF</span>'
                 f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:8px;background:{AMBER};color:#ffffff;font-size:13px;font-weight:700">{ico("bolt",16,"#ffffff",2)}先打通招标平台</span>')
 REPORT = HEAD + frame(COLS2, sidebar(flow_active=True) +
-    topbar("投标流程 · 汇报模式", chips=("只读", "19 个节点 · 23 条线", "示例数据"), right=report_right) + report_main) + TAIL
+    topbar("投标流程 · 汇报模式", chips=("只读", "19 个节点 · 23 条线", "示例数据"), actions=[("导出 PNG / PDF", "ghost", "download"), ("同意：先建标书撰写（楔子）", "primary", "check")]) + report_main) + TAIL
 
 # ===================================================================== 09 组件详情
 def _row(k, v, mono=False):
@@ -191,7 +191,7 @@ cd_right = (
     + '</div>'
     f'<div style="background:{FIXBG};border:1px solid {OK};border-radius:12px;padding:11px 14px;font-size:12.5px;line-height:1.6">'
     f'<b style="color:{OK}">v1.2 回归达标</b>　2 / 2 通过，日常在用。<br><span style="color:{AMBER};font-weight:700">v1.3 候选</span> 正在回归中，未过门槛前不发布——见 10 复盘与回归。</div>')
-COMPONENT_DETAIL = HEAD + frame(COLS3, sidebar(kennel_active=True) +
+COMPONENT_DETAIL = HEAD + frame(COLS3, sidebar("library") +
     topbar("组件库 · 合同审查", chips=("工作狗", "7 环节", "v1.2 已发布", "示例数据")) + cd_main +
     right_col(right_head("资产状态"), cd_right)) + TAIL
 
@@ -274,6 +274,6 @@ retro_right = (
     + f'<div style="font-size:11.5px;color:{SUB};padding-top:8px;line-height:1.6">满 10 条时合并；改版时抬升进 AGENTS.md 的「已知规律」，日志顶部清空重新累积。</div></div>'
     f'<div style="margin-top:auto;border:1px solid {LINE};border-radius:12px;padding:11px 14px;font-size:12px;color:{SUB};line-height:1.6">'
     f'数据来自这只狗自己的 <span style="font-family:{MONO}">复盘/日志.md</span> 与 <span style="font-family:{MONO}">验收清单.json</span>，不经过任何服务端。</div>')
-RETRO = HEAD + frame(COLS3, sidebar(kennel_active=True) +
+RETRO = HEAD + frame(COLS3, sidebar("retro") +
     topbar("复盘与回归 · 合同审查", chips=("对照期 2026-08", "候选 v1.3", "回归 1 / 2", "示例数据")) + retro_main +
     right_col(right_head("回流与规律"), retro_right)) + TAIL

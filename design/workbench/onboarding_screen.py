@@ -63,6 +63,6 @@ right = (
     + '</table></div>'
     f'<div style="background:{AMBER_SOFT};border:1px solid {AMBER};border-radius:12px;padding:10px 14px;font-size:12.5px;line-height:1.7;color:{INK}"><b>常见误区</b><br>先写 PRD 再开始 → 不用，先出图<br>等材料整理完整 → 不用，先丢进来<br>一次建很多只狗 → 先一只，跑通再说<br>每一步等确认 → 它只在不可逆动作前停</div>')
 ONBOARDING = HEAD + frame(COLS3,
-    sidebar("dog") + topbar("从 0 到 1", chips=("第 1 周", "第 2 步 / 5"), right=f'<span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:8px;color:{SUB};font-size:13px">{ico("help",18,SUB)}<span>跳过引导</span></span>') +
+    sidebar("dog") + topbar("从 0 到 1", chips=("第 1 周", "第 2 步 / 5"), actions=[("跳过引导", "text", "help")]) +
     main +
     right_col(right_head("准备与入口"), right)) + TAIL
