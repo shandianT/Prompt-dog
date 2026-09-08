@@ -166,8 +166,8 @@
 
   /* ---------- 今日回顾 / 主管数据（演示样本） ---------- */
   const review = {
-    numbers: { checked: 7, traced: 5, pending: 1, intents: 2 },
-    summary: ['今天打点 7 家、留痕 5 家，留痕率 71%。', '2 家有意向：金牌烤鸭（下周三带方案）、小巷串串（周四带方案）。', '1 家已打点未留痕：满堂红火锅，建议今天补录。'],
+    numbers: { checked: 6, traced: 4, pending: 1, intents: 2 },
+    summary: ['今天打点 6 家、留痕 4 家，留痕率 67%。', '2 家有意向：金牌烤鸭（下周三带方案）、小巷串串（周四带方案）。', '1 家已打点未留痕：满堂红火锅，建议今天补录。'],
     tomorrow: ['一马路 03 家未去：蜀香居（约访）、蓝湾咖啡、陶陶居', '逾期回访 2 家优先：好邻居便利店、康宁药房'],
   };
   const team = {
@@ -241,8 +241,8 @@
     const r = s.reminders.find((x) => x.id === 'r_bing'); if (r) r.status = 'done';
     if (!s.reminders.find((x) => x.id === 'r_bing_next')) s.reminders.push({ id: 'r_bing_next', storeId: 's_bing', source: '上次下一步约定', note: '9月16日 14:00 带方案到店', due: '2026-09-16', status: 'todo' });
     if (!s.reminders.find((x) => x.id === 'r_bing_tier')) s.reminders.push({ id: 'r_bing_tier', storeId: 's_bing', source: '分层规则', tier: 'A', cycle: 7, due: '2026-09-14', status: 'todo', dedupNote: '与「上次下一步约定」同店同周期，提醒合并展示' });
-    s.review.numbers = { checked: 8, traced: 6, pending: 1, intents: 3 };
-    s.review.summary = ['今天打点 8 家、留痕 6 家，留痕率 75%。', '3 家有意向：金牌烤鸭（下周三带方案）、小巷串串（周四带方案）、蜀香居（下周三带方案，预算 2–2.5k/月）。', '1 家已打点未留痕：满堂红火锅，建议今天补录。'];
+    s.review.numbers = { checked: 7, traced: 5, pending: 1, intents: 3 };
+    s.review.summary = ['今天打点 7 家、留痕 5 家，留痕率 71%。', '3 家有意向：金牌烤鸭（下周三带方案）、小巷串串（周四带方案）、蜀香居（下周三带方案，预算 2–2.5k/月）。', '1 家已打点未留痕：满堂红火锅，建议今天补录。'];
     s.demo.archived = true; s.demo.version = version || 'good';
   };
 

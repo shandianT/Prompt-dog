@@ -79,6 +79,13 @@
   .hm-tomo { display: flex; flex-direction: column; gap: 8px; }
   .hm-tomo .ti { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; line-height: 1.5; }
   .hm-tomo .ti .n { width: 22px; height: 22px; border-radius: 7px; background: var(--brand-soft); color: var(--brand-3); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none; margin-top: 1px; }
+  .hero .h-sub { margin-top: 6px; }
+  .hm-sum .st .t { white-space: nowrap; }
+  .entry .es { white-space: nowrap; }
+  .list .cell .cell-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .amber-bar { font-size: 12px; padding: 8px 10px; gap: 6px; }
+  .amber-bar .pill { font-size: 10.5px; padding: 3px 7px; }
+  .hero .h-sub { font-size: 12.5px; }
   .hm-seg { display: flex; justify-content: center; margin: 2px 0 10px; }
   .hm-seg .seg button { padding: 0 22px; }
   `);
@@ -96,7 +103,7 @@
   S.traced = (list) => list.filter((s) => s.route.trace === 'done');
   S.pendingStores = (list) => list.filter((s) => s.route.trace === 'pending');
   S.myTasks = () => App.state.tasks.filter((t) => isMe(t.toId) && (t.status === '待接受' || t.status === '执行中'));
-  S.dueReminders = () => App.state.reminders.filter((r) => r.status !== 'done' && r.due <= TODAY).sort((a, b) => (a.due < b.due ? -1 : 1));
+  S.dueReminders = () => App.state.reminders.filter((r) => { const s = App.store(r.storeId); return r.status !== 'done' && r.due <= TODAY && s && isMe(s.ownerId); }).sort((a, b) => (a.due < b.due ? -1 : 1));
   S.greeting = function () {
     if (App.state.ui.evening) return '今天辛苦了';
     const h = 10; // 演示时钟 10:30
@@ -121,7 +128,7 @@
   const PERMS = [
     { key: 'mic', title: '录音', sub: '语音留痕', icon: 'mic', tone: 'rose', purpose: '拜访后说一句话，由日日新大模型转写为文字并抽取字段；原文与音频保存在贵司租户内。', scope: '留痕转写，仅在你点击「开始」后录制，不做后台录音。', when: '点击麦克风时' },
     { key: 'geo', title: '定位', sub: '到店打点与扫街辅助', icon: 'map-pin', tone: 'brand', purpose: '开始拜访时记录到店位置与时间；进入街道时列出该街道客户。', scope: '仅在拜访期间打点，结束即停止；不记录额外轨迹。', when: '开始拜访 / 打开路线时' },
-    { key: 'cam', title: '相机', sub: '拍门头 / 名片 / 执照识别', icon: 'camera', tone: 'navy', purpose: '拍门头、名片、营业执照识别公司名与联系人；拍照识虫辅助现场应答。', scope: '照片仅用于识别与本次记录，不用于其他用途。', when: '点击拍照时' },
+    { key: 'cam', title: '相机', sub: '拍门头 / 名片 / 执照', icon: 'camera', tone: 'navy', purpose: '拍门头、名片、营业执照识别公司名与联系人；拍照识虫辅助现场应答。', scope: '照片仅用于识别与本次记录，不用于其他用途。', when: '点击拍照时' },
   ];
   S.togglePerm = function (key) {
     const p = App.state.perms; p[key] = !p[key]; App.save();
@@ -169,7 +176,7 @@
      ---------------------------------------------------------- */
   S.hero = function (opts) {
     const me = App.me();
-    return `<div class="hero"><div class="row between top" style="position:relative;z-index:1"><div class="grow"><div class="h-title">${esc(S.greeting())}，${esc(me.name)}</div><div class="h-sub">${App.fmt.mdw(TODAY)} · ${esc(me.org)} · ${esc(me.roleName)}（虚构）</div></div><span class="h-chip">${App.icon(opts.chipIcon || 'road', 12)}${esc(opts.chip)}</span></div>
+    return `<div class="hero"><div style="position:relative;z-index:1"><div class="row between"><div class="h-title grow ellipsis">${esc(S.greeting())}，${esc(me.name)}</div><span class="h-chip">${App.icon(opts.chipIcon || 'road', 12)}${esc(opts.chip)}</span></div><div class="h-sub ellipsis">${App.fmt.mdw(TODAY)} · ${esc(me.org)} · ${esc(me.roleName)}（虚构）</div></div>
       <div class="h-metrics tiles" style="position:relative;z-index:1">${opts.metrics.map((m) => `<div class="m" ${m.onclick ? `onclick="${m.onclick}"` : ''}><div class="v">${m.value}</div><div class="l">${esc(m.label)}</div></div>`).join('')}</div></div>`;
   };
   S.reviewCard = function () {
@@ -202,11 +209,11 @@
       ],
     });
 
-    const amber = pend.length ? `<div class="amber-bar" onclick="App.go('record',{storeId:'${pend[0].id}'})" style="cursor:pointer"><span class="ellipsis">${pend.length} 家已打点未留痕：${esc(pend.map((s) => (s.name.replace(/（.*?）/g, ''))).join('、'))}</span><span class="pill">30 秒留痕（设计目标）</span></div>` : '';
+    const amber = pend.length ? `<div class="amber-bar" onclick="App.go('record',{storeId:'${pend[0].id}'})" style="cursor:pointer"><span class="grow" style="line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${pend.length} 家已打点未留痕：${esc(pend.map((s) => (s.name.replace(/（.*?）/g, ''))).join('、'))}</span><span class="pill">30 秒留痕（设计目标）</span></div>` : '';
 
     const entries = `<div class="entry-grid">
       <div class="entry" onclick="App.go('visit-start')"><div class="ei">${App.icon('play', 22)}</div><div class="et">开始拜访</div><div class="es">到店一键打点</div></div>
-      <div class="entry" onclick="App.go('record')"><div class="ei em">${App.icon('mic', 22)}</div><div class="et">说一句留痕</div><div class="es">30 秒（设计目标）</div></div>
+      <div class="entry" onclick="App.go('record')"><div class="ei em">${App.icon('mic', 22)}</div><div class="et">说一句留痕</div><div class="es">30 秒 · 设计目标</div></div>
       <div class="entry" onclick="App.go('capture')"><div class="ei navy">${App.icon('camera', 22)}</div><div class="et">拍照建档</div><div class="es">门头 / 名片 / 执照</div></div></div>`;
 
     const routeCard = `<div class="card mt12"><div class="row between mb8"><div class="card-title" style="margin:0">今日路线 · ${list.length} 家</div><a class="small" onclick="App.tab('route')">查看路线 ›</a></div>
@@ -294,11 +301,11 @@
         <div class="hm-num ok"><div class="v">${n.traced}</div><div class="l">已留痕</div></div>
         <div class="hm-num warn"><div class="v">${n.pending}</div><div class="l">未留痕</div></div>
         <div class="hm-num ai"><div class="v">${n.intents}</div><div class="l">意向客户</div></div></div>`;
-      const sum = `<div class="hm-sum"><div class="st"><div class="t">${App.icon('sparkle', 16)}AI 即时总结 · 日日新大模型</div><span class="ai-tag">按已归档记录实时生成</span></div>
+      const sum = `<div class="hm-sum"><div class="st"><div class="t">${App.icon('sparkle', 16)}AI 即时总结 · 日日新大模型</div><span class="ai-tag">实时生成</span></div>
         ${rv.summary.map((l) => `<p>${esc(l)}</p>`).join('')}
         <div class="sf">留痕率 ${rate}%（已留痕 / 已打点）· 门槛 ${st.settings.threshold} 分 · AI 派生，不改正式值</div></div>`;
       const pendSec = `<div class="card hm-pend"><div class="row between mb8"><div class="card-title" style="margin:0">已打点未留痕 · ${pend.length}</div>${App.ui.chip('仅本人可见', 'warn', { sm: true, icon: 'eye-off' })}</div>
-        ${pend.length ? pend.map((s) => `<div class="row" style="padding:6px 0"><div class="hm-tile warn">${esc(App.initials(s.name))}</div><div class="grow"><div class="bold ellipsis">${esc(s.name)}</div><div class="muted small">${esc(s.route.checkin || s.route.time)} 打点${s.route.checkout ? ` · ${esc(s.route.checkout)} 离店` : ''} · ${esc(s.street)}</div></div>${App.ui.btn('一键补录', { tone: 'primary', size: 'sm', icon: 'mic', onclick: `App.go('record',{storeId:'${s.id}'})` })}</div>`).join('') : `<div class="muted small">今日打点门店均已留痕</div>`}</div>`;
+        ${pend.length ? pend.map((s) => `<div class="row" style="padding:6px 0"><div class="hm-tile warn">${esc(App.initials(s.name))}</div><div class="grow"><div class="bold ellipsis">${esc(s.name)}</div><div class="muted small">${esc(s.route.checkin || s.route.time)} 打点${s.route.checkout ? ` · ${esc(s.route.checkout)} 离店` : ''}</div></div>${App.ui.btn('一键补录', { tone: 'primary', size: 'sm', onclick: `App.go('record',{storeId:'${s.id}'})` })}</div>`).join('') : `<div class="muted small">今日打点门店均已留痕</div>`}</div>`;
       const intentSec = `<div class="card"><div class="card-title">意向客户 · ${intents.length}</div>
         ${intents.length ? intents.map((s) => `<div class="row" style="padding:7px 0" onclick="App.go('customer',{id:'${s.id}'})"><div class="hm-tile ${s.tier === 'A' ? 'brand' : 'ai'}">${esc(App.initials(s.name))}</div><div class="grow"><div class="row"><span class="bold ellipsis">${esc(s.name)}</span>${App.ui.tierChip(s.tier, { sm: true })}</div><div class="muted small ellipsis">下一步：${esc(s.lastNext)}</div></div>${App.icon('chevron-right', 16)}</div>`).join('') : `<div class="muted small">今日暂无新增意向客户</div>`}</div>`;
       const tomo = `<div class="card"><div class="card-title">${App.icon('road', 16)} 明日路线建议 ${App.ui.chip('AI 建议', 'ai', { sm: true })}</div><div class="hm-tomo">${rv.tomorrow.map((t, i) => `<div class="ti"><div class="n">${i + 1}</div><div>${esc(t)}</div></div>`).join('')}</div>
