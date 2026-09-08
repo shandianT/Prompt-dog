@@ -22,7 +22,7 @@
     .need-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
     .need-grid .ni .l { font-size: 11.5px; color: var(--ink-3); }
     .need-grid .ni .v { font-size: 14px; font-weight: 600; margin-top: 2px; line-height: 1.4; }
-    .need-grid .ni .v .src { font-size: 10.5px; color: var(--ai); font-weight: 500; margin-left: 4px; }
+    .need-grid .ni .l .src { font-size: 10.5px; color: var(--ai); font-weight: 600; margin-left: 2px; }
     .need-grid .ni.wide { grid-column: 1 / -1; }
     .tp-group .card-title { justify-content: space-between; }
     .tp { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; }
@@ -72,7 +72,7 @@
     .cover .cv-kv { font-size: 12.5px; opacity: .9; line-height: 1.7; }
     .cover .cv-kv b { font-weight: 700; opacity: 1; }
     .cover .cv-total { font-size: 24px; font-weight: 800; letter-spacing: -.01em; margin-top: 8px; }
-    .cover .cv-total small { font-size: 12px; font-weight: 500; opacity: .8; margin-left: 6px; }
+    .cover .cv-total small { display: block; font-size: 12px; font-weight: 500; opacity: .8; margin-top: 2px; letter-spacing: 0; }
     .cover .cv-foot { margin-top: 10px; font-size: 11px; opacity: .7; }
     .share-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .share-tile { background: var(--surface); border-radius: 16px; padding: 14px 8px 12px; text-align: center; box-shadow: var(--shadow-xs); border: 1px solid rgba(17,24,39,.04); }
@@ -106,8 +106,9 @@
     const budget = val('客户预算') || val('预计金额') || (store.id === 's_bing' ? '¥2,000–2,500 / 月' : '');
     const next = val('下一步') || store.lastNext || '';
     const who = (val('客户职位') || store.contact.role || '') + ' ' + (val('客户名字') || store.contact.name || '');
-    const date = v ? v.time.slice(0, 10) : (store.lastVisit || App.TODAY);
-    return { need, budget, next, who: who.trim(), date, visitId: v ? v.id : null, demo, score: v && v.score ? v.score.total : null };
+    const date = v ? v.time.slice(0, 10) : (store.id === 's_bing' ? App.TODAY : (store.lastVisit || App.TODAY));
+    const visitCount = App.visitsOf(store.id).length || (store.id === 's_bing' ? 1 : 0);
+    return { need, budget, next, who: who.trim(), date, visitCount, visitId: v ? v.id : null, demo, score: v && v.score ? v.score.total : null };
   }
   function storeCard(store, sm) {
     const tier = App.ui.tierChip(store.tier, { sm: !!sm });
@@ -188,8 +189,8 @@
       const sm = summary(store);
       const ui = App.state.ui;
       const head = `<div class="pg-head"><div class="pg-t">GTM 助手</div><div class="pg-s">需求摘要已带入 · 选模版 · AI 填变量生成方案与报价 · 不输出专业内容</div></div>`;
-      const cell = (l, v, wide, src) => `<div class="ni ${wide ? 'wide' : ''}"><div class="l">${l}</div><div class="v ${v ? '' : 'missing'}" ${v ? '' : 'style="color:var(--warn)"'}>${v ? esc(v) : '待补充 · 不编造'}${v && src ? `<span class="src">${src}</span>` : ''}</div></div>`;
-      const need = `<div class="card"><div class="card-title" style="justify-content:space-between">需求摘要<span class="small muted" style="font-weight:500">来自 ${App.fmt.md(sm.date)} 留痕${sm.score ? ` · 质量分 ${sm.score}` : ''}${sm.demo ? ' · 演示抽取' : ''}</span></div><div class="need-grid">${cell('现场诉求', sm.need, false, 'AI 抽取')}${cell('客户预算', sm.budget, false, '客户口述')}${cell('联系人', sm.who)}${cell('下一步', sm.next)}${cell('历史沟通 · 照片', `${App.visitsOf(store.id).length + (sm.visitId ? 0 : 0)} 次留痕 · 门头 1 张 · 风险点位 1 张（识虫：德国小蠊 86%）`, true)}</div></div>`;
+      const cell = (l, v, wide, src) => `<div class="ni ${wide ? 'wide' : ''}"><div class="l">${l}${v && src ? `<span class="src">· ${src}</span>` : ''}</div><div class="v" ${v ? '' : 'style="color:var(--warn)"'}>${v ? esc(v) : '待补充 · 不编造'}</div></div>`;
+      const need = `<div class="card"><div class="card-title" style="justify-content:space-between">需求摘要<span class="small muted" style="font-weight:500">来自 ${App.fmt.md(sm.date)} 留痕${sm.score ? ` · 质量分 ${sm.score}` : ''}${sm.demo ? ' · 演示抽取' : ''}</span></div><div class="need-grid">${cell('现场诉求', sm.need, false, 'AI 抽取')}${cell('客户预算', sm.budget, false, '客户口述')}${cell('联系人', sm.who)}${cell('下一步', sm.next)}${cell('历史沟通 · 照片', `${sm.visitCount} 次留痕 · 门头 1 张 · 风险点位 1 张（识虫：德国小蠊 86%）`, true)}</div></div>`;
       const seg = `<div class="card"><div class="card-title" style="justify-content:space-between">客户类别${App.ui.chip('AI 推荐 · ' + catOf(store), 'ai', { sm: true })}</div><div class="seg block">${G().categories.map((c) => `<button class="${c === cat ? 'active' : ''}" onclick="S_GTM.cat('${c}')">${esc(c)}</button>`).join('')}</div><div class="small muted mt8">依据：${esc(cat)} + ${esc(sm.need || '现场诉求待补充')} → 推荐 ${recommended(cat, store).map((t) => t.kind).join(' / ') || '暂无匹配模版'}</div></div>`;
       const groups = ['方案', '报价单', '保险单'].map((kind) => {
         const list = templatesFor(cat).filter((t) => t.kind === kind);

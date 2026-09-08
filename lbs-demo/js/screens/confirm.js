@@ -379,15 +379,16 @@
       const f = ex.fields;
       const name = (f.商机名称 && f.商机名称.v) || `${store.name.replace(/（.*?）/g, '')} · 综合服务`;
       const amt = (f.预计金额 && f.预计金额.v) || '';
-      const opps = App.oppsOf(storeId).filter((o) => o.id !== 'o_bing' || A.choice);
+      const opps = App.oppsOf(storeId);
+      const recNew = !opps.length;
       const sub = `2026-09-07 10:45 · 语音 · ${App.state.settings.firstVisit ? '首次拜访' : '再次拜访'} · ${App.me().name}`;
       let html = `${ui().phaseBar(PHASES, 3)}
         <div class="ar-head"><div class="t"><span class="ar-ok">${App.icon('check', 18)}</span>归档完成 · 选择商机</div><div class="s">不自动建商机，由你判断：新建、更新已有，或暂不 · 避免同一客户跑三次建出三条商机</div></div>
         ${storeCard(store, ui().chip('已留痕', 'ok'), sub)}`;
       if (!A.choice) {
-        html += `<div class="card ar-opt rec"><span class="rec-tag">AI 推荐</span>
+        html += `<div class="card ar-opt ${recNew ? 'rec' : ''}">${recNew ? '<span class="rec-tag">AI 推荐</span>' : ''}
             <div class="card-title">新建商机</div>
-            <div class="tiny muted">该客户暂无进行中的商机，本次沟通已有明确需求与预算</div>
+            <div class="tiny muted">${recNew ? '该客户暂无进行中的商机，本次沟通已有明确需求与预算' : '该客户已有进行中的商机，仅在需求确属另一单时新建'}</div>
             <div class="ar-form">
               <div class="ar-row"><label>名称</label><input id="arName" value="${esc(name)}" oninput="S_CONFIRM.arch.oppName=this.value"></div>
               <div class="ar-row"><label>预计金额</label><input id="arAmt" value="${esc(amt)}" placeholder="待补充（不编造）" oninput="S_CONFIRM.arch.oppAmt=this.value"></div>
@@ -395,8 +396,9 @@
             </div>
             <div class="mt12">${ui().btn('新建商机', { tone: 'primary', block: true, onclick: "S_CONFIRM.choose('新建商机')" })}</div>
           </div>
-          <div class="card ar-opt">
+          <div class="card ar-opt ${recNew ? '' : 'rec'}">${recNew ? '' : '<span class="rec-tag">AI 推荐</span>'}
             <div class="card-title">更新已有商机</div>
+            ${opps.length ? '<div class="tiny muted">同一客户多次拜访归到同一条商机，避免重复建单</div>' : ''}
             ${opps.length ? opps.map((o) => `<div class="ar-opp" onclick="S_CONFIRM.choose('更新已有商机','${o.id}')"><span class="rd"></span><div class="grow"><div class="row between"><span class="n ellipsis">${esc(o.name)}</span>${ui().stageChip(o.stage)}</div><div class="m">预计 ${esc(o.amount)} · 负责人 ${esc(o.ownerName)} · 更新 ${esc(App.fmt.md(o.updatedAt))}</div></div></div>`).join('')
             : `<div class="tiny muted" style="padding:6px 0 2px">该客户暂无商机 · 若有进行中的商机，本次留痕将关联到它，而不是再建一条</div>`}
           </div>
@@ -432,6 +434,17 @@
     const st = App.state;
     if (storeId === 's_bing') {
       D.archiveDemoVisit(st, version, choice);
+      // 以确认页最终字段 / 评分 / 原文覆盖归档记录（data.js 只按样例版本重建）
+      const v = App.visit('v_bing_new');
+      if (v && S.key === storeId + '|' + version && S.fields) {
+        v.fields = App.clone(S.fields); v.score = App.clone(S.score); v.transcript = S.transcript(); v.type = st.settings.firstVisit ? '首次拜访' : '再次拜访';
+        const store = App.store('s_bing'); const g2 = S.gate2;
+        if (g2 && g2.pass && g2.date && store) {
+          const note = `${App.fmt.md(g2.date)}${g2.hm ? ' ' + g2.hm : ''}${g2.before ? ' 前' : ''} ${g2.action}`;
+          store.lastNext = note; store.nextDue = g2.date;
+          const r = st.reminders.find((x) => x.id === 'r_bing_next'); if (r) { r.note = note; r.due = g2.date; }
+        }
+      }
       const o = App.opp('o_bing');
       if (o && choice === '新建商机') { if (A.oppName && A.oppName.trim()) o.name = A.oppName.trim(); if (A.oppAmt && A.oppAmt.trim()) o.amount = A.oppAmt.trim(); }
     } else {

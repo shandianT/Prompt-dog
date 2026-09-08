@@ -62,8 +62,10 @@
   .cu-hero .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
   .cu-hero .tags .chip { background: rgba(255,255,255,.92); }
   .cu-hero .rule { font-size: 11px; opacity: .7; margin-top: 8px; }
-  .cu-hero .own { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.14); font-size: 12.5px; }
-  .cu-hero .own .a { display: flex; align-items: center; gap: 6px; }
+  .cu-hero .own { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.14); font-size: 12.5px; white-space: nowrap; }
+  .cu-hero .own .a { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .cu-hero .own .a span { overflow: hidden; text-overflow: ellipsis; }
+  .cu-hero .own .lv { flex: none; opacity: .75; }
   .cu-hero .own .a .avatar { width: 22px; height: 22px; font-size: 10px; background: rgba(255,255,255,.2); }
   /* 五个标签 */
   .cu-tabs { display: flex; background: var(--surface-3); border-radius: 12px; padding: 3px; gap: 2px; margin-bottom: 12px; position: sticky; top: -8px; z-index: 5; }
@@ -302,14 +304,14 @@
       <div class="addr">${App.icon('map-pin', 13)}<span>${esc(s.address)}</span></div>
       <div class="tags">${App.ui.coopChip(s.coop)}${App.ui.tierChip(s.tier)}${s.dupSuspect ? App.ui.chip('疑似重复', 'danger', { icon: 'alert' }) : ''}${S.crmChip(s)}</div>
       <div class="rule" onclick="S_CUS.tierRuleInfo()">分层由规则计算 · 规则 v3 · 不可手改 ›</div>
-      <div class="own"><div class="a">${App.ui.avatar(s.ownerName)}<span>负责人 ${esc(s.ownerName)}${S.isMe(s.ownerId) ? '（我）' : ''}</span></div><span style="opacity:.75">${s.lastVisit ? `上次拜访 ${App.fmt.md(s.lastVisit)} · ${App.fmt.rel(s.lastVisit)}` : '尚未拜访'}</span></div>
+      <div class="own"><div class="a">${App.ui.avatar(s.ownerName)}<span>负责人 ${esc(s.ownerName)}${S.isMe(s.ownerId) ? '（我）' : ''}</span></div><span class="lv">${s.lastVisit ? `上次 ${App.fmt.md(s.lastVisit)} · ${App.fmt.rel(s.lastVisit)}` : '尚未拜访'}</span></div>
     </div>`;
   };
   S.tabOverview = function (s) {
     const c = s.contact || {};
     const kv = [['联系人', c.name ? `${esc(c.name)} <span class="muted">· ${esc(c.role || '—')}</span>` : '<span class="chip warn sm">待补充</span>'], ['电话', c.name ? `${S.maskPhone(s)} <span class="muted">· 脱敏显示</span>` : '<span class="muted">—</span>']];
-    if (s.coop === 'active') { kv.push(['合作起始', App.fmt.md(s.since || '')]); kv.push(['合同到期', s.contractEnd ? `${App.fmt.md(s.contractEnd)} <span class="muted">· ${App.fmt.days(s.contractEnd)} 天后 · 来自 CRM</span>` : '<span class="muted">—</span>']); kv.push(['服务项', (s.services || []).map((x) => App.ui.chip(x, 'brand', { sm: true })).join(' ') || '—']); }
-    if (s.coop === 'paused') { kv.push(['停做时间', App.fmt.md(s.pausedAt || '')]); kv.push(['停做原因', esc(s.pausedReason || '—')]); }
+    if (s.coop === 'active') { kv.push(['合作起始', s.since ? `${esc(s.since)} <span class="muted">· 来自 CRM</span>` : '<span class="muted">—</span>']); kv.push(['合同到期', s.contractEnd ? `${esc(s.contractEnd)} <span class="muted">· ${App.fmt.days(s.contractEnd)} 天后</span>` : '<span class="muted">—</span>']); kv.push(['服务项', (s.services || []).map((x) => App.ui.chip(x, 'brand', { sm: true })).join(' ') || '—']); }
+    if (s.coop === 'paused') { kv.push(['停做时间', esc(s.pausedAt || '—')]); kv.push(['停做原因', esc(s.pausedReason || '—')]); }
     if (s.isNew) kv.push(['新开', `${App.fmt.md(s.newSince)} 起 <span class="muted">· 扫街发现</span>`]);
     if (s.group) kv.push(['所属集团', `${esc(s.group.name)} <span class="muted">· ${s.group.sites} 个站点 · 协作门店按分配可见</span>`]);
     kv.push(['回访周期', s.tier && s.tier !== 'pending' ? `${App.tierCycle(s.tier)} 天 <span class="muted">· 按分层规则</span>${s.nextDue ? ` · 下次 ${App.fmt.md(s.nextDue)}` : ''}` : '<span class="muted">待判定 · 归档后按规则计算</span>']);

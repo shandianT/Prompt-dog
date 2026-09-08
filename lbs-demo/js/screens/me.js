@@ -16,7 +16,8 @@
   .me-acc .avatar.lg { width: 60px; height: 60px; font-size: 24px; background: rgba(255,255,255,.18); border: 2px solid rgba(255,255,255,.35); box-shadow: 0 6px 16px rgba(0,0,0,.2); }
   .me-acc .nm { font-size: 21px; font-weight: 800; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
   .me-acc .nm .fic { font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.22); letter-spacing: .04em; }
-  .me-acc .rl { font-size: 13px; opacity: .85; margin-top: 4px; }
+  .me-acc .rl { font-size: 13px; opacity: .85; margin-top: 4px; line-height: 1.4; }
+  .me-acc .top .grow { min-width: 0; }
   .me-acc .sw { height: 30px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28); color: #fff; font-size: 12.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; flex: none; }
   .me-acc .stats { display: flex; gap: 8px; margin-top: 14px; }
   .me-acc .stats .m { flex: 1; background: rgba(255,255,255,.1); border-radius: 12px; padding: 9px 10px; }

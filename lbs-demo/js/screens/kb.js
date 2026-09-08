@@ -76,14 +76,18 @@
   const canSee = (k) => k.role !== '主管可见' || App.isMgr();
   const chat = () => { if (!App.state.ui.chat) App.state.ui.chat = []; return App.state.ui.chat; };
   const now = () => { const d = new Date(); return `${App.TODAY} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
-  const firstSentence = (s) => (s || '').split(/[；;。]/)[0] + '。';
+  const sentence = (s, j) => { const parts = (s || '').split(/[；;。]/).filter(Boolean); return (parts[Math.min(j || 0, parts.length - 1)] || '').trim() + '。'; };
+  const firstSentence = (s) => sentence(s, 0);
   const UNKNOWN_Q = '你们能保证一年不再有老鼠吗？';
 
   // 关键词匹配（不做语义猜测：命中数为 0 即未命中）
   function match(q) {
+    // 承诺 / 保证类问题知识库无条目 → 未命中（不用相近条目冒充答案）
+    if (/保证|承诺|包.*不再|永远|100%/.test(q)) return null;
     let best = null, bestN = 0;
     KB().forEach((k) => {
-      const n = (k.keywords || []).filter((w) => q.includes(w)).length + (q.includes(k.q.replace(/[？?]/g, '')) ? 3 : 0);
+      const hit = (k.keywords || []).filter((w) => q.includes(w));
+      const n = hit.filter((w) => !hit.some((o) => o !== w && o.includes(w))).length + (q.includes(k.q.replace(/[？?]/g, '')) ? 3 : 0);
       if (n > bestN) { best = k; bestN = n; }
     });
     return best;
@@ -111,7 +115,7 @@
     if (m.kind === 'hit') {
       const k = article(m.kbId); if (!k) return '';
       const open = m.open || {};
-      const src = k.sources.map((s, j) => `<div class="si"><div class="row between" onclick="S_KB.toggleSrc(${i},${j})"><div class="grow"><b>${esc(s.title)}</b><div class="loc">${esc(s.loc)}${j === 0 ? ' · 主要依据' : ''}</div></div>${App.icon(open[j] ? 'chevron-down' : 'chevron-right', 16)}</div>${open[j] ? `<div class="quote"><div class="q-cap">原文摘录（演示）</div>${esc(firstSentence(k.answer))}</div>` : ''}</div>`).join('');
+      const src = k.sources.map((s, j) => `<div class="si"><div class="row between" onclick="S_KB.toggleSrc(${i},${j})"><div class="grow"><b>${esc(s.title)}</b><div class="loc">${esc(s.loc)}${j === 0 ? ' · 主要依据' : ''}</div></div>${App.icon(open[j] ? 'chevron-down' : 'chevron-right', 16)}</div>${open[j] ? `<div class="quote"><div class="q-cap">原文摘录（演示）</div>${esc(sentence(k.answer, j))}</div>` : ''}</div>`).join('');
       const faq = related(k.q, k.id, 2);
       return bubbleAI(`${esc(k.answer)}<div class="kb-src"><div class="st">出处 · ${k.sources.length} 条 · 点击展开原文</div>${src}</div><div class="kb-acts">${App.ui.btn('打开条目', { tone: 'secondary', size: 'xs', icon: 'doc', onclick: `App.go('kb-article',{id:'${k.id}'})` })}${App.ui.btn('有帮助', { tone: 'ghost', size: 'xs', icon: 'thumbs', onclick: "App.toast('已反馈：有帮助',{icon:'check'})" })}${App.ui.btn('不准确', { tone: 'ghost', size: 'xs', onclick: "App.toast('已反馈：不准确，回流管理员复核',{icon:'send'})" })}</div>${faq.length ? `<div class="kb-src"><div class="st">相关 FAQ</div><div class="kb-faq">${faq.map((f) => `<button onclick="S_KB.ask('${f.id}')">${esc(f.q)}</button>`).join('')}</div></div>` : ''}`, `日日新大模型 · 依据 ${k.sources.length} 条出处 · ${esc(k.kind)}`);
     }
@@ -189,7 +193,7 @@
       const visible = KB().filter(canSee);
       const chips = KB().map((k) => `<button onclick="S_KB.ask('${k.id}')">${canSee(k) ? '' : App.icon('lock', 12)}${esc(k.q)}</button>`).join('') + `<button class="unknown" onclick="S_KB.askUnknown()">${esc(UNKNOWN_Q)}</button>`;
       const hero = `<div class="hero ai kb"><div class="h-eyebrow">知识库 · 日日新大模型检索</div><div class="h-title">知识库随身问</div><div class="h-sub">答案带出处 · 未命中不编答案 · 按角色权限（${esc(me.roleName)}）</div><div class="h-tags"><span>10 秒查到（设计目标）</span><span>条目 ${visible.length} 条可见</span><span>未命中回流管理员</span></div></div>`;
-      const entries = `<div class="kb-entries"><div class="kb-entry" onclick="App.go('pest')"><div class="ei">${App.icon('camera', 20)}</div><div class="grow"><div class="et">拍照识虫</div><div class="es">种类 / 习性 / 危害 / 处置</div></div>${App.icon('chevron-right', 16)}</div><div class="kb-entry" onclick="S_KB.history()"><div class="ei navy">${App.icon('history', 20)}</div><div class="grow"><div class="et">历史提问</div><div class="es">${c.filter((m) => m.role === 'me').length} 条 · 未命中 ${(App.state.kbMissLog || []).length}</div></div>${App.icon('chevron-right', 16)}</div></div>`;
+      const entries = `<div class="kb-entries"><div class="kb-entry" onclick="App.go('pest')"><div class="ei">${App.icon('camera', 20)}</div><div class="grow"><div class="et">拍照识虫</div><div class="es">种类 · 习性 · 处置</div></div>${App.icon('chevron-right', 16)}</div><div class="kb-entry" onclick="S_KB.history()"><div class="ei navy">${App.icon('history', 20)}</div><div class="grow"><div class="et">历史提问</div><div class="es">已问 ${c.filter((m) => m.role === 'me').length} · 未命中 ${(App.state.kbMissLog || []).length}</div></div>${App.icon('chevron-right', 16)}</div></div>`;
       const suggest = `<div class="section" style="margin-top:6px"><div><div class="eyebrow">${c.length ? '相关 FAQ · 继续问' : '客户常问 · 点一下就问'}</div><h3 style="font-size:15px">${c.length ? '换个问题' : '试试这些问题'}</h3></div>${c.length ? `<div class="more" onclick="S_KB.clear()">清空对话</div>` : `<div class="more">按点击热度</div>`}</div><div class="suggest wrap">${chips}</div>`;
       const body = c.length ? c.map(renderMsg).join('') : renderMsg({ role: 'ai', kind: 'welcome' });
       return `${hero}${entries}${suggest}<div class="chat kb-chat mt12" id="kbChat">${body}</div>`;
@@ -212,7 +216,7 @@
       const k = article(p.id);
       if (!k) return App.ui.empty({ icon: 'inbox', title: '条目不存在', sub: '该知识条目未纳入演示' });
       if (!canSee(k)) return `<div class="card"><div class="row"><div class="kb-av gray">${App.icon('lock', 16)}</div><div class="grow"><div class="card-title" style="margin:0">仅主管可见</div><div class="small muted">该条目按角色权限限制，地推销售不可查看</div></div></div></div>${App.ui.btn('申请查看权限', { tone: 'primary', block: true, onclick: "App.toast('已向主管 李华 发送权限申请（演示）',{icon:'send'})" })}`;
-      const src = k.sources.map((s, j) => `<div class="si"><div class="row between"><div class="grow"><b>${esc(s.title)}</b><div class="loc">${esc(s.loc)}</div></div>${App.ui.chip(j === 0 ? '主要依据' : '佐证', j === 0 ? 'ai' : 'gray', { sm: true })}</div><div class="quote"><div class="q-cap">原文摘录（演示）</div>${esc(firstSentence(k.answer))}</div></div>`).join('');
+      const src = k.sources.map((s, j) => `<div class="si"><div class="row between"><div class="grow"><b>${esc(s.title)}</b><div class="loc">${esc(s.loc)}</div></div>${App.ui.chip(j === 0 ? '主要依据' : '佐证', j === 0 ? 'ai' : 'gray', { sm: true })}</div><div class="quote"><div class="q-cap">原文摘录（演示）</div>${esc(sentence(k.answer, j))}</div></div>`).join('');
       return `<div class="card kb-art"><div class="row top between"><div class="kb-art-q grow">${esc(k.q)}</div>${App.ui.chip(k.kind, 'brand', { sm: true })}</div><div class="divider"></div><div class="eyebrow mb8">答案 · 来自知识库，非 AI 生成</div><div class="ans">${esc(k.answer)}</div><div class="kb-src"><div class="st">出处 · ${k.sources.length} 条</div>${src}</div></div>
       <div class="card"><div class="card-title">适用范围</div><div class="chips">${k.scope.map((s) => App.ui.chip(s, 'outline')).join('')}</div><div class="kb-meta mt12"><div class="mi"><div class="l">可见角色</div><div class="v">${esc(k.role)}</div></div><div class="mi"><div class="l">命中次数</div><div class="v">${k.hits} 次</div></div><div class="mi"><div class="l">版本</div><div class="v">v2 · 2026-08（演示）</div></div><div class="mi"><div class="l">更新</div><div class="v">管理员 · 企业管理后台</div></div></div></div>
       <div class="card"><div class="card-title">这条回答对现场有帮助吗？</div><div class="btn-row">${App.ui.btn('有帮助', { tone: 'secondary', size: 'sm', icon: 'thumbs', onclick: "App.toast('已反馈：有帮助',{icon:'check'})" })}${App.ui.btn('不准确', { tone: 'ghost', size: 'sm', onclick: "App.toast('已反馈：不准确，回流管理员复核',{icon:'send'})" })}${App.ui.btn('补充建议', { tone: 'ghost', size: 'sm', onclick: "App.prompt('补充建议','例：客户常追问药剂气味…',()=>App.toast('已提交管理员（演示）',{icon:'send'}))" })}</div></div>`;
