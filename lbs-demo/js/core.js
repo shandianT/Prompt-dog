@@ -6,12 +6,14 @@
 (function () {
   'use strict';
 
-  const TAB_ROOTS = ['today', 'customers', 'assistant', 'me'];
+  // 五 Tab：首页 / 路线 / 客户（中间凸起）/ 知识库 / 我的
+  const TAB_ROOTS = ['home', 'route', 'customers', 'kb', 'me'];
   const TABS = [
-    { id: 'today', label: '今日', icon: 'sun' },
-    { id: 'customers', label: '客户', icon: 'store' },
-    { id: 'assistant', label: '工作助手', icon: 'sparkle' },
-    { id: 'me', label: '我的', icon: 'user' },
+    { id: 'home', label: '首页', glyph: '首' },
+    { id: 'route', label: '路线', glyph: '路' },
+    { id: 'customers', label: '客户', glyph: '客', center: true },
+    { id: 'kb', label: '知识库', glyph: '知' },
+    { id: 'me', label: '我的', glyph: '我' },
   ];
 
   const App = window.App = {
@@ -174,7 +176,7 @@
   App.reset = function (silent) {
     App.state = App.freshState();
     App.save();
-    App.tab('today');
+    App.tab('home');
     if (!silent) App.toast('演示数据已重置', { icon: 'refresh' });
   };
   App.me = () => App.state.users[App.state.role];
@@ -183,7 +185,7 @@
     if (!App.state.users[role]) return;
     App.state.role = role;
     App.save();
-    App.tab('today');
+    App.tab('home');
     App.toast(`已切换为 ${App.me().name} · ${App.me().roleName}`, { icon: 'user' });
   };
   // 便捷取数
@@ -196,8 +198,11 @@
   App.visitsOf = (storeId) => App.state.visits.filter((v) => v.storeId === storeId).sort((a, b) => (a.time < b.time ? 1 : -1));
   App.tasksOf = (storeId) => App.state.tasks.filter((t) => t.storeId === storeId);
   App.primaryOpp = (storeId) => { const s = App.store(storeId); return App.opp(s && s.primaryOppId) || App.oppsOf(storeId)[0] || null; };
-  App.tierLabel = (t) => ({ unknown: '未知', none: '无当前意向', 20: '20%', 50: '50%', 80: '80%', pending: '待判断' }[t] || String(t));
-  App.tierTone = (t) => ({ unknown: 'gray', none: 'gray', 20: 'info', 50: 'warn', 80: 'brand', pending: 'gray' }[t] || 'gray');
+  // 四象限分层（贵司现有分层标准；阈值为演示值）：A 主攻 / B 培育 / C 维护 / D 观察 / 待判定
+  App.TIERS = { A: { label: 'A · 主攻', tone: 'brand', cycle: 7 }, B: { label: 'B · 培育', tone: 'ai', cycle: 14 }, C: { label: 'C · 维护', tone: 'ok', cycle: 30 }, D: { label: 'D · 观察', tone: 'gray', cycle: 60 }, pending: { label: '待判定', tone: 'outline', cycle: null } };
+  App.tierLabel = (t) => (App.TIERS[t] || App.TIERS.pending).label;
+  App.tierTone = (t) => (App.TIERS[t] || App.TIERS.pending).tone;
+  App.tierCycle = (t) => (App.TIERS[t] || App.TIERS.pending).cycle;
 
   /* ----------------------------------------------------------
      浮层：toast / sheet / modal
@@ -285,7 +290,13 @@
     if (c.status === 'closed') return ui.chip('客诉已结', 'gray');
     return '';
   };
-  ui.stageChip = (stage) => ui.chip(stage, ({ 待触达: 'gray', 已触达: 'info', 需求确认: 'info', 方案沟通: 'warn', 报价商务: 'warn', 待签约: 'brand', 已赢单: 'ok', 已丢单: 'danger', 暂停培育: 'gray', 待判断: 'gray' }[stage] || 'gray'));
+  ui.stageChip = (stage) => ui.chip(stage, ({ 线索: 'gray', 意向: 'info', 方案: 'warn', 报价: 'warn', 审批中: 'warn', 待签约: 'brand', 已成交: 'ok', 已流失: 'danger', 待触达: 'gray', 已触达: 'info', 需求确认: 'info', 方案沟通: 'warn', 报价商务: 'warn', 已赢单: 'ok', 已丢单: 'danger', 暂停培育: 'gray' }[stage] || 'gray'));
+  // 留痕状态：done 已留痕 / running 进行中 / pending 已打点未留痕 / todo 未去
+  ui.traceChip = (st, opts) => ui.chip(({ done: '已留痕', running: '进行中', pending: '未留痕', todo: '未去', draft: '草稿' }[st] || st), ({ done: 'ok', running: 'info', pending: 'warn', todo: 'gray', draft: 'gray' }[st] || 'gray'), opts);
+  // 评分环（0–100，门槛）
+  ui.scoreRing = (score, threshold = 60, size = 92) => { const r = (size - 10) / 2, c = 2 * Math.PI * r, pct = Math.max(0, Math.min(100, score)) / 100, col = score >= threshold ? 'var(--ok)' : 'var(--warn)'; return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--surface-3)" stroke-width="9"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${col}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${c * pct} ${c}" transform="rotate(-90 ${size / 2} ${size / 2})"/><text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" font-size="${size * .3}" font-weight="700" fill="${col}">${score}</text></svg>`; };
+  // 阶段进度条（录音 → 结构化 → 确认 → 归档）
+  ui.phaseBar = (labels, current) => `<div class="phasebar">${labels.map((l, i) => `<div class="ph ${i <= current ? 'on' : ''}"><i></i><span>${App.esc(l)}</span></div>`).join('')}</div>`;
   ui.tierChip = (t, opts) => ui.chip(App.tierLabel(t), App.tierTone(t), opts);
   ui.taskStatusChip = (st) => ui.chip(({ todo: '待办', doing: '进行中', done: '已完成', rescheduled: '已改期', cancelled: '已取消' }[st] || st), ({ todo: 'info', doing: 'warn', done: 'ok', rescheduled: 'gray', cancelled: 'gray' }[st] || 'gray'));
   ui.visitStatusChip = (st, opts) => ui.chip(({ draft: '本地草稿', uploading: '上传中', ai: 'AI处理中', pending_confirm: '待确认', saved: '已保存/待同步', synced: '同步成功', failed: '同步失败' }[st] || st), ({ draft: 'gray', uploading: 'info', ai: 'ai', pending_confirm: 'warn', saved: 'info', synced: 'ok', failed: 'danger' }[st] || 'gray'), opts);
@@ -308,7 +319,7 @@
      ---------------------------------------------------------- */
   App.register = function (id, def) { App.screens[id] = Object.assign({ id }, def); };
   App.currentEntry = () => App.stack[App.stack.length - 1];
-  App.currentTab = () => (App.stack[0] ? App.stack[0].id : 'today');
+  App.currentTab = () => (App.stack[0] ? App.stack[0].id : 'home');
 
   function navbarHtml(entry, def, ctx) {
     const nav = (typeof def.nav === 'function' ? def.nav(entry.params, ctx) : def.nav) || {};
@@ -321,7 +332,7 @@
   }
   function tabbarHtml(active) {
     const badges = (window.DATA.tabBadges && window.DATA.tabBadges(App.state)) || {};
-    return `<div class="tabbar">${TABS.map((t) => `<div class="tab ${t.id === active ? 'active' : ''}" onclick="App.tab('${t.id}')">${App.icon(t.icon, 24)}<span>${t.label}</span>${badges[t.id] ? `<span class="badge">${badges[t.id]}</span>` : ''}</div>`).join('')}</div>`;
+    return `<div class="demo-note"><span>演示数据</span><span>不代表真实客户</span></div><div class="tabbar">${TABS.map((t) => `<div class="tab ${t.center ? 'center' : ''} ${t.id === active ? 'active' : ''}" onclick="App.tab('${t.id}')"><div class="tab-ico">${t.glyph}</div><span>${t.label}</span>${badges[t.id] ? `<span class="badge">${badges[t.id]}</span>` : ''}</div>`).join('')}</div>`;
   }
   App.renderEntry = function (entry) {
     const def = App.screens[entry.id];
@@ -426,15 +437,15 @@
   };
   App.openFromHash = function () {
     const h = location.hash.replace(/^#\/?/, '');
-    if (!h) { App.tab('today'); return; }
+    if (!h) { App.tab('home'); return; }
     const [id, qs] = h.split('?');
     const params = {};
     (qs || '').split('&').filter(Boolean).forEach((kv) => { const [k, v] = kv.split('='); params[decodeURIComponent(k)] = decodeURIComponent(v || ''); });
     if (params.role && App.state.users[params.role]) { App.state.role = params.role; App.save(); }
     const def = App.screens[id];
-    if (!def) { App.tab('today'); return; }
+    if (!def) { App.tab('home'); return; }
     if (TAB_ROOTS.includes(id)) { App.tab(id, params); return; }
-    App.tab(def.tab || 'today');
+    App.tab(def.tab || 'home');
     App.go(id, params);
   };
 
@@ -460,7 +471,7 @@
     if (g.prepare) { try { g.prepare(App.state); } catch (e) { console.error(e); } }
     App.save();
     const def = App.screens[g.screen]; if (!def) return;
-    if (TAB_ROOTS.includes(g.screen)) App.tab(g.screen); else { App.tab(def.tab || 'today'); if (g.via) g.via.forEach((v) => App.go(v.screen, v.params || {})); App.go(g.screen, g.params || {}); }
+    if (TAB_ROOTS.includes(g.screen)) App.tab(g.screen); else { App.tab(def.tab || 'home'); if (g.via) g.via.forEach((v) => App.go(v.screen, v.params || {})); App.go(g.screen, g.params || {}); }
     if (g.after) setTimeout(() => g.after(), 350);
     App.togglePresenter(false);
   };
@@ -481,7 +492,7 @@
     App.state = App.load();
     // 状态栏时间
     const sb = App.q('#statusbar');
-    if (sb) sb.innerHTML = `<span>9:41</span><span class="right">${App.icon('signal', 16)}${App.icon('wifi', 16)}${App.icon('battery', 22)}</span>`;
+    if (sb) sb.innerHTML = `<span>10:30</span><span class="right">${App.icon('signal', 15)}<span>5G</span>${App.icon('battery', 22)}</span>`;
     window.addEventListener('hashchange', () => { if (!App._ignoreHash && location.hash !== App._lastHash) App.openFromHash(); });
     App.openFromHash();
   };
