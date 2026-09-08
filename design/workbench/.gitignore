@@ -1,0 +1,7 @@
+# 生成物不进仓库，运行 flow.py 可重建
+*.dc.html
+canvas-test.json
+promptdog-workbench*.html
+shots/
+__pycache__/
+*.png

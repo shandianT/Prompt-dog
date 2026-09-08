@@ -1,0 +1,552 @@
+<title>PromptDog 工作台设计文档</title>
+<style>
+  :root {
+    --bg: #faf9f7; --card: #ffffff; --ink: #1f2328; --sub: #57606a; --line: #e8e4de; --code: #f5f2ec;
+    --accent: #d97706; --accent-ink: #b45309; --accent-soft: #fef3e2; --side: #1b1f27;
+    --ok: #1a7f37; --hi: #c93131; --lo: #2456c9; --shadow: 0 1px 2px rgba(31,35,40,.05);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15171b; --card: #1c1f25; --ink: #e6e3dd; --sub: #9aa1ab; --line: #2b3038; --code: #22262e;
+      --accent: #f0a13a; --accent-ink: #f6b95f; --accent-soft: rgba(240,161,58,.14); --side: #0f1115;
+      --ok: #4ec27a; --hi: #f07070; --lo: #7ea2ff; --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15171b; --card: #1c1f25; --ink: #e6e3dd; --sub: #9aa1ab; --line: #2b3038; --code: #22262e;
+    --accent: #f0a13a; --accent-ink: #f6b95f; --accent-soft: rgba(240,161,58,.14); --side: #0f1115;
+    --ok: #4ec27a; --hi: #f07070; --lo: #7ea2ff; --shadow: none;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent-ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  a:hover { border-bottom-color: currentColor; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .page { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 40px; max-width: 1180px; margin: 0 auto; padding: 40px 28px 80px; }
+  nav.toc { position: sticky; top: 24px; align-self: start; font-size: 13px; line-height: 1.5; }
+  nav.toc .t { font-size: 11px; letter-spacing: .1em; font-weight: 800; color: var(--sub); margin-bottom: 10px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  nav.toc a { display: flex; gap: 8px; padding: 5px 8px; border-radius: 7px; color: var(--ink); border: 0; }
+  nav.toc a:hover { background: var(--accent-soft); }
+  nav.toc a .n { font-family: var(--mono); color: var(--sub); font-size: 11px; min-width: 22px; padding-top: 2px; }
+  main { min-width: 0; max-width: 820px; }
+  header.hero { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 36px; }
+  .kicker { font-size: 11px; letter-spacing: .12em; font-weight: 800; color: var(--accent-ink); margin-bottom: 10px; }
+  h1 { font-size: 30px; line-height: 1.25; margin: 0 0 12px; letter-spacing: -.01em; text-wrap: balance; }
+  .lead { font-size: 16px; color: var(--sub); margin: 0 0 18px; max-width: 62ch; }
+  .meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; font-size: 13.5px; }
+  .meta div { display: flex; gap: 10px; }
+  .meta b { color: var(--sub); font-weight: 700; min-width: 64px; }
+  h2 { font-size: 22px; line-height: 1.3; margin: 48px 0 14px; padding-top: 8px; letter-spacing: -.01em; display: flex; gap: 12px; align-items: baseline; }
+  h2 .n { font-family: var(--mono); font-size: 13px; color: var(--accent-ink); font-weight: 700; }
+  h3 { font-size: 16px; margin: 28px 0 10px; }
+  p { margin: 0 0 12px; max-width: 70ch; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; max-width: 72ch; }
+  li { margin: 4px 0; }
+  li::marker { color: var(--sub); }
+  strong { font-weight: 700; }
+  code { font-family: var(--mono); font-size: .88em; background: var(--code); padding: 1px 6px; border-radius: 5px; }
+  .tbl { overflow-x: auto; margin: 12px 0 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; line-height: 1.55; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  th { font-size: 11.5px; letter-spacing: .06em; color: var(--sub); font-weight: 800; background: var(--code); white-space: nowrap; }
+  tr:last-child td { border-bottom: 0; }
+  td.k { font-weight: 700; white-space: nowrap; }
+  .callout { border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--card); border-radius: 10px; padding: 12px 16px; margin: 14px 0 18px; box-shadow: var(--shadow); }
+  .callout.q { border-left-color: var(--lo); }
+  .callout b.t { display: block; font-size: 12px; letter-spacing: .06em; color: var(--sub); margin-bottom: 4px; }
+  .tag { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border-radius: 6px; font-size: 11.5px; font-weight: 700; white-space: nowrap; vertical-align: middle; }
+  .tag.p { background: var(--accent-soft); color: var(--accent-ink); }
+  .tag.ok { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
+  .tag.hi { background: color-mix(in srgb, var(--hi) 14%, transparent); color: var(--hi); }
+  .tag.lo { background: color-mix(in srgb, var(--lo) 14%, transparent); color: var(--lo); }
+  .tag.n { background: var(--code); color: var(--sub); }
+  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: 1px solid var(--line); vertical-align: -1px; margin-right: 6px; }
+  figure { margin: 18px 0 22px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); box-shadow: var(--shadow); }
+  figure svg { display: block; width: 100%; height: auto; max-width: 100%; }
+  figcaption { font-size: 13px; color: var(--sub); margin-top: 10px; line-height: 1.55; }
+  .grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 12px 0 18px; }
+  .card { border: 1px solid var(--line); border-radius: 10px; background: var(--card); padding: 12px 14px; box-shadow: var(--shadow); }
+  .card h4 { margin: 0 0 6px; font-size: 14px; }
+  .card p { font-size: 13.5px; margin: 0; color: var(--sub); }
+  .num { font-variant-numeric: tabular-nums; }
+  hr { border: 0; border-top: 1px solid var(--line); margin: 36px 0; }
+  .small { font-size: 13px; color: var(--sub); }
+  @media (max-width: 1000px) { .page { grid-template-columns: 1fr; gap: 24px; padding: 24px 18px 60px; } nav.toc { position: static; } nav.toc ol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); } .meta { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 1fr; } }
+  @media print { nav.toc { display: none; } .page { display: block; } figure, .tbl, .callout { break-inside: avoid; } }
+</style>
+
+<div class="page">
+<nav class="toc" aria-label="目录">
+  <div class="t">目录</div>
+  <ol>
+    <li><a href="#s1"><span class="n">01</span>文档用途</a></li>
+    <li><a href="#s2"><span class="n">02</span>产品背景</a></li>
+    <li><a href="#s3"><span class="n">03</span>用户与场景</a></li>
+    <li><a href="#s4"><span class="n">04</span>设计原则</a></li>
+    <li><a href="#s5"><span class="n">05</span>信息架构</a></li>
+    <li><a href="#s6"><span class="n">06</span>屏幕清单</a></li>
+    <li><a href="#s7"><span class="n">07</span>流程画布规格</a></li>
+    <li><a href="#s8"><span class="n">08</span>组件与 token</a></li>
+    <li><a href="#s9"><span class="n">09</span>参考与借鉴</a></li>
+    <li><a href="#s10"><span class="n">10</span>文案规范</a></li>
+    <li><a href="#s11"><span class="n">11</span>迭代计划</a></li>
+    <li><a href="#s12"><span class="n">12</span>验收指标</a></li>
+    <li><a href="#s13"><span class="n">13</span>交付清单</a></li>
+    <li><a href="#s14"><span class="n">14</span>待拍板</a></li>
+    <li><a href="#sa"><span class="n">附</span>示例数据与术语</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="kicker">给 CLAUDE DESIGN 的原型设计说明</div>
+  <h1>PromptDog 工作台设计文档</h1>
+  <p class="lead">把说不清的需求变成能上岗的 Agent，再把公司的流程画成一张能拖、能拼、能看出卡点的地图。本文档说明要做什么、按什么原则做、拿什么参考、做到什么算好。</p>
+  <div class="meta">
+    <div><b>版本</b><span>v1.0 · 2026-09-08</span></div>
+    <div><b>状态</b><span>第 0 步两项决定待拍板（见 §14），其余可开工</span></div>
+    <div><b>输入</b><span>设计画布（已有 7 屏 + 组件表 + 流程画布 v2）、仓库 Prompt-dog（SKILL.md、references/、kennel/、index.html 的 token）</span></div>
+    <div><b>输出</b><span>高保真可交互原型、组件库、逐屏状态；不含视觉重塑与后端</span></div>
+  </div>
+</header>
+
+<h2 id="s1"><span class="n">01</span>文档用途与读法</h2>
+<p>这是一份给原型设计者的工作文档，读者是 Claude Design，或任何接手做原型的人。它不是 PRD，不定商业目标；它定的是：要画哪些屏、每屏里有什么、怎么交互、按什么原则判断好坏、参考谁。</p>
+<div class="callout"><b class="t">怎么读</b>先读 §2 到 §4 建立语境，§4 的八条原则是后面所有判断的依据。§6 和 §7 是要画的东西，§7 流程画布是本轮的重心。§9 告诉你从哪些产品借什么、不借什么。§12 是验收，做完对着它检查。§14 是需要产品负责人拍板的事，遇到就停下来问，不要替他决定。</div>
+<p><strong>边界</strong>：沿用现有视觉语言（琥珀主色、暖白底、深色侧栏，见 §8），不做品牌重塑；所有数字与业务数据都是示例，必须标注；不设计登录、计费、权限。</p>
+
+<h2 id="s2"><span class="n">02</span>产品背景</h2>
+<p><strong>PromptDog 是什么。</strong>一个装进用户 AI（Claude Code、Codex、WorkBuddy 等）里的技能包：用户说一句模糊需求，它先判复杂度，再用带推荐默认值的选择题澄清，然后交付能直接上岗的 Agent 资产包。资产包叫「工作狗」，住在「犬舍」里，自带启动指令、复盘飞轮和回归测试。核心信条：让用户做选择题不做问答题；卡片是纠错窗口不是审批关卡；能简单绝不复杂；验收标准先于设计；循环必须有终点。</p>
+<p><strong>工作台是什么。</strong>PromptDog 的产品界面：一句话造工作狗、犬舍、组件库，以及本轮新增的组织流程画布。画布是公司流程的地图，每个节点是人、工作狗、技能、行业 know-how 或数据系统；三种标记回答三个问题：卡在哪、缺什么、要打通什么。</p>
+<p><strong>愿景一句话。</strong>公司未来的核心工作是组织流程的优化；agent 只是服务流程的执行体。所以画布是中心，聊天窗口不是。</p>
+<div class="grid2">
+  <div class="card"><h4>已定 · 楔子场景</h4><p>投标流程。跨销售、商务、售前、财务、领导五个角色，卡点真实，犬舍已有标书撰写 Agent。合同审查排第二。</p></div>
+  <div class="card"><h4>已定 · 运行模型</h4><p>工作台是壳，引擎是用户自己的 Claude Code 或 Codex。画布产出资产包加启动指令，不自带执行。托管执行放以后。</p></div>
+</div>
+
+<h2 id="s3"><span class="n">03</span>用户与场景</h2>
+<div class="tbl"><table>
+  <thead><tr><th>角色</th><th>他要什么</th><th>在原型里的主屏</th><th>成功的样子</th></tr></thead>
+  <tbody>
+    <tr><td class="k">流程负责人 / 老板</td><td>30 秒看懂流程：哪些自动、人在哪、卡在哪、缺什么、打通什么；拍板改不改</td><td>07 流程画布 · 汇报模式</td><td>不用别人解释就能指着图说「先打通招标平台」</td></tr>
+    <tr><td class="k">搭建者（PM / 售前主管 / IT）</td><td>把现状画出来，把 AI 塞进去，配组件，打通系统</td><td>07 流程画布 · 编辑模式，02b，06</td><td>一小时内从一句话到一张可建的目标流程</td></tr>
+    <tr><td class="k">执行者（商务 / 售前）</td><td>每天让工作狗跑起来，出问题知道退回哪一步</td><td>05 工作狗上岗，04 犬舍</td><td>一条启动指令跑到交付，中途只在人审人定处停</td></tr>
+    <tr><td class="k">专业角色（财务 / 法务 / 领导）</td><td>只在人审、人定节点出现，看到该看的就够</td><td>05 里的人工确认点，通知</td><td>看摘要与变化清单就能过或退回</td></tr>
+  </tbody>
+</table></div>
+<h3>五个核心场景</h3>
+<ol>
+  <li><strong>一句话造工作狗</strong>：首页输入一句话，判级，最多一轮选择题，交付资产包并入犬舍（01 → 02 → 03）。</li>
+  <li><strong>画流程找卡点</strong>：把投标流程画出来或由 AI 反推出来，标出卡点、缺口、待打通，得到重构建议（07）。</li>
+  <li><strong>打通与补齐</strong>：对系统节点定打通方式，对缺口配组件或新建占位，应用建议后看目标态（07 属性面板、诊断）。</li>
+  <li><strong>工作狗上岗运行</strong>：启动指令一条跑到交付，人审人定处暂停，交付物实时生成（05）。</li>
+  <li><strong>复盘回流</strong>：运行数据回到画布节点，改现状图，改版跑回归（04、07 运行态，待设计）。</li>
+</ol>
+
+<h2 id="s4"><span class="n">04</span>设计原则</h2>
+<p>八条，每条都有落点和验收方法。做任何屏之前先问：这个设计服务哪一条？答不上来就别加。</p>
+<div class="tbl"><table>
+  <thead><tr><th>#</th><th>原则</th><th>一句话</th><th>在原型里的落点</th><th>怎么验收</th></tr></thead>
+  <tbody>
+    <tr><td class="num">1</td><td class="k">先读懂，再动手</td><td>老板 30 秒内回答五问：哪些自动、人在哪、卡在哪、缺什么、打通什么</td><td>泳道 + 三种标记 + 顶栏五个数字；汇报模式只留这些</td><td>五问测试：找 3 个没看过的人，30 秒内答对 4 问</td></tr>
+    <tr><td class="num">2</td><td class="k">两条线不混</td><td>顺序线与数据线分开画，卡点和待打通只在数据线上，退回和分支只在控制线上</td><td>五种线型（§7.3），线上写产物名</td><td>任意一条线不看图例能说出它是什么</td></tr>
+    <tr><td class="num">3</td><td class="k">节点即组件，组件即资产</td><td>每个节点是可复用组件，工作狗是子图，选几个节点就能打包成新工作狗</td><td>组件库、双击钻取、框选打包、入犬舍</td><td>打包后的狗能拖进另一条流程复用</td></tr>
+    <tr><td class="num">4</td><td class="k">类型约束替代规则说明</td><td>端口按产物类型着色，不兼容的线连不上，新线自带默认产物与契约</td><td>端口颜色、拖线变红、连线面板</td><td>不读文档也不会连出无意义的线</td></tr>
+    <tr><td class="num">5</td><td class="k">一张图三种看法</td><td>目标态、对照现状、运行态是同一张图的三个镜头</td><td>顶栏「对照现状」「试跑」，节点上的原：人做 / 手工搬 / 新增 chip</td><td>切换镜头时节点位置不变，只变标注</td></tr>
+    <tr><td class="num">6</td><td class="k">人机边界显式且可拖</td><td>泳道有语义，跨越边界就是决策</td><td>人的步骤拖进 AI 泳道 = 要自动化并标缺口；AI 拖进人泳道 = 改人审；不可逆前的人定节点受保护</td><td>拖一次就理解，不需要说明文字</td></tr>
+    <tr><td class="num">7</td><td class="k">默认值先行，卡片是纠错窗口</td><td>AI 先给出图，人只纠错；没有空白画布</td><td>一句话生成草稿；诊断建议一键「应用」</td><td>从一句话到可用草稿不超过一分钟，用户零输入也能得到结果</td></tr>
+    <tr><td class="num">8</td><td class="k">最短路径</td><td>创建与连接是一个动作，一切可撤销，不出现模态框</td><td>端口拖到空白即新建并连上、双击搜组件、右键菜单、撤销、快捷键</td><td>加一个连好线的节点不超过两个动作</td></tr>
+  </tbody>
+</table></div>
+<div class="callout"><b class="t">和 PromptDog 方法论的关系</b>原则 7 就是 SKILL.md 的「预填交付」；原则 6 里的人定节点保护对应「人工确认点只放在不可逆动作前」；原则 5 的运行态对应复盘飞轮。原型不能违背这些规则，遇到冲突以 SKILL.md 为准。</div>
+
+<h2 id="s5"><span class="n">05</span>信息架构与导航</h2>
+<div class="tbl"><table>
+  <thead><tr><th>侧栏分组</th><th>条目</th><th>去哪</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td class="k">顶部动作</td><td>造一只工作狗</td><td>01 首页</td><td>唯一的主按钮，琥珀实底</td></tr>
+    <tr><td class="k">我的数字员工</td><td>提示狗、合同审查助手、标书撰写、内容营销、竞品分析…</td><td>提示狗 → 01；工作狗 → 05</td><td>新建的狗带「新」徽章；顺序按最近使用</td></tr>
+    <tr><td class="k">组织</td><td>流程画布</td><td>07</td><td>数字是流程数；本轮的中心入口</td></tr>
+    <tr><td class="k">犬舍</td><td>全部工作狗、组件库、复盘与回归</td><td>04、09（待设计）、10（待设计）</td><td>复盘有待处理时右侧一个琥珀圆点</td></tr>
+    <tr><td class="k">底部</td><td>我的工作区</td><td>设置（不设计）</td><td>占位</td></tr>
+  </tbody>
+</table></div>
+<p><strong>顶栏</strong>承载当前对象的上下文：标题、状态 chip（判级、轮次、版本）、右侧动作。画布页的顶栏是数字面板加模式开关（撤销、对照现状、产物、试跑、按这个建），主按钮一屏只有一个。</p>
+<p><strong>全局模式</strong>四种：编辑（默认）、对照现状（叠加 chip 并压暗未变节点）、试跑（按顺序点亮自动节点）、汇报（隐藏组件库和属性面板）。模式互斥，切换不改位置只改标注。</p>
+
+<h2 id="s6"><span class="n">06</span>屏幕清单</h2>
+<p>编号与设计画布一致。「下一版改动」是本轮要落的点，没写的保持现状。</p>
+<div class="tbl"><table>
+  <thead><tr><th>编号</th><th>目标</th><th>关键元素</th><th>状态</th><th>下一版改动</th></tr></thead>
+  <tbody>
+    <tr><td class="k">01 首页</td><td>一句话开始，零门槛</td><td>大输入框、贴文件、直接做开关、示例 chip、右栏空态</td><td>空态 / 输入中 / 已贴材料</td><td>输入后可直接生成画布草稿而不是文本（原则 7）；贴材料的入口更醒目，因为材料决定现状图</td></tr>
+    <tr><td class="k">02 确认卡片</td><td>仅一轮，最短回复</td><td>判级一句话、四题 ★ 预填、都按推荐主按钮、简写快捷回复</td><td>未答 / 部分答 / 生效复述</td><td>卡片折叠进画布右栏诊断，作为草稿的纠错窗口；保留独立形态给 L1 / L2</td></tr>
+    <tr><td class="k">02b 流程重构</td><td>组件库 → 模块插槽的装配视图</td><td>四类来源标签、双泳道、插槽、装配规则</td><td>预填 / 用户改动</td><td>与 07 合并：07 就是它的可编辑版本；保留作为「本质 + 现状对照」头部区块</td></tr>
+    <tr><td class="k">03 资产包交付</td><td>拿走即用</td><td>构建流水线、目录树、四道保险、H 假设带「改」</td><td>构建中 / 已完成 / 有未达标项</td><td>加「入犬舍」「在画布中查看」两个出口；未达标清单直接链到画布上的缺口节点</td></tr>
+    <tr><td class="k">04 犬舍</td><td>看状态、上岗、复盘</td><td>工作狗卡片：版本、上次运行、回归状态</td><td>达标 / 待回归 / 新建 / 尚未运行</td><td>卡片加「用于 N 条流程」；从卡片进入它所在的流程画布</td></tr>
+    <tr><td class="k">05 工作狗上岗</td><td>一条指令跑到交付</td><td>文件 chip、七环节进度、右栏实时交付物</td><td>运行中 / 人审暂停 / 完成 / 止损</td><td>人审暂停态要设计：看什么、通过或退回到哪一步；止损态展示卡点报告</td></tr>
+    <tr><td class="k">06 组件表</td><td>全站由这些拼装</td><td>13 个组件与 token</td><td>—</td><td>加 FlowNode、FlowEdge、面板组件的变体矩阵（§8）</td></tr>
+    <tr><td class="k">07 流程画布</td><td>本轮重心，见 §7</td><td>组件库 / 画布 / 属性面板 / 诊断</td><td>编辑 / 对照 / 试跑 / 汇报 / 子流程</td><td>汇报模式、部门泳道、一句话生成草稿、契约闭合、材料反推现状</td></tr>
+    <tr><td class="k">08 汇报模式（新）</td><td>给老板看的一屏</td><td>本质一句话、五问数字、放大的画布、导出</td><td>—</td><td>新设计，原则 1 的直接产物</td></tr>
+    <tr><td class="k">09 组件详情（新）</td><td>组件即资产</td><td>输入、输出、参数、复用于哪些流程、版本与改动</td><td>—</td><td>新设计，原则 3</td></tr>
+    <tr><td class="k">10 复盘与回归（新）</td><td>飞轮的操作面</td><td>四指标回填、回归对照表、发布门槛</td><td>达标 / 不达标</td><td>新设计，数据回流到 07 的运行态</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="s7"><span class="n">07</span>流程画布规格</h2>
+<h3>7.1 布局</h3>
+<figure>
+  <svg viewBox="0 0 900 430" role="img" aria-label="流程画布布局：左侧组件库，中间三条泳道的画布，右侧属性与诊断面板；组件从库拖入画布成为节点，选中节点后右栏显示属性">
+    <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L9 5 L0 9 z" fill="currentColor"></path></marker></defs>
+    <g fill="none" stroke="currentColor" stroke-width="1.2">
+      <rect x="10" y="40" width="70" height="380" rx="6" opacity=".55"></rect>
+      <rect x="92" y="40" width="130" height="380" rx="6"></rect>
+      <rect x="234" y="40" width="470" height="380" rx="6"></rect>
+      <rect x="716" y="40" width="174" height="380" rx="6"></rect>
+      <line x1="234" y1="170" x2="704" y2="170" stroke-dasharray="4 4" opacity=".6"></line>
+      <line x1="234" y1="300" x2="704" y2="300" stroke-dasharray="4 4" opacity=".6"></line>
+    </g>
+    <g font-size="12" fill="currentColor">
+      <text x="45" y="30" text-anchor="middle">侧栏</text>
+      <text x="157" y="30" text-anchor="middle">组件库</text>
+      <text x="469" y="30" text-anchor="middle">画布 · 三条泳道</text>
+      <text x="803" y="30" text-anchor="middle">属性 / 诊断</text>
+      <text x="244" y="62" font-weight="700" opacity=".7">AI 自动</text>
+      <text x="244" y="192" font-weight="700" fill="#d97706">人</text>
+      <text x="244" y="322" font-weight="700" opacity=".7">数据与系统</text>
+    </g>
+    <g font-size="11" fill="currentColor">
+      <rect x="104" y="60" width="106" height="26" rx="5" fill="none" stroke="currentColor" opacity=".6"></rect><text x="112" y="77">工作狗 · 技能</text>
+      <rect x="104" y="94" width="106" height="26" rx="5" fill="none" stroke="currentColor" opacity=".6"></rect><text x="112" y="111">know-how</text>
+      <rect x="104" y="128" width="106" height="26" rx="5" fill="none" stroke="currentColor" opacity=".6"></rect><text x="112" y="145">数据与系统</text>
+      <rect x="104" y="162" width="106" height="26" rx="5" fill="none" stroke="currentColor" opacity=".6"></rect><text x="112" y="179">人审 / 人定</text>
+    </g>
+    <g stroke="currentColor" stroke-width="1.4" fill="none">
+      <rect x="290" y="88" width="96" height="40" rx="7"></rect>
+      <rect x="430" y="88" width="96" height="40" rx="7"></rect>
+      <rect x="570" y="88" width="96" height="40" rx="7"></rect>
+      <rect x="360" y="218" width="96" height="40" rx="7" stroke="#d97706" stroke-width="1.8"></rect>
+      <rect x="570" y="218" width="96" height="40" rx="7" stroke="#d97706" stroke-width="1.8"></rect>
+      <rect x="360" y="348" width="96" height="40" rx="7" stroke-dasharray="5 4"></rect>
+    </g>
+    <g font-size="11" fill="currentColor">
+      <text x="338" y="112" text-anchor="middle">招标解析</text>
+      <text x="478" y="112" text-anchor="middle">应答矩阵</text>
+      <text x="618" y="112" text-anchor="middle">合规自查</text>
+      <text x="408" y="242" text-anchor="middle">投不投 · 人定</text>
+      <text x="618" y="242" text-anchor="middle">领导审批 · 人审</text>
+      <text x="408" y="372" text-anchor="middle">素材库 · 待打通</text>
+    </g>
+    <g stroke="currentColor" stroke-width="1.4" fill="none" marker-end="url(#arr)">
+      <path d="M386 108 L430 108"></path>
+      <path d="M526 108 L570 108"></path>
+      <path d="M338 128 C338 180, 408 180, 408 218"></path>
+      <path d="M666 108 C700 108, 700 238, 666 238"></path>
+    </g>
+    <path d="M408 348 L408 260" stroke="#2563eb" stroke-width="1.4" fill="none" stroke-dasharray="5 4" marker-end="url(#arr)"></path>
+    <text x="418" y="300" font-size="10.5" fill="#2563eb">现在靠人搬</text>
+    <path d="M210 175 C260 175, 270 300, 356 358" stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="2 3" marker-end="url(#arr)"></path>
+    <text x="250" y="266" font-size="10.5" fill="currentColor" opacity=".8">拖入 = 新节点</text>
+    <path d="M666 258 C700 300, 716 300, 716 300" stroke="currentColor" stroke-width="1.2" fill="none" stroke-dasharray="2 3" marker-end="url(#arr)"></path>
+    <text x="700" y="330" font-size="10.5" fill="currentColor" opacity=".8">选中 → 属性</text>
+    <g font-size="11" fill="currentColor" opacity=".8">
+      <text x="728" y="70">未选中：诊断</text>
+      <text x="728" y="90">卡点 / 缺口 / 待打通</text>
+      <text x="728" y="110">重构建议 · 应用</text>
+      <text x="728" y="150">选中节点：分类型字段</text>
+      <text x="728" y="170">选中连线：产物与契约</text>
+      <text x="728" y="210">按这个建：构建预览</text>
+    </g>
+  </svg>
+  <figcaption>三栏加三条泳道。组件从左侧库拖入画布成为节点；人的节点用琥珀边框；数据系统节点用虚线，指向它的蓝色虚线表示现在靠人搬数据；右栏在没有选中时是诊断，选中后是该对象的属性。</figcaption>
+</figure>
+<p>尺寸基准 1920×1080：侧栏 240，组件库 200，属性面板 292，画布内容区 1220×1024，可缩放 50% 到 160%。泳道分界 y=440 与 y=720，AI 在上，人在中，数据与系统在下。</p>
+
+<h3>7.2 对象模型</h3>
+<div class="tbl"><table>
+  <thead><tr><th>对象</th><th>字段</th><th>说明</th></tr></thead>
+  <tbody>
+    <tr><td class="k">节点 node</td><td>id, kind, role, name, sub, x, y, flag, note, fix, was, target, owner, sla, notify, method, dir, reuse, src, children</td><td>kind 五类：human 人 / dog 工作狗 / skill 技能 / know 行业 know-how / data 数据与系统。role 三档只对非数据节点：auto 自动 / review 人审 / decide 人定。flag 四态：ok / block 卡点 / missing 缺口 / pending 待打通。was 记录原来怎么做（human 人做 / manual 手工搬 / new 新增），对照现状用。target 是应用建议后的目标状态。children 是子图，工作狗才有。</td></tr>
+    <tr><td class="k">连线 edge</td><td>id, from, to, kind, label, dtype, contract</td><td>kind 五种：seq 顺序 / data 数据 / pending 待打通 / loop 回填 / back 退回。label 是线上流动的产物名。dtype 六类：file 文件 / struct 结构化 / text 文本 / decision 决定 / event 事件 / sys 系统数据。contract 写字段与格式，契约闭合检查用。</td></tr>
+    <tr><td class="k">泳道 lane</td><td>mode, bands</td><td>两种模式：按谁来做（AI / 人 / 数据与系统，默认）与按部门（销售 / 商务 / 售前 / 财务 / 领导）。同一份节点数据，只换分带规则。</td></tr>
+    <tr><td class="k">子图 subgraph</td><td>nodes, edges</td><td>工作狗的内部环节。钻进去后组件库和交互与顶层一致，面包屑回到上层。打包动作生成子图。</td></tr>
+    <tr><td class="k">流程 flow</td><td>name, essence, root, stack, hist, view, zoom</td><td>essence 是那句「本质」。hist 是撤销栈。view 是模式。</td></tr>
+  </tbody>
+</table></div>
+
+<h3>7.3 视觉编码</h3>
+<figure>
+  <svg viewBox="0 0 900 250" role="img" aria-label="节点解剖：左右两个端口，顶部类型徽章与角色徽章，右上角状态标记，左上角对照 chip，右下角子流程数">
+    <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1 L9 5 L0 9 z" fill="currentColor"></path></marker></defs>
+    <g transform="translate(300,70)">
+      <rect x="0" y="0" width="300" height="128" rx="14" fill="none" stroke="#d97706" stroke-width="2.2"></rect>
+      <circle cx="0" cy="64" r="9" fill="none" stroke="currentColor" stroke-width="2"></circle>
+      <circle cx="300" cy="64" r="9" fill="none" stroke="#d97706" stroke-width="2.4"></circle>
+      <rect x="18" y="16" width="52" height="22" rx="5" fill="#d97706" opacity=".18"></rect>
+      <text x="44" y="31" font-size="12" text-anchor="middle" fill="#d97706" font-weight="700">人</text>
+      <rect x="216" y="16" width="66" height="22" rx="5" fill="#d97706"></rect>
+      <text x="249" y="31" font-size="12" text-anchor="middle" fill="#ffffff" font-weight="700">人定</text>
+      <text x="18" y="76" font-size="18" font-weight="700" fill="currentColor">报价</text>
+      <text x="18" y="102" font-size="12.5" fill="currentColor" opacity=".7">财务 · 成本核算</text>
+      <rect x="236" y="-12" width="54" height="22" rx="5" fill="#dc2626"></rect>
+      <text x="263" y="3" font-size="11.5" text-anchor="middle" fill="#ffffff" font-weight="800">卡点</text>
+      <rect x="14" y="-12" width="76" height="22" rx="5" fill="#1e232b"></rect>
+      <text x="52" y="3" font-size="11.5" text-anchor="middle" fill="#ffffff" font-weight="800">原：人做</text>
+      <rect x="196" y="118" width="94" height="22" rx="5" fill="#ffffff" stroke="currentColor" stroke-width="1" opacity=".9"></rect>
+      <text x="243" y="133" font-size="11" text-anchor="middle" fill="#1f2328" font-weight="700">7 环节 · 双击</text>
+    </g>
+    <g font-size="12" fill="currentColor" stroke="currentColor" stroke-width="1.1">
+      <path d="M150 60 L282 62" fill="none" marker-end="url(#arr2)" stroke-dasharray="3 3"></path>
+      <path d="M150 140 L286 135" fill="none" marker-end="url(#arr2)" stroke-dasharray="3 3"></path>
+      <path d="M760 60 L600 58" fill="none" marker-end="url(#arr2)" stroke-dasharray="3 3"></path>
+      <path d="M760 100 L588 97" fill="none" marker-end="url(#arr2)" stroke-dasharray="3 3"></path>
+      <path d="M760 190 L590 200" fill="none" marker-end="url(#arr2)" stroke-dasharray="3 3"></path>
+      <path d="M150 200 L294 220" fill="none" marker-end="url(#arr2)" stroke-dasharray="3 3"></path>
+    </g>
+    <g font-size="12" fill="currentColor">
+      <text x="140" y="56" text-anchor="end">对照 chip：原来怎么做</text>
+      <text x="140" y="136" text-anchor="end">输入端口</text>
+      <text x="140" y="196" text-anchor="end">类型徽章：人 / 工作狗 / 技能 / know-how / 数据</text>
+      <text x="770" y="56">状态标记：卡点 红 · 缺口 琥珀 · 待打通 蓝</text>
+      <text x="770" y="96">角色徽章：自动 灰 · 人审 琥珀框 · 人定 琥珀底</text>
+      <text x="770" y="132">输出端口按产物类型着色</text>
+      <text x="770" y="194">子流程数，双击钻取</text>
+    </g>
+  </svg>
+  <figcaption>一个节点承载的全部编码。人的节点用琥珀边框，其余用灰边；状态标记压在右上角，对照 chip 压在左上角，二者同时出现也不冲突。</figcaption>
+</figure>
+<div class="tbl"><table>
+  <thead><tr><th>元素</th><th>编码</th><th>数值</th></tr></thead>
+  <tbody>
+    <tr><td class="k">节点边框</td><td>人 = 琥珀 1.5px；其余灰 1px；数据节点暖灰底</td><td><span class="sw" style="background:#d97706"></span>#d97706 · <span class="sw" style="background:#e5e8ee"></span>#e5e8ee · <span class="sw" style="background:#f5f2ec"></span>#f5f2ec</td></tr>
+    <tr><td class="k">状态标记</td><td>卡点红实边；缺口琥珀虚边；待打通蓝虚边；标记压右上角</td><td><span class="sw" style="background:#dc2626"></span>#dc2626 · #d97706 · <span class="sw" style="background:#2563eb"></span>#2563eb</td></tr>
+    <tr><td class="k">角色徽章</td><td>自动灰底；人审琥珀线框；人定琥珀实底。点一下循环切换</td><td>灰 #e5e8ee / 琥珀</td></tr>
+    <tr><td class="k">类型徽章与端口</td><td>人与工作狗琥珀；技能蓝；know-how 绿；数据白底黑框。输出端口颜色 = 产物类型：决定琥珀、结构化石板灰、文本绿、系统数据蓝</td><td>#2563eb · #16a34a · #64748b</td></tr>
+    <tr><td class="k">五种线</td><td>顺序：灰实线带箭头。数据：深灰实线。待打通：蓝虚线。回填：绿虚线，沿底边绕回上游。退回：红虚线，从节点顶部拱到目标顶部。选中：琥珀加粗</td><td>#9aa4af · #64748b · #2563eb · #16a34a · #dc2626</td></tr>
+    <tr><td class="k">线上标签</td><td>产物名，10.5px，浅底小圆角；默认只显示非顺序线与决定类，「产物」开关显示全部</td><td>—</td></tr>
+    <tr><td class="k">对照 chip</td><td>原：人做（黑底）、原：手工搬（黑底）、新增（绿底）；未变节点压暗到 38%</td><td>#1e232b · #16a34a</td></tr>
+    <tr><td class="k">运行态</td><td>当前执行节点外圈琥珀光晕；完成打绿勾；失败红边并标退回位置</td><td>—</td></tr>
+  </tbody>
+</table></div>
+
+<h3>7.4 交互清单</h3>
+<div class="tbl"><table>
+  <thead><tr><th>动作</th><th>触发</th><th>行为</th><th>反馈</th><th>可撤销</th></tr></thead>
+  <tbody>
+    <tr><td class="k">移动节点</td><td>按住节点拖</td><td>跟随，限制在画布内；多选时一起动</td><td>松手时按泳道规则（7.6）可能改角色并提示</td><td>是</td></tr>
+    <tr><td class="k">选中</td><td>点节点 / 点线</td><td>右栏切到属性；再点空白取消</td><td>琥珀光晕；线加粗</td><td>—</td></tr>
+    <tr><td class="k">框选</td><td>在空白处拖出矩形</td><td>相交的节点全部选中</td><td>顶部浮条：已选 N 个，打包成工作狗 / 删除 / 取消</td><td>—</td></tr>
+    <tr><td class="k">连线</td><td>按住输出端口拖到另一节点松手</td><td>生成线；两端有数据节点且待打通则为蓝虚线</td><td>拖动中显示橡皮筋；不兼容时线变红并说明</td><td>是</td></tr>
+    <tr><td class="k">拖到空白新建</td><td>从输出端口拖到空白松手</td><td>弹出组件搜索，选中即新建并连上</td><td>提示「接在 X 之后」</td><td>是</td></tr>
+    <tr><td class="k">双击空白</td><td>双击画布空白</td><td>在该处弹出组件搜索</td><td>输入即过滤</td><td>是</td></tr>
+    <tr><td class="k">拖入组件</td><td>从组件库拖到画布</td><td>新建节点；数据类默认待打通；工作狗带子图</td><td>幽灵节点跟随；落下有提示</td><td>是</td></tr>
+    <tr><td class="k">切换谁来做</td><td>点角色徽章</td><td>自动 → 人审 → 人定 循环</td><td>提示新角色</td><td>是</td></tr>
+    <tr><td class="k">右键菜单</td><td>节点上右键</td><td>改角色、标记状态、打开子流程、打包所选、删除</td><td>菜单贴光标</td><td>是</td></tr>
+    <tr><td class="k">钻取</td><td>双击工作狗</td><td>进入子图，面包屑显示路径，返回上一层</td><td>顶栏数字按子图重算</td><td>—</td></tr>
+    <tr><td class="k">打包</td><td>框选 ≥2 个步骤节点后点打包</td><td>生成新工作狗节点，内部保留原节点与内部连线，外部连线改接到新节点</td><td>提示改名后入犬舍</td><td>是</td></tr>
+    <tr><td class="k">应用建议</td><td>诊断列表或属性面板里点「应用」</td><td>节点变为目标状态：卡点消失、待打通变数据线、人定变自动或人审</td><td>提示可开「对照现状」看变化</td><td>是</td></tr>
+    <tr><td class="k">对照现状</td><td>顶栏开关</td><td>显示原：人做 / 手工搬 / 新增，其余压暗</td><td>—</td><td>—</td></tr>
+    <tr><td class="k">试跑</td><td>顶栏按钮</td><td>自动节点按 x 顺序逐个点亮</td><td>结束提示执行了几个节点（示例）</td><td>—</td></tr>
+    <tr><td class="k">按这个建</td><td>顶栏主按钮</td><td>右栏显示构建预览：环节、工具清单、人工确认点、交付前必须解决</td><td>—</td><td>—</td></tr>
+    <tr><td class="k">缩放</td><td>右下角 − / + / 适应</td><td>50% 到 160%，坐标按缩放换算</td><td>显示百分比</td><td>—</td></tr>
+    <tr><td class="k">撤销</td><td>顶栏或 Cmd+Z</td><td>回到上一个快照，最多 40 步</td><td>提示</td><td>—</td></tr>
+  </tbody>
+</table></div>
+
+<h3>7.5 面板规格</h3>
+<div class="tbl"><table>
+  <thead><tr><th>面板</th><th>内容</th><th>规则</th></tr></thead>
+  <tbody>
+    <tr><td class="k">组件库</td><td>搜索框；五组：工作狗、技能、行业 know-how、数据与系统、人；底部「新组件（占位缺口）」</td><td>每项带拖动把手、类型圆点、名称与一句说明；工作狗显示环节数；缺的 know-how 标「缺 · 待沉淀」</td></tr>
+    <tr><td class="k">诊断（默认）</td><td>卡点 / 缺口 / 待打通三行，各带节点 chip；重构建议列表，每条可「应用」；拖法提示；重置示例</td><td>数字与顶栏一致；点 chip 选中该节点；建议由标记自动生成，改标记建议就变</td></tr>
+    <tr><td class="k">节点属性</td><td>名称、说明、谁来做、状态、备注（卡在哪 / 缺什么 / 要打通什么）、怎么解、输入、输出、删除</td><td>分类型附加字段见下表；有 target 的节点显示「应用建议」按钮</td></tr>
+    <tr><td class="k">连线属性</td><td>A → B、流动的产物、产物类型、关系（顺序 / 数据 / 待打通 / 回填 / 退回）、数据契约、删除</td><td>待打通改成数据即变实线</td></tr>
+    <tr><td class="k">构建预览</td><td>环节（AI 泳道按顺序）、工具清单（数据与系统）、人工确认点（人定）、交付前必须解决（缺口与卡点）、一句总结</td><td>缺口和卡点不解决也能建，写进未达标清单</td></tr>
+    <tr><td class="k">汇报模式（新）</td><td>本质一句话、五问数字、放大画布、导出 PNG / PDF</td><td>隐藏组件库与属性面板；不可编辑</td></tr>
+  </tbody>
+</table></div>
+<div class="tbl"><table>
+  <thead><tr><th>节点类型</th><th>附加字段</th></tr></thead>
+  <tbody>
+    <tr><td class="k">人</td><td>负责人 / 部门、时限、通知渠道（企业微信 / 邮件 / 站内）</td></tr>
+    <tr><td class="k">工作狗</td><td>子流程环节数、复用于 N 条流程、打开子流程、版本</td></tr>
+    <tr><td class="k">技能</td><td>复用于 N 只工作狗、改一处全部同步的说明</td></tr>
+    <tr><td class="k">行业 know-how</td><td>来源（行业库 / 你的材料 / 待沉淀）</td></tr>
+    <tr><td class="k">数据与系统</td><td>打通方式（接口 / RPA / 文件 / 人工）、方向（读 / 写 / 读写）、系统负责人</td></tr>
+  </tbody>
+</table></div>
+
+<h3>7.6 泳道语义规则</h3>
+<div class="tbl"><table>
+  <thead><tr><th>拖动</th><th>结果</th><th>提示文案</th></tr></thead>
+  <tbody>
+    <tr><td>人的步骤 → AI 泳道</td><td>变成技能节点，自动，标缺口，记录「原：人做」，说明改为「原：某某 · 待配组件」</td><td>「X」标为要自动化：还缺一个组件来做它（缺口）</td></tr>
+    <tr><td>AI 节点（自动）→ 人泳道</td><td>角色改为人审，类型不变</td><td>「X」改为人审</td></tr>
+    <tr><td>步骤节点 → 数据泳道</td><td>弹回人泳道底部</td><td>步骤节点不能放进数据泳道</td></tr>
+    <tr><td>数据节点 → 其他泳道</td><td>弹回数据泳道</td><td>系统节点留在「数据与系统」泳道</td></tr>
+    <tr><td>部门泳道模式下跨道</td><td>改负责人 / 部门；跨道连线视为交接并高亮</td><td>交接 +1：卡点多长在交接处</td></tr>
+  </tbody>
+</table></div>
+
+<h3>7.7 空状态、边界与错误</h3>
+<ul>
+  <li><strong>没有空白画布</strong>。新建流程一律从一句话或模板生成草稿（原则 7）；真要空白，画布中央给三个动作：从一句话开始、选模板、拖组件。</li>
+  <li><strong>不兼容连线</strong>：拖到目标时线变红，松手不连，提示原因，例如「决定不能直接进数据系统」。</li>
+  <li><strong>删除不可逆前的人定节点</strong>：二次确认，并说明这是 PromptDog 的人工确认点规则。</li>
+  <li><strong>无人回复时</strong>：任何卡片与确认都有默认路径；试跑与构建不因缺口停下，缺口进未达标清单。</li>
+  <li><strong>子图内的空状态</strong>：新打包的狗至少有两个环节；钻进去看到与顶层一致的泳道。</li>
+</ul>
+
+<h3>7.8 快捷键</h3>
+<div class="tbl"><table>
+  <thead><tr><th>键</th><th>动作</th></tr></thead>
+  <tbody>
+    <tr><td><code>Delete</code> / <code>Backspace</code></td><td>删除选中的节点或连线</td></tr>
+    <tr><td><code>Cmd/Ctrl + Z</code></td><td>撤销</td></tr>
+    <tr><td><code>Esc</code></td><td>取消连线、关闭菜单与搜索、取消选中</td></tr>
+    <tr><td><code>方向键</code></td><td>选中节点微移 1px，按住 Shift 10px</td></tr>
+    <tr><td><code>Cmd/Ctrl + K</code></td><td>组件搜索</td></tr>
+    <tr><td><code>1 / 2 / 3</code></td><td>选中节点改为自动 / 人审 / 人定</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="s8"><span class="n">08</span>组件与 token</h2>
+<p>全部取自 index.html 与设计画布 06 组件表，实现时以组件名为准。</p>
+<div class="tbl"><table>
+  <thead><tr><th>token</th><th>值</th><th>用途</th></tr></thead>
+  <tbody>
+    <tr><td class="k">主色</td><td><span class="sw" style="background:#d97706"></span>#d97706 · 浅 #fdf0dd</td><td>主按钮、选中态、确认卡边框、人类触点。一屏只有一个主按钮</td></tr>
+    <tr><td class="k">中性</td><td><span class="sw" style="background:#1e232b"></span>#1e232b 正文 · #68707c 次要 · #e5e8ee 分割线 · #f7f8fa 页面底 · #f5f2ec 暖灰</td><td>侧栏 #1b1f27，激活 #2e3542</td></tr>
+    <tr><td class="k">语义色</td><td><span class="sw" style="background:#dc2626"></span>#dc2626 高风险 / 卡点 · <span class="sw" style="background:#2563eb"></span>#2563eb 技能 / 待打通 · <span class="sw" style="background:#16a34a"></span>#16a34a 达标 / know-how / 回填</td><td>只用于风险等级与四类来源，不当装饰</td></tr>
+    <tr><td class="k">字号</td><td>26 / 800 页面标题 · 16 / 800 卡片标题 · 14 正文 · 12.5 辅助 · 11.5 / 700 标签 · 节点内 13 / 11 / 10.5</td><td>字体：系统中文栈；mono 用于编号、hash、版本号</td></tr>
+    <tr><td class="k">圆角</td><td>14 卡片 · 10 按钮与输入与节点 · 8 标签 · 6 徽章 · 999 胶囊</td><td>—</td></tr>
+    <tr><td class="k">控件高度</td><td>44 主按钮与输入 · 40 次按钮 · 36 紧凑 · 28 顶栏 chip · 24 来源标签 · 22 徽章</td><td>点击目标不小于 44</td></tr>
+  </tbody>
+</table></div>
+<h3>组件清单</h3>
+<div class="tbl"><table>
+  <thead><tr><th>组件</th><th>变体</th><th>状态</th></tr></thead>
+  <tbody>
+    <tr><td class="k">FlowNode</td><td>kind × role × flag = 5 × 3 × 4；另有 selected / connecting / running / dim；对照 chip 三种</td><td>已在画布作为独立组件，带变体开关</td></tr>
+    <tr><td class="k">FlowEdge</td><td>五种关系 × 选中 × 标签有无</td><td>需拆为组件</td></tr>
+    <tr><td class="k">FlowPalette</td><td>分组、搜索、拖动中、空结果</td><td>需拆为组件</td></tr>
+    <tr><td class="k">FlowInspector</td><td>诊断 / 节点五类 / 连线 / 构建预览</td><td>需拆为组件</td></tr>
+    <tr><td class="k">既有 13 个</td><td>色板、字号、按钮、输入栏、角色徽章与状态、来源标签与插槽、步骤模块、确认卡片选项、消息气泡、流水线行、指标块、风险卡、假设行与侧栏项</td><td>见画布 06</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="s9"><span class="n">09</span>参考与借鉴</h2>
+<p>学的是机制，不是外观。每一条都写了不借什么，避免把工程师工具的复杂度搬给业务用户。</p>
+<div class="tbl"><table>
+  <thead><tr><th>产品</th><th>借什么</th><th>不借什么</th><th>对应原则</th></tr></thead>
+  <tbody>
+    <tr><td class="k">ComfyUI</td><td>类型化 socket 与颜色编码；参数直接在节点上改；子图与组节点；双击搜索添加；从端口拖到空白弹出候选；bypass 暂时停用；执行时逐节点点亮与产物预览；工作流即 JSON 可分享</td><td>密集小字与深色工程感；把所有参数都摊在节点上；无引导的空白画布</td><td>2、3、4、5、8</td></tr>
+    <tr><td class="k">n8n / Make</td><td>触发器节点显式；每节点执行日志；错误分支与重试；从上一节点拖出下一节点</td><td>把技术字段直接暴露给业务用户；一节点一屏的配置弹窗</td><td>2、5、8</td></tr>
+    <tr><td class="k">Dify / Coze</td><td>节点分类清楚（LLM、知识库、条件分支、人工介入）；变量面板；用测试输入调试</td><td>以模型参数为中心的属性面板</td><td>4、7</td></tr>
+    <tr><td class="k">Unreal Blueprint</td><td>执行引脚与数据引脚分色分线，这是「两条线不混」的来源</td><td>图形化编程的粒度</td><td>2</td></tr>
+    <tr><td class="k">Miro / FigJam</td><td>泳道与分区是一等公民；便签与评论；演示模式</td><td>自由画板的无结构</td><td>1、6</td></tr>
+    <tr><td class="k">Whimsical / Lucid 流程图</td><td>按角色分泳道的流程地图，交接处即风险点</td><td>符号学式的流程图规范</td><td>1、6</td></tr>
+    <tr><td class="k">Figma 属性面板</td><td>选中什么右栏就是什么，分段控件替代下拉</td><td>—</td><td>8</td></tr>
+    <tr><td class="k">PromptDog 官网 demo</td><td>琥珀 / 暖白 / 深侧栏，确认卡片、流水线、风险卡的既有形态</td><td>—</td><td>全部</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="s10"><span class="n">10</span>文案与语气</h2>
+<ul>
+  <li>说人话，结果先行。判级算式、策略名、信号打分默认收起，用户追问才展开。</li>
+  <li>卡片是纠错窗口。所有确认类文案写成「我按 A 做了，不符再改」，不写「请确认」。</li>
+  <li>按钮是动词，说清会发生什么：按这个建、应用建议、打包成工作狗、返回上一层。</li>
+  <li>提示解释后果而不是操作：「X 标为要自动化：还缺一个组件来做它」。</li>
+  <li>标记的名字固定：卡点、缺口、待打通；线的名字固定：顺序、数据、待打通、回填、退回。不发明同义词。</li>
+  <li>示例数据一律标「示例」；真实事实缺失时用可见占位，如【待填】，不编造。</li>
+</ul>
+
+<h2 id="s11"><span class="n">11</span>迭代计划</h2>
+<div class="tbl"><table>
+  <thead><tr><th>阶段</th><th>做什么</th><th>原则</th><th>产出</th></tr></thead>
+  <tbody>
+    <tr><td class="k">第 0 步 · 定方向</td><td>拍板楔子与运行模型；找两家公司在画布上共创投标流程，验五问与材料假设</td><td>1</td><td>两条决定、一份访谈记录、修正后的示例数据</td></tr>
+    <tr><td class="k">迭代 A · 读懂与默认值</td><td>一句话生成画布草稿；汇报模式；部门泳道；等待时长上节点；小地图、快捷键、吸附、一键整理、双击改名</td><td>1、7、8</td><td>01 与 07 合流；08 汇报模式</td></tr>
+    <tr><td class="k">迭代 B · 组件资产化</td><td>打包真正入犬舍并生成资产包目录；组件详情页；端口类型校验与契约自动推导</td><td>3、4</td><td>09 组件详情；04 犬舍改版</td></tr>
+    <tr><td class="k">迭代 C · 现状与运行态</td><td>材料反推现状图；运行数据回流；契约闭合检查；边界语义再深一层；人定节点保护</td><td>2、5、6</td><td>10 复盘与回归；07 运行态</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="s12"><span class="n">12</span>验收指标</h2>
+<div class="tbl"><table>
+  <thead><tr><th>指标</th><th>怎么测</th><th>目标</th><th>原则</th></tr></thead>
+  <tbody>
+    <tr><td class="k">五问 30 秒</td><td>3 个没看过的人看汇报模式 30 秒后作答</td><td>4 问以上答对</td><td>1</td></tr>
+    <tr><td class="k">一句话到草稿</td><td>从首页输入到画布草稿出现</td><td>60 秒内，用户零输入也有结果</td><td>7</td></tr>
+    <tr><td class="k">修正次数</td><td>一条示例流程从草稿到「按这个建」的人工改动次数</td><td>不超过 8 次</td><td>7</td></tr>
+    <tr><td class="k">两动作新建</td><td>加一个连好线的节点需要的动作数</td><td>≤ 2</td><td>8</td></tr>
+    <tr><td class="k">复用率</td><td>被两条以上流程使用的组件占比</td><td>示例流程 ≥ 30%</td><td>3</td></tr>
+    <tr><td class="k">卡点消除数</td><td>对照现状前后卡点数量差</td><td>投标示例 2 → 0</td><td>5、6</td></tr>
+    <tr><td class="k">无人回复可跑完</td><td>试跑与构建在不点任何确认时能否结束</td><td>能，缺口进未达标清单</td><td>7</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="s13"><span class="n">13</span>给 Claude Design 的交付清单</h2>
+<ol>
+  <li>屏幕 01 到 10 的高保真画板，1440×900；07 与 08 用 1920×1080。每屏含空态、常态、异常态。</li>
+  <li>07 流程画布做成可交互原型：至少覆盖 §7.4 里标「是」可撤销的全部动作，以及钻取、对照、试跑。</li>
+  <li>组件库：FlowNode 全变体矩阵、FlowEdge 五种、FlowPalette、FlowInspector 四种视图，加既有 13 个组件。</li>
+  <li>每屏一段设计说明：服务哪条原则、关键决策、未决问题。</li>
+  <li>示例数据统一用附录 A 的投标流程，不另编。</li>
+  <li>导出：PNG 与 PDF 各一份，加可分享链接。</li>
+</ol>
+
+<h2 id="s14"><span class="n">14</span>待拍板</h2>
+<div class="callout q"><b class="t">遇到这些不要替产品负责人决定</b>
+<ol>
+  <li>楔子场景与运行模型是否按 §2 的建议定下来。</li>
+  <li>部门泳道模式默认开还是按需开。建议按需，默认仍是按谁来做。</li>
+  <li>「按这个建」之后是进 03 资产包交付，还是直接入犬舍并回到画布。建议进 03 再入犬舍，交付物要让人看见。</li>
+  <li>组件版本策略：改一处全局同步是否需要审批。建议第一版不设审批，回归测试当门槛。</li>
+  <li>画布上的改动何时持久化：每次动作自动保存，还是显式保存。建议自动保存加版本历史。</li>
+</ol></div>
+
+<hr>
+<h2 id="sa"><span class="n">附</span>示例数据与术语</h2>
+<h3>A · 投标流程示例节点</h3>
+<div class="tbl"><table>
+  <thead><tr><th>id</th><th>类型</th><th>名称</th><th>谁来做</th><th>状态</th><th>原来</th><th>怎么解</th></tr></thead>
+  <tbody>
+    <tr><td>n1</td><td>人</td><td>商机进入 · 销售</td><td>人定</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>s1</td><td>数据</td><td>CRM</td><td>—</td><td><span class="tag lo">待打通</span></td><td>手工搬</td><td>商机与客户资料只读同步</td></tr>
+    <tr><td>n2</td><td>人</td><td>获取招标文件 · 商务</td><td>人定</td><td><span class="tag hi">卡点</span></td><td>—</td><td>平台打通后改关键词监控自动拉取，变自动</td></tr>
+    <tr><td>s2</td><td>数据</td><td>招标平台</td><td>—</td><td><span class="tag lo">待打通</span></td><td>手工搬</td><td>RPA 或接口订阅公告并下载</td></tr>
+    <tr><td>n3</td><td>工作狗</td><td>招标解析与废标项</td><td>自动</td><td>—</td><td>人做</td><td>—</td></tr>
+    <tr><td>n4 / n14</td><td>人</td><td>投不投 → 投 / 不投·归档</td><td>人定</td><td>—</td><td>—</td><td>决定类分支，两条出线</td></tr>
+    <tr><td>n5 / n7</td><td>工作狗</td><td>评分拆解与应答矩阵 / 分章撰写</td><td>自动</td><td>—</td><td>人做</td><td>—</td></tr>
+    <tr><td>n6</td><td>技能</td><td>素材检索</td><td>自动</td><td>—</td><td>人做</td><td>—</td></tr>
+    <tr><td>s3</td><td>数据</td><td>素材库</td><td>—</td><td><span class="tag p">缺口</span></td><td>手工搬</td><td>补业绩扫描件与证书，投标后回填</td></tr>
+    <tr><td>n8</td><td>工作狗</td><td>合同条款审查（复用合同审查，7 环节子图）</td><td>自动</td><td>—</td><td>人做</td><td>—</td></tr>
+    <tr><td>n9</td><td>人</td><td>报价 · 财务</td><td>人定</td><td><span class="tag hi">卡点</span></td><td>—</td><td>ERP 成本接口加报价模板，人只定折扣，变人审</td></tr>
+    <tr><td>s4</td><td>数据</td><td>ERP 成本</td><td>—</td><td><span class="tag lo">待打通</span></td><td>手工搬</td><td>只读接口</td></tr>
+    <tr><td>n10</td><td>技能</td><td>合规自查与模拟评审</td><td>自动</td><td>—</td><td>人做</td><td>—</td></tr>
+    <tr><td>n11</td><td>人</td><td>领导审批</td><td>人审</td><td>—</td><td>—</td><td>不通过退回报价（退回线）</td></tr>
+    <tr><td>s5</td><td>数据</td><td>OA 审批</td><td>—</td><td><span class="tag lo">待打通</span></td><td>手工搬</td><td>审批单自动发起与回写</td></tr>
+    <tr><td>n12</td><td>人</td><td>递交 · 人工确认点</td><td>人定</td><td>—</td><td>—</td><td>不可逆，受保护</td></tr>
+    <tr><td>n13</td><td>技能</td><td>复盘回填 → 素材库</td><td>自动</td><td>—</td><td><span class="tag ok">新增</span></td><td>回填线回到素材库</td></tr>
+  </tbody>
+</table></div>
+<p class="small">连线共 23 条：顺序 15、数据 3、待打通 4、退回 1、回填 1。完整字段见设计画布 07 的数据源（flow.py），示例数字均为编造的演示值。</p>
+<h3>B · 术语</h3>
+<div class="tbl"><table>
+  <tbody>
+    <tr><td class="k">提示狗</td><td>PromptDog 本体，造工作狗的技能</td></tr>
+    <tr><td class="k">工作狗</td><td>场景专用 Agent 资产包，拖进任意工作区即上岗</td></tr>
+    <tr><td class="k">犬舍</td><td>工作狗的存放与运营处，含复盘与回归</td></tr>
+    <tr><td class="k">组件</td><td>技能、工作狗、行业 know-how、数据与系统、人，五类可拖进流程的东西</td></tr>
+    <tr><td class="k">卡点 / 缺口 / 待打通</td><td>流程在等人 / 缺组件或材料 / 人在搬数据</td></tr>
+    <tr><td class="k">人审 / 人定</td><td>人看一眼可退回 / 不可逆前由人拍板</td></tr>
+    <tr><td class="k">对照现状</td><td>同一张图叠加「原来怎么做」的镜头</td></tr>
+    <tr><td class="k">H 假设</td><td>PromptDog 产物头部的编号假设，用户按编号纠错</td></tr>
+  </tbody>
+</table></div>
+</main>
+</div>
