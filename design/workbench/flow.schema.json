@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/shandianT/Prompt-dog/design/workbench/flow.schema.json",
+  "title": "PromptDog 流程图",
+  "description": "流程重构模式的产物，也是工作台画布的输入。同一份 JSON：技能（references/process-rebuild.md）产出它，画布渲染它，复盘回流改它。",
+  "type": "object",
+  "required": ["name", "nodes", "edges"],
+  "properties": {
+    "name": { "type": "string", "description": "流程名，如「投标流程」" },
+    "essence": { "type": "string", "description": "本质一句话，汇报模式顶部显示" },
+    "version": { "type": "string", "description": "流程图版本，随资产包版本走" },
+    "lanes": {
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["role", "dept"], "default": "role", "description": "role = 按谁来做（AI / 人 / 数据与系统）；dept = 按部门" },
+        "bands": { "type": "array", "items": { "type": "string" }, "description": "dept 模式下的部门顺序，如 [\"销售\",\"商务\",\"售前\",\"财务\",\"领导\"]" }
+      }
+    },
+    "nodes": { "type": "array", "items": { "$ref": "#/definitions/node" } },
+    "edges": { "type": "array", "items": { "$ref": "#/definitions/edge" } }
+  },
+  "definitions": {
+    "kind": { "type": "string", "enum": ["human", "dog", "skill", "know", "data"], "description": "人 / 工作狗 / 技能 / 行业 know-how / 数据与系统" },
+    "role": { "type": "string", "enum": ["auto", "review", "decide", ""], "description": "自动 / 人审 / 人定；数据节点为空" },
+    "flag": { "type": "string", "enum": ["ok", "block", "missing", "pending"], "description": "正常 / 卡点（等人）/ 缺口（缺组件或材料）/ 待打通（人在搬数据）" },
+    "was": { "type": "string", "enum": ["", "human", "manual", "new"], "description": "对照现状用：原来人做 / 原来手工搬 / 新增" },
+    "method": { "type": "string", "enum": ["", "api", "rpa", "file", "manual"], "description": "数据节点的打通方式" },
+    "dir": { "type": "string", "enum": ["", "read", "write", "rw"] },
+    "node": {
+      "type": "object",
+      "required": ["id", "kind", "name"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-z0-9]*$" },
+        "kind": { "$ref": "#/definitions/kind" },
+        "role": { "$ref": "#/definitions/role" },
+        "name": { "type": "string" },
+        "sub": { "type": "string", "description": "一句说明：部门 / 来源 / 环节号" },
+        "x": { "type": "number" }, "y": { "type": "number" },
+        "flag": { "$ref": "#/definitions/flag" },
+        "note": { "type": "string", "description": "卡在哪 / 缺什么 / 要打通什么" },
+        "fix": { "type": "string", "description": "怎么解" },
+        "was": { "$ref": "#/definitions/was" },
+        "target": { "type": "object", "description": "应用建议后的目标状态，字段是 node 的子集（kind / role / flag / sub / method）", "additionalProperties": true },
+        "owner": { "type": "string", "description": "人：负责人或部门；数据：系统负责人" },
+        "sla": { "type": "string", "description": "人：时限" },
+        "notify": { "type": "string", "description": "人：通知渠道（企业微信 / 邮件 / 站内）" },
+        "method": { "$ref": "#/definitions/method" },
+        "dir": { "$ref": "#/definitions/dir" },
+        "reuse": { "type": "integer", "minimum": 0, "description": "复用于 N 条流程 / N 只工作狗" },
+        "src": { "type": "string", "description": "know-how 来源：行业库 / 用户材料 / 待沉淀；或反推现状时的材料出处" },
+        "pack": { "type": "string", "description": "所属资产包目录，如 kennel/标书撰写Agent；复盘回流用" },
+        "children": { "type": "array", "items": { "$ref": "#/definitions/node" }, "description": "子图节点，工作狗才有" },
+        "childEdges": { "type": "array", "items": { "$ref": "#/definitions/edge" } }
+      },
+      "additionalProperties": false
+    },
+    "edge": {
+      "type": "object",
+      "required": ["id", "from", "to", "kind"],
+      "properties": {
+        "id": { "type": "string" },
+        "from": { "type": "string" }, "to": { "type": "string" },
+        "kind": { "type": "string", "enum": ["seq", "data", "pending", "loop", "back"], "description": "顺序 / 数据 / 待打通 / 回填 / 退回；seq 与 back 是控制线，其余是数据线" },
+        "label": { "type": "string", "description": "线上流动的产物名" },
+        "dtype": { "type": "string", "enum": ["file", "struct", "text", "decision", "event", "sys"], "description": "产物类型，决定端口颜色与兼容性" },
+        "contract": { "type": "string", "description": "数据契约：字段与格式，契约闭合检查用" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "x-compat": {
+    "port": { "decision": "琥珀", "struct": "石板灰", "text": "绿", "file": "绿", "sys": "蓝", "event": "琥珀" },
+    "rules": [
+      "决定类产物不能直接进数据节点",
+      "data 节点只能出现在数据与系统泳道",
+      "decide 且位于不可逆动作前的人节点不可改为 auto",
+      "pending 边两端至少一端是 data 节点；写了 method≠manual 后自动降为 data 边"
+    ]
+  }
+}
