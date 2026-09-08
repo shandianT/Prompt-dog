@@ -82,6 +82,10 @@ git clone https://github.com/shandianT/Prompt-dog
 
 ![PromptDog 产品流程](design/figures/product-process.svg)
 
+第一次用怎么走：第一周只做一条流程、一只狗，每一步只做纠错。见 [`design/workbench/使用逻辑.md`](design/workbench/使用逻辑.md)。
+
+![从 0 到 1](design/figures/first-run.svg)
+
 ## 最近更新
 
 - 2026-09-08：新增「设计」入口（产品想法 → 五问首行 + 一页产品定义 + 故事清单，四视角对抗审查）与产品主线（上岗 → 复盘 → 回流，回流表在 `复盘/README.md`）；图档位由环境决定。

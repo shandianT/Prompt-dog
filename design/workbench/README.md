@@ -5,6 +5,7 @@
 | 你是 | 先读 | 然后 |
 |---|---|---|
 | 产品负责人：定方向 | `产品定义.md`（一页：用户、楔子、运行模型、假设、里程碑、待拍板） | 拍板末尾六条 |
+| 第一次用的人，或按使用逻辑做产品的人 | `使用逻辑.md`（从 0 到 1：第一周五步） | 对照画布 00 首次引导与 `design/figures/first-run.svg` |
 | 原型或前端的 agent / 工程师 | `SPEC.md`（屏幕、画布规格、交互、token、验收） | 按 `stories.json` 的顺序做，一次一条 |
 | 写流程重构技能或对接画布的人 | `flow.schema.json`（流程图数据契约） | 示例数据在 `flow.py` 的 `NODES` / `EDGES`；方法在 `references/process-rebuild.md` |
 | 想看设计稿 | 设计画布 <https://claude.ai/code/artifact/cac62e7f-15b7-4363-9d67-613c6468110f> · 设计文档 <https://claude.ai/code/artifact/66c6f966-40e6-483d-a0f9-17a2bb687376> | 文档 HTML 源：`promptdog-design-spec.html` |
@@ -17,7 +18,11 @@
 | `SPEC.md` | 构建规范：屏幕清单、流程画布规格（对象模型、视觉编码、交互清单、面板、泳道语义、快捷键）、token、参考、验收指标 |
 | `stories.json` | 按依赖排序的构建故事，每条一个上下文能做完，验收项可二值判定，`passes` 记进度（与 `references/run-loop.md` 同一套跑法） |
 | `flow.schema.json` | 流程图 JSON Schema：技能产出它，画布渲染它，复盘回流改它；含端口兼容规则 |
-| `gen.py` | 视觉令牌、图标、侧栏 / 顶栏 / 卡片积木，生成 01–06 画板 |
+| `gen.py` | 视觉令牌、图标、侧栏 / 顶栏 / 卡片积木，生成 01–06 画板（01–05 的 v1 版保留作对照） |
+| `screens_v2.py` | 01–05 的 v2 版：四个入口、预填交付、入犬舍 / 画布出口、验收清单驱动的犬舍状态、停在人工确认点的上岗屏；`flow.py` 用它覆盖同名画板 |
+| `design_screen.py` | 11 设计屏：三件套 tab、五问首行、泳道图、H 假设、可选纠错卡 |
+| `onboarding_screen.py` | 00 首次引导：从 0 到 1 的五步时间线、准备清单、入口选择、常见误区 |
+| `使用逻辑.md` | 从 0 到 1 的使用逻辑：第 0 天准备、第一周五步（输入 / 产出 / 屏幕 / 耗时 / 停在哪）、节奏、入口选择、常见误区 |
 | `flow.py` | 入口。07 流程画布（可交互）与 FlowNode 组件；投标流程示例数据的单一来源；运行它重建全部画板 |
 | `canvas.json` | 画板坐标、说明便签、启动配置 |
 | `cdp-look2.mjs` | 无头 Chromium + CDP 交互验证：驱动拖拽 / 连线 / 框选 / 钻取并截图 |

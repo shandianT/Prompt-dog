@@ -623,13 +623,17 @@ FLOW_Y = 2 * (H + GY)
 FLOW_X = W + GX
 if __name__ == "__main__":
     gen.build(
-        extra_files={"FlowCanvas.dc.html": FLOW_CANVAS, "FlowNode.dc.html": FLOW_NODE, "DesignScreen.dc.html": __import__("design_screen").DESIGN},
+        extra_files={"FlowCanvas.dc.html": FLOW_CANVAS, "FlowNode.dc.html": FLOW_NODE, "DesignScreen.dc.html": __import__("design_screen").DESIGN, "Onboarding.dc.html": __import__("onboarding_screen").ONBOARDING,
+                     **{f"{k}.dc.html": getattr(__import__("screens_v2"), v) for k, v in (("Main", "MAIN"), ("Confirm", "CONFIRM"), ("Deliver", "DELIVER"), ("Kennel", "KENNEL"), ("WorkdogRun", "RUN"))}},
         extra_boards=[
+            {"file": "Onboarding.dc.html", "x": -(W + GX), "y": 0, "w": W, "h": H, "title": "00 首次引导 · 从 0 到 1（第一周把一条流程跑起来）"},
             {"file": "DesignScreen.dc.html", "x": 2 * (W + GX), "y": H + GY, "w": W, "h": H, "title": "11 设计 · 从一个想法到能开工的三件套（产品定义 · 故事 · 图）"},
             {"file": "FlowCanvas.dc.html", "x": FLOW_X, "y": FLOW_Y, "w": 1920, "h": 1080, "title": "07 流程画布 · 投标流程（拖连线 · 框选打包 · 钻取 · 对照 · 试跑）", "is_interactive": True, "expand": "fill"},
             {"file": "FlowNode.dc.html", "x": FLOW_X + 1920 + GX, "y": FLOW_Y, "w": 150, "h": 64, "title": "FlowNode · 节点组件（变体用上方调节）"},
         ],
         extra_notes=[
+            {"id": "onboarding-note", "x": -(W + GX), "y": -190, "w": 640,
+             "text": "00 首次引导 · 使用逻辑（从 0 到 1）\n第一周只做一条流程、一只狗：画出现状（30 分钟）→ 建第一只狗（30 分钟）→ 上岗一次（1 小时，只在递交前停）→ 复盘（15 分钟）→ 回到图上（10 分钟，卡点 2 → 0）\n每一步有输入、产出、屏幕、耗时、停在哪；用户只做纠错，不写文档、不整理材料、不一次建多只狗\n文档：design/workbench/使用逻辑.md · 图：design/figures/first-run.svg · QUICKSTART 第八节"},
             {"id": "design-note", "x": 2 * (W + GX), "y": H + 30, "w": 640,
              "text": "11 设计（新）· 入口「设计」：一个产品想法 → 三件套 + 图，不判级\n五问首行（为谁 / 解决什么 / 怎么算成功 / 不做什么 / 先做哪条）是验收，动笔前先填；答不出的转 H\n一页产品定义骨架固定：一句话 · 用户表 · ★ 决定 · 核心场景 · 非目标 · H 与验法 · 里程碑 · 指标 · 待拍板\n右栏图从同一份 flow JSON 渲染，档位由环境决定（高保真 / Mermaid / 泳道表），写成 H\n交付前四视角找茬：老板 / 搭建者 / 执行者 / 反方；唯一一张卡只问深度与楔子，不回复即 ★ 生效\n方法：references/design-mode.md · 范例：design/workbench/ 三件套"},
             {"id": "flow-note", "x": FLOW_X, "y": FLOW_Y - 300, "w": 720,
