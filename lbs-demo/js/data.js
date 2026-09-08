@@ -164,6 +164,8 @@
     ],
   };
 
+  D.planSections = gtm.planSections; // 函数不随 state 深拷贝，单独暴露
+
   /* ---------- 今日回顾 / 主管数据（演示样本） ---------- */
   const review = {
     numbers: { checked: 6, traced: 4, pending: 1, intents: 2 },

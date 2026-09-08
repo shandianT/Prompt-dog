@@ -55,6 +55,7 @@
     .q-sum .qr.total .k { font-size: 14px; font-weight: 700; color: var(--ink); }
     .q-sum .disc { width: 62px; height: 30px; border: 1px solid var(--line-2); border-radius: 8px; text-align: right; padding: 0 8px; font-size: 14px; background: #fff; }
     .q-sum .disc:focus { border-color: var(--brand); outline: 0; }
+    .q-sum .disc { -moz-appearance: textfield; } .q-sum .disc::-webkit-outer-spin-button, .q-sum .disc::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     .q-sum .disc.over { border-color: var(--warn); color: #b45309; font-weight: 700; }
     .q-sum .qr.locked { background: var(--surface-2); border-radius: 10px; padding: 8px 10px; color: var(--ink-3); font-size: 12.5px; }
     .q-sum .qr.locked .v { font-weight: 500; color: var(--ink-3); font-size: 12px; }
@@ -122,7 +123,7 @@
   }
   function reasonOf(t, cat, store) {
     if (t.category === cat && t.reason) return t.reason;
-    if (t.category === '通用' && t.reason) return cat === '单店餐饮' ? '' : t.reason;
+    if (t.category === '通用' && t.reason) return cat === '单店餐饮' ? '' : cat === '食品工厂' ? '工厂客户审核（AIB）通常要求附保险' : t.reason;
     if (t.category === cat) return `客户类别为${cat}，与模版适用范围一致`;
     return '';
   }
@@ -286,7 +287,7 @@
       const shown = exp ? secs : secs.slice(0, 2);
       const head = `<div class="pg-head"><div class="pg-t">方案与报价</div><div class="pg-s">六段方案由模版 + 变量填充 · 报价条目改数量 / 折扣即时重算</div></div>`;
       const tpl = planTpl(p); const qtpl = quoteTpl(p);
-      const plan = `<div class="card"><div class="row top between"><div class="card-title grow" style="margin:0;line-height:1.35">${esc(planTitle(store, p))}</div>${App.ui.chip(`${tpl.version} · ${tpl.sections || 6} 段`, 'gray', { sm: true })}</div>${shown.map((s, i) => `<div class="plan-sec"><div class="pt">${i + 1}. ${esc(s.t)}</div><div class="pp">${esc(s.p)}</div></div>`).join('')}<button class="plan-more" onclick="S_GTM.expand()">${exp ? '收起 ▴' : `展开全部 ${secs.length} 段（${secs.slice(2).map((s) => s.t).join(' / ')}）▾`}</button><div class="plan-foot">演示模版，条款与价格口径由贵司提供 · 变量来源：${App.fmt.md(sm.date)} 留痕、识虫结果、客户类别</div></div>`;
+      const plan = `<div class="card"><div class="row top between"><div class="card-title grow" style="margin:0;line-height:1.35">${esc(planTitle(store, p))}</div>${App.ui.chip(`${tpl.version} · ${secs.length} 段`, 'gray', { sm: true })}</div>${shown.map((s, i) => `<div class="plan-sec"><div class="pt">${i + 1}. ${esc(s.t)}</div><div class="pp">${esc(s.p)}</div></div>`).join('')}<button class="plan-more" onclick="S_GTM.expand()">${exp ? '收起 ▴' : `展开全部 ${secs.length} 段（${secs.slice(2).map((s) => s.t).join(' / ')}）▾`}</button><div class="plan-foot">演示模版，条款与价格口径由贵司提供 · 变量来源：${App.fmt.md(sm.date)} 留痕、识虫结果、客户类别</div></div>`;
       const rows = p.items.map((it, i) => `<tr><td><div class="qn">${esc(it.name)}</div><div class="unit">${esc(it.unit)}</div></td><td><input class="qty" type="number" min="0" value="${it.qty}" oninput="S_GTM.qty('${p.id}',${i},this.value)"></td><td class="r">${money(it.price)}</td><td class="r" id="sub_${i}">${money(it.qty * it.price)}</td></tr>`).join('');
       const quote = `<div class="card"><div class="row between"><div class="card-title" style="margin:0">报价单 · ${esc(qtpl ? qtpl.name.replace(/^.*?· /, '') : '标准报价单')}</div><div class="row gap4">${App.ui.chip('演示单价', 'gray', { sm: true })}<span id="statusChip">${statusChip(p)}</span></div></div><div class="quote-wrap mt8"><table class="quote-table"><thead><tr><th>条目</th><th>数量</th><th class="r">单价</th><th class="r">小计</th></tr></thead><tbody>${rows}</tbody></table></div><div class="q-sum"><div class="qr"><div class="k">小计</div><div class="v" id="qRaw">${money(c.raw)}</div></div><div class="qr"><div class="k">折扣 <input class="disc ${c.over ? 'over' : ''}" id="discIn" type="number" min="0" max="60" value="${p.discount}" oninput="S_GTM.disc('${p.id}',this.value)"> %<span class="tiny muted">阈值 ${G().discountThreshold}%</span></div><div class="v" id="qDisc">−${money(c.disc)}</div></div><div class="qr total"><div class="k">合计</div><div class="v" id="qTotal">${money(c.total)}</div></div><div class="qr"><div class="k">有效期</div><div class="v">${p.validDays} 天 · 至 ${App.fmt.md('2026-10-07')}</div></div><div class="qr locked"><div class="k">${App.icon('lock', 14)}成本与毛利</div><div class="v">占位字段 · 仅审批人可见</div></div></div><div class="mt12" id="discNotice">${discNotice(p)}</div></div>`;
       const ins = hasIns(p) ? `<div class="card att"><div class="ai">${App.icon('shield', 20)}</div><div class="grow"><div class="bold">附件 · 服务责任保险单</div><div class="small muted">v1 · 贵司预置 · 保险主体与保额由贵司提供</div></div>${App.ui.chip('已附', 'brand', { sm: true })}</div>` : '';
