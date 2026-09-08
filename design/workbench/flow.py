@@ -626,10 +626,12 @@ FLOW_X = W + GX
 if __name__ == "__main__":
     gen.build(
         extra_files={"FlowCanvas.dc.html": FLOW_CANVAS, "FlowNode.dc.html": FLOW_NODE, "DesignScreen.dc.html": __import__("design_screen").DESIGN, "Onboarding.dc.html": __import__("onboarding_screen").ONBOARDING,
+                     "Journey.dc.html": __import__("journey_screen").JOURNEY,
                      **{f"{k}.dc.html": getattr(__import__("screens_v3"), v) for k, v in (("Report", "REPORT"), ("ComponentDetail", "COMPONENT_DETAIL"), ("Retro", "RETRO"))},
                      **{f"{k}.dc.html": getattr(__import__("screens_v2"), v) for k, v in (("Main", "MAIN"), ("Confirm", "CONFIRM"), ("Deliver", "DELIVER"), ("Kennel", "KENNEL"), ("WorkdogRun", "RUN"))}},
         extra_boards=[
             {"file": "Onboarding.dc.html", "x": -(W + GX), "y": 0, "w": W, "h": H, "title": "00 首次引导 · 从 0 到 1（第一周把一条流程跑起来）"},
+            {"file": "Journey.dc.html", "x": -(W + GX), "y": H + GY, "w": W, "h": H, "title": "12 用户旅程 · 每一步（在哪屏 · 你做什么 · 它做什么 · 停不停）"},
             {"file": "ComponentDetail.dc.html", "x": 3 * (W + GX), "y": H + GY, "w": W, "h": H, "title": "09 组件详情 · 合同审查（组件即资产：契约 · 复用 · 版本）"},
             {"file": "Retro.dc.html", "x": 4 * (W + GX), "y": H + GY, "w": W, "h": H, "title": "10 复盘与回归 · 四指标回填 + 回归门槛 + 回流建议"},
             {"file": "Report.dc.html", "x": W + GX, "y": 3980, "w": W, "h": H, "title": "08 汇报模式 · 给老板看的一屏（五问 30 秒答完）"},
@@ -638,6 +640,8 @@ if __name__ == "__main__":
             {"file": "FlowNode.dc.html", "x": FLOW_X + 1920 + GX, "y": FLOW_Y, "w": 150, "h": 64, "title": "FlowNode · 节点组件（变体用上方调节）"},
         ],
         extra_notes=[
+            {"id": "journey-note", "x": -(W + GX), "y": H + GY - 230, "w": 660,
+             "text": "12 用户旅程（新）· 把「用户怎么用」的每一步摊开\n四个阶段十二步，每步写清：在哪屏 · 你做什么 · 它做什么 · 停不停\n三条贯穿规则：先做出来再纠错（不先问问题）· 纠错只有一种语法（说编号）· 只在不可逆动作前停（其余走 ★ 默认）\n全流程只有三个地方会停：按这个建 / 人工确认点 / 改版不改版；其中只有人工确认点在不回复时会一直停着\n逐步规格（含每步的产物、异常路径、出错怎么办）见 design/workbench/交互流程.md"},
             {"id": "new-screens-note", "x": 3 * (W + GX), "y": H + GY - 250, "w": 700,
              "text": "09 组件详情 / 10 复盘与回归（新）· 补齐 SPEC §5 里已列规格但没画的屏\n09 回答原则 3「组件即资产」：一只工作狗的输入输出契约、参数、7 环节子图、复用于哪两条流程与节点号、版本与改动；右栏是「改一处全局同步」与发布前必过项\n10 是飞轮的操作面：四指标回填（漏审 / 误报 / 定位失败 / 虚构来源，带上期对比）、2 份历史样本的回归对照、不达标就不许发布、右栏给出到达触发条件的回流建议与已知规律\n两屏的数据都来自狗自己的 复盘/日志.md 与 验收清单.json，不经服务端"},
             {"id": "report-note", "x": W + GX, "y": 3980 - 250, "w": 700,
