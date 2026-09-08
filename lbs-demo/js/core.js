@@ -405,6 +405,7 @@
     App._syncHash(); App._updatePresenter();
   };
   App.tab = function (tabId, params = {}) {
+    if (!App.screens[tabId]) { console.warn('unknown tab', tabId); tabId = TAB_ROOTS[0]; }
     App.closeOverlay();
     App.stack.forEach((e) => e.el && e.el.remove());
     App.stack = [];
