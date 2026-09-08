@@ -76,10 +76,10 @@ AGENTS = [
     ("comp", "📈", "竞品分析",    "每周一 · 竞品周报"),
 ]
 
-def sidebar(active="dog", kennel_active=False, flow_active=False):
+def sidebar(active="dog", kennel_active=False, flow_active=False, design_active=False):
     items = []
     for key, av, name, sub in AGENTS:
-        on = (key == active) and not kennel_active and not flow_active
+        on = (key == active) and not kennel_active and not flow_active and not design_active
         bg = SIDE_ON if on else "transparent"
         col = "#ffffff" if on else SIDE_TXT
         new = ''
@@ -100,6 +100,7 @@ def sidebar(active="dog", kennel_active=False, flow_active=False):
         f'<div style="display:flex;flex-direction:column;gap:2px">{"".join(items)}</div>'
         f'<div style="font-size:11px;letter-spacing:.1em;color:{SIDE_SEC};padding:14px 10px 6px;font-weight:700">组织</div>'
         f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;background:{SIDE_ON if flow_active else "transparent"};color:{"#ffffff" if flow_active else SIDE_TXT};font-size:14px">{ico("flow",20)}<span style="font-weight:600">流程画布</span><span style="margin-left:auto;font-size:12px;color:{SIDE_SMALL}">3</span></div>'
+        f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;background:{SIDE_ON if design_active else "transparent"};color:{"#ffffff" if design_active else SIDE_TXT};font-size:14px">{ico("book",20)}<span style="font-weight:600">设计</span><span style="margin-left:auto;font-size:12px;color:{SIDE_SMALL}">1</span></div>'
         f'<div style="font-size:11px;letter-spacing:.1em;color:{SIDE_SEC};padding:12px 10px 6px;font-weight:700">犬舍</div>'
         f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;background:{kbg};color:{kcol};font-size:14px">{ico("grid",20)}<span style="font-weight:600">全部工作狗</span><span style="margin-left:auto;font-size:12px;color:{SIDE_SMALL}">4</span></div>'
         f'<div style="display:flex;gap:11px;align-items:center;min-height:44px;padding:6px 10px;border-radius:10px;color:{SIDE_TXT};font-size:14px">{ico("puzzle",20)}<span style="font-weight:600">组件库</span><span style="margin-left:auto;font-size:12px;color:{SIDE_SMALL}">12</span></div>'

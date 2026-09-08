@@ -29,8 +29,8 @@ git clone https://github.com/shandianT/Prompt-dog
 然后在你的 `AGENTS.md` 加一段路由：
 
 ```markdown
-遇到写提示词 / 优化提示词 / 设计 SOP 或工作流的任务时，
-读取 Prompt-dog/SKILL.md 并严格按其流程执行。
+遇到写提示词 / 优化提示词 / 设计 SOP 或工作流、描述一段部门流程问哪些能交给 AI、
+或要产品定义 / PRD / 设计文档的任务时，读取 Prompt-dog/SKILL.md 并严格按其流程执行。
 ```
 
 **方式二：任意对话 AI** —— 复制 [`assets/system-prompt.md`](assets/system-prompt.md) 分隔线以下全文，贴进系统提示词框或对话第一条。

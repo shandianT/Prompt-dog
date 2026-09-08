@@ -623,12 +623,15 @@ FLOW_Y = 2 * (H + GY)
 FLOW_X = W + GX
 if __name__ == "__main__":
     gen.build(
-        extra_files={"FlowCanvas.dc.html": FLOW_CANVAS, "FlowNode.dc.html": FLOW_NODE},
+        extra_files={"FlowCanvas.dc.html": FLOW_CANVAS, "FlowNode.dc.html": FLOW_NODE, "DesignScreen.dc.html": __import__("design_screen").DESIGN},
         extra_boards=[
+            {"file": "DesignScreen.dc.html", "x": 2 * (W + GX), "y": H + GY, "w": W, "h": H, "title": "11 设计 · 从一个想法到能开工的三件套（产品定义 · 故事 · 图）"},
             {"file": "FlowCanvas.dc.html", "x": FLOW_X, "y": FLOW_Y, "w": 1920, "h": 1080, "title": "07 流程画布 · 投标流程（拖连线 · 框选打包 · 钻取 · 对照 · 试跑）", "is_interactive": True, "expand": "fill"},
             {"file": "FlowNode.dc.html", "x": FLOW_X + 1920 + GX, "y": FLOW_Y, "w": 150, "h": 64, "title": "FlowNode · 节点组件（变体用上方调节）"},
         ],
         extra_notes=[
+            {"id": "design-note", "x": 2 * (W + GX), "y": H + 30, "w": 640,
+             "text": "11 设计（新）· 入口「设计」：一个产品想法 → 三件套 + 图，不判级\n五问首行（为谁 / 解决什么 / 怎么算成功 / 不做什么 / 先做哪条）是验收，动笔前先填；答不出的转 H\n一页产品定义骨架固定：一句话 · 用户表 · ★ 决定 · 核心场景 · 非目标 · H 与验法 · 里程碑 · 指标 · 待拍板\n右栏图从同一份 flow JSON 渲染，档位由环境决定（高保真 / Mermaid / 泳道表），写成 H\n交付前四视角找茬：老板 / 搭建者 / 执行者 / 反方；唯一一张卡只问深度与楔子，不回复即 ★ 生效\n方法：references/design-mode.md · 范例：design/workbench/ 三件套"},
             {"id": "flow-note", "x": FLOW_X, "y": FLOW_Y - 300, "w": 720,
              "text": "07 流程画布（可交互）· 八条设计原则的落点\n1 先读懂再动手：泳道 + 三种标记回答五个问题（哪些自动 / 人在哪 / 卡在哪 / 缺什么 / 打通什么）\n2 两条线不混：顺序线（灰实）/ 数据线（深灰实）/ 待打通（蓝虚）/ 退回（红虚）/ 回填（绿虚），线上标产物\n3 节点即组件：工作狗 = 子图，双击钻取；框选多个 = 打包成新工作狗\n4 类型化端口：端口颜色 = 产物类型，新连线自动带默认产物与契约\n5 一张图三种看法：目标态（默认）/ 对照现状（每个节点标「原：人做 / 手工搬 / 新增」）/ 试跑（按顺序点亮）\n6 人机边界可拖：人的步骤拖进 AI 泳道 = 要自动化并标缺口；AI 拖进人泳道 = 改人审\n7 默认值先行：AI 先给出图，人只纠错；诊断建议一键「应用」变成打通后的样子\n8 最短路径：从端口拖到空白 = 新建并连上；双击空白搜组件；右键菜单；撤销"},
         ],

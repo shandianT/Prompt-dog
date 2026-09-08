@@ -6,7 +6,7 @@
   </defs>
   <rect width="1440" height="620" fill="#f7f8fa"/>
   <text x="40" y="44" font-size="22" font-weight="800" fill="#1e232b">PromptDog 产品流程 · 从一句话或一段流程，到上岗，再回到图上</text>
-  <text x="40" y="68" font-size="13" fill="#68707c">灰实线 = 顺序（上游停机标记 = 下游启动条件）　蓝虚线 = 并联分支与汇总　绿虚线 = 回流（只对重复的事）　琥珀边 = 有人参与的点</text>
+  <text x="40" y="68" font-size="13" fill="#68707c">灰实线 = 顺序（上岗循环内：上一轮停机标记 = 下一轮动作）　蓝虚线 = 并联分支与汇总　绿虚线 = 回流（只对重复的事）　琥珀边 = 有人参与的点</text>
 
   <!-- lanes -->
   <g font-size="12" font-weight="700" fill="#68707c">
@@ -29,7 +29,7 @@
     <rect x="860" y="140" width="220" height="64" rx="10" fill="#fef3e2" stroke="#d97706" stroke-width="1.5"/>
     <text x="876" y="165" font-weight="700">设计</text><text x="876" y="186" font-size="11.5" fill="#68707c">产品想法 → 产品定义 + 故事 + 图</text>
     <rect x="1140" y="140" width="220" height="64" rx="10" fill="#f5f2ec" stroke="#e5e8ee"/>
-    <text x="1156" y="165" font-weight="700" fill="#68707c">契约</text><text x="1156" y="186" font-size="11.5" fill="#68707c">流程图 JSON · H 假设清单</text>
+    <text x="1156" y="165" font-weight="700" fill="#68707c">契约</text><text x="1156" y="186" font-size="11.5" fill="#68707c">流程图 JSON · stories.json · H 假设</text>
   </g>
 
   <!-- build row -->
@@ -81,7 +81,7 @@
   <g fill="#9aa4af"><circle cx="450" cy="270" r="3.5"/><circle cx="970" cy="270" r="3.5"/></g>
   <circle cx="710" cy="270" r="3.5" fill="#2563eb"/>
   <text x="985" y="241" font-size="11.5" fill="#2563eb">打包建议里的多只狗并行判级建包 · 汇总点：流程图 JSON</text>
-  <text x="200" y="262" font-size="11" fill="#68707c">三个入口汇入同一条主循环：新建直接判级 · 设计的第一条故事转判级</text>
+  <text x="200" y="262" font-size="11" fill="#68707c">四个入口汇入同一条主循环（诊断经升级提议）· 新建直接判级 · 设计里标「转主循环」的故事转判级</text>
   <!-- loop back: 回流 → entry -->
   <g fill="none" stroke="#16a34a" stroke-width="1.8" stroke-dasharray="7 5" marker-end="url(#ag)">
     <path d="M1080 502H1110C1122 502 1130 494 1130 482V120C1130 108 1122 100 1110 100H720C708 100 700 108 700 120V140"/>
