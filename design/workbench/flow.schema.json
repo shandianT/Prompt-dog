@@ -49,6 +49,7 @@
         "reuse": { "type": "integer", "minimum": 0, "description": "复用于 N 条流程 / N 只工作狗" },
         "src": { "type": "string", "description": "know-how 来源：行业库 / 用户材料 / 待沉淀；或反推现状时的材料出处" },
         "pack": { "type": "string", "description": "所属资产包目录，如 kennel/标书撰写Agent；复盘回流用" },
+        "irreversible": { "type": "boolean", "description": "人节点：这一步是或紧接不可逆动作（发送 / 提交 / 付款 / 签署）。x-compat 规则 3 靠它判定「不可改为 auto」——没有这个字段，那条规则无法机器检查" },
         "children": { "type": "array", "items": { "$ref": "#/definitions/node" }, "description": "子图节点，工作狗才有" },
         "childEdges": { "type": "array", "items": { "$ref": "#/definitions/edge" } }
       },

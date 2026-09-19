@@ -1,0 +1,623 @@
+{
+ "name": "投标流程",
+ "essence": "按评分表答题，让评标专家无处扣分",
+ "version": "0.1.0",
+ "lanes": {
+  "mode": "role"
+ },
+ "nodes": [
+  {
+   "id": "n1",
+   "kind": "human",
+   "role": "decide",
+   "name": "商机进入",
+   "sub": "销售 · 录入线索",
+   "x": 20,
+   "y": 500,
+   "flag": "ok",
+   "note": "销售把线索录进来，决定跟不跟。",
+   "owner": "销售",
+   "sla": "当天",
+   "notify": "企业微信"
+  },
+  {
+   "id": "s1",
+   "kind": "data",
+   "name": "CRM",
+   "sub": "商机 · 客户资料",
+   "x": 20,
+   "y": 780,
+   "flag": "pending",
+   "note": "现在靠人从 CRM 抄到表格。",
+   "fix": "打通商机状态与客户资料的只读同步，商机进入后自动带出客户背景。",
+   "was": "manual",
+   "method": "manual",
+   "dir": "read",
+   "target": {
+    "flag": "ok",
+    "method": "api"
+   }
+  },
+  {
+   "id": "n2",
+   "kind": "human",
+   "role": "decide",
+   "name": "获取招标文件",
+   "sub": "商务 · 刷平台下载",
+   "x": 190,
+   "y": 500,
+   "flag": "block",
+   "note": "每天人工刷招标平台，常漏标，常晚一天才看到。",
+   "fix": "招标平台打通后改为关键词监控自动拉取，这一步从人定变自动，卡点消失。",
+   "owner": "商务",
+   "sla": "当天",
+   "notify": "企业微信",
+   "target": {
+    "kind": "skill",
+    "role": "auto",
+    "flag": "ok",
+    "sub": "关键词监控 · 自动拉取"
+   }
+  },
+  {
+   "id": "s2",
+   "kind": "data",
+   "name": "招标平台",
+   "sub": "公告 · 文件下载",
+   "x": 190,
+   "y": 780,
+   "flag": "pending",
+   "note": "公告订阅与文件下载都靠人。",
+   "fix": "RPA 或平台接口：公告订阅 + 文件自动下载到「招标文件/」。",
+   "was": "manual",
+   "method": "manual",
+   "dir": "read",
+   "target": {
+    "flag": "ok",
+    "method": "rpa"
+   }
+  },
+  {
+   "id": "n3",
+   "kind": "dog",
+   "role": "auto",
+   "name": "招标解析与废标项",
+   "sub": "标书撰写 · 环节 1",
+   "x": 360,
+   "y": 120,
+   "flag": "ok",
+   "note": "输出结构化解析，废标项清单置顶。",
+   "was": "human",
+   "reuse": 1
+  },
+  {
+   "id": "n4",
+   "kind": "human",
+   "role": "decide",
+   "name": "投不投",
+   "sub": "售前负责人",
+   "x": 360,
+   "y": 500,
+   "flag": "ok",
+   "note": "看废标项与评分结构决定是否投标。",
+   "owner": "售前负责人",
+   "sla": "1 天",
+   "notify": "企业微信"
+  },
+  {
+   "id": "n14",
+   "kind": "human",
+   "role": "decide",
+   "name": "不投 · 归档",
+   "sub": "记录原因，回填线索",
+   "x": 360,
+   "y": 620,
+   "flag": "ok",
+   "note": "不投也要留痕，原因回 CRM。",
+   "owner": "商务",
+   "sla": "当天",
+   "notify": "企业微信"
+  },
+  {
+   "id": "n5",
+   "kind": "dog",
+   "role": "auto",
+   "name": "评分拆解与应答矩阵",
+   "sub": "标书撰写 · 环节 2",
+   "x": 530,
+   "y": 60,
+   "flag": "ok",
+   "note": "每个评分点一行：分值、细则原文、我方素材、得分策略。",
+   "was": "human",
+   "reuse": 1
+  },
+  {
+   "id": "n6",
+   "kind": "skill",
+   "role": "auto",
+   "name": "素材检索",
+   "sub": "技能 · 资质 / 业绩 / 人员",
+   "x": 530,
+   "y": 200,
+   "flag": "ok",
+   "note": "按应答矩阵从素材库取材料，缺的标【待补材料】。",
+   "was": "human",
+   "reuse": 2
+  },
+  {
+   "id": "s3",
+   "kind": "data",
+   "name": "素材库",
+   "sub": "资质 · 业绩 · 技术模块",
+   "x": 530,
+   "y": 780,
+   "flag": "missing",
+   "note": "历史业绩缺扫描件，人员证书没入库，素材命中率低。",
+   "fix": "补齐业绩扫描件与人员证书；每次投标后新章节回填，越用越全。",
+   "was": "manual",
+   "method": "file",
+   "dir": "rw",
+   "target": {
+    "flag": "ok"
+   }
+  },
+  {
+   "id": "n7",
+   "kind": "dog",
+   "role": "auto",
+   "name": "分章撰写",
+   "sub": "标书撰写 · 环节 3",
+   "x": 700,
+   "y": 60,
+   "flag": "ok",
+   "note": "篇幅跟着分值走，只引用素材库真实材料。",
+   "was": "human",
+   "reuse": 1
+  },
+  {
+   "id": "n8",
+   "kind": "dog",
+   "role": "auto",
+   "name": "合同条款审查",
+   "sub": "合同审查 · 复用 · 7 环节",
+   "x": 700,
+   "y": 200,
+   "flag": "ok",
+   "note": "复用合同审查工作狗审招标文件里的合同条款，给偏离表依据。双击可钻进去看 7 个环节。",
+   "was": "human",
+   "reuse": 2,
+   "children": [
+    {
+     "id": "n8c1",
+     "kind": "skill",
+     "role": "auto",
+     "name": "文件解析",
+     "sub": "合同审查 · 环节 1",
+     "x": 20,
+     "y": 140,
+     "flag": "ok",
+     "reuse": 1
+    },
+    {
+     "id": "n8c2",
+     "kind": "skill",
+     "role": "auto",
+     "name": "事实提取",
+     "sub": "合同审查 · 环节 2",
+     "x": 190,
+     "y": 140,
+     "flag": "ok",
+     "reuse": 1
+    },
+    {
+     "id": "n8c3",
+     "kind": "skill",
+     "role": "auto",
+     "name": "风险扫描",
+     "sub": "合同审查 · 环节 3",
+     "x": 360,
+     "y": 140,
+     "flag": "ok",
+     "reuse": 1
+    },
+    {
+     "id": "n8c4",
+     "kind": "skill",
+     "role": "auto",
+     "name": "法律核查",
+     "sub": "合同审查 · 环节 4",
+     "x": 530,
+     "y": 140,
+     "flag": "ok",
+     "reuse": 1
+    },
+    {
+     "id": "n8c5",
+     "kind": "skill",
+     "role": "auto",
+     "name": "条款建议",
+     "sub": "合同审查 · 环节 5",
+     "x": 700,
+     "y": 140,
+     "flag": "ok",
+     "reuse": 1
+    },
+    {
+     "id": "n8c6",
+     "kind": "skill",
+     "role": "auto",
+     "name": "对抗审查",
+     "sub": "合同审查 · 环节 6",
+     "x": 870,
+     "y": 140,
+     "flag": "ok",
+     "reuse": 1
+    },
+    {
+     "id": "n8c7",
+     "kind": "skill",
+     "role": "auto",
+     "name": "交付生成",
+     "sub": "合同审查 · 环节 7",
+     "x": 1040,
+     "y": 140,
+     "flag": "ok",
+     "reuse": 1
+    }
+   ],
+   "childEdges": [
+    {
+     "id": "n8ce0",
+     "from": "n8c1",
+     "to": "n8c2",
+     "kind": "seq",
+     "label": "环节 1 产物",
+     "dtype": "struct",
+     "contract": ""
+    },
+    {
+     "id": "n8ce1",
+     "from": "n8c2",
+     "to": "n8c3",
+     "kind": "seq",
+     "label": "环节 2 产物",
+     "dtype": "struct",
+     "contract": ""
+    },
+    {
+     "id": "n8ce2",
+     "from": "n8c3",
+     "to": "n8c4",
+     "kind": "seq",
+     "label": "环节 3 产物",
+     "dtype": "struct",
+     "contract": ""
+    },
+    {
+     "id": "n8ce3",
+     "from": "n8c4",
+     "to": "n8c5",
+     "kind": "seq",
+     "label": "环节 4 产物",
+     "dtype": "struct",
+     "contract": ""
+    },
+    {
+     "id": "n8ce4",
+     "from": "n8c5",
+     "to": "n8c6",
+     "kind": "seq",
+     "label": "环节 5 产物",
+     "dtype": "struct",
+     "contract": ""
+    },
+    {
+     "id": "n8ce5",
+     "from": "n8c6",
+     "to": "n8c7",
+     "kind": "seq",
+     "label": "环节 6 产物",
+     "dtype": "struct",
+     "contract": ""
+    }
+   ]
+  },
+  {
+   "id": "n9",
+   "kind": "human",
+   "role": "decide",
+   "name": "报价",
+   "sub": "财务 · 成本核算",
+   "x": 700,
+   "y": 500,
+   "flag": "block",
+   "note": "等财务出成本，整条流程常卡在这里。",
+   "fix": "ERP 成本只读接口 + 报价模板，先自动出报价框架，人只定折扣，这一步从人定变人审。",
+   "owner": "财务",
+   "sla": "2 天",
+   "notify": "企业微信",
+   "target": {
+    "role": "review",
+    "flag": "ok",
+    "sub": "ERP 成本 + 报价模板 · 人只定折扣"
+   }
+  },
+  {
+   "id": "s4",
+   "kind": "data",
+   "name": "ERP 成本",
+   "sub": "物料 · 人工 · 历史报价",
+   "x": 700,
+   "y": 780,
+   "flag": "pending",
+   "note": "成本口径在财务手里，每次现算。",
+   "fix": "只读接口拉成本口径与历史报价。",
+   "was": "manual",
+   "method": "manual",
+   "dir": "read",
+   "target": {
+    "flag": "ok",
+    "method": "api"
+   }
+  },
+  {
+   "id": "n10",
+   "kind": "skill",
+   "role": "auto",
+   "name": "合规自查与模拟评审",
+   "sub": "对抗审查 + 废标项清单",
+   "x": 870,
+   "y": 120,
+   "flag": "ok",
+   "note": "切换成挑剔的评标专家，只找扣分点。",
+   "was": "human",
+   "reuse": 3
+  },
+  {
+   "id": "n11",
+   "kind": "human",
+   "role": "review",
+   "name": "领导审批",
+   "sub": "分管领导",
+   "x": 870,
+   "y": 500,
+   "flag": "ok",
+   "note": "看自查清单与报价，通过才递交；不通过退回报价。",
+   "owner": "分管领导",
+   "sla": "1 天",
+   "notify": "企业微信"
+  },
+  {
+   "id": "s5",
+   "kind": "data",
+   "name": "OA 审批",
+   "sub": "流程 · 签章",
+   "x": 870,
+   "y": 780,
+   "flag": "pending",
+   "note": "审批在 OA 里另起一单，结果要人回来告诉流程。",
+   "fix": "审批单自动发起与回写，审批结果直接推进到递交。",
+   "was": "manual",
+   "method": "manual",
+   "dir": "rw",
+   "target": {
+    "flag": "ok",
+    "method": "api"
+   }
+  },
+  {
+   "id": "n12",
+   "kind": "human",
+   "role": "decide",
+   "name": "递交",
+   "sub": "人工确认点",
+   "x": 1040,
+   "y": 500,
+   "flag": "ok",
+   "note": "不可逆动作，递交前暂停等人确认。",
+   "owner": "商务",
+   "sla": "截止前 1 天",
+   "notify": "企业微信",
+   "irreversible": true
+  },
+  {
+   "id": "n13",
+   "kind": "skill",
+   "role": "auto",
+   "name": "复盘回填",
+   "sub": "中标结果 → 素材库",
+   "x": 1040,
+   "y": 200,
+   "flag": "ok",
+   "note": "中标 / 落标结果、评审意见、新写章节回填素材库。",
+   "was": "new",
+   "reuse": 4
+  }
+ ],
+ "edges": [
+  {
+   "id": "e0",
+   "from": "s1",
+   "to": "n1",
+   "kind": "pending",
+   "label": "商机、客户资料",
+   "dtype": "sys"
+  },
+  {
+   "id": "e1",
+   "from": "n1",
+   "to": "n2",
+   "kind": "seq",
+   "label": "跟进的线索",
+   "dtype": "decision"
+  },
+  {
+   "id": "e2",
+   "from": "s2",
+   "to": "n2",
+   "kind": "pending",
+   "label": "公告、招标文件",
+   "dtype": "sys"
+  },
+  {
+   "id": "e3",
+   "from": "n2",
+   "to": "n3",
+   "kind": "seq",
+   "label": "招标文件 PDF",
+   "dtype": "file"
+  },
+  {
+   "id": "e4",
+   "from": "n3",
+   "to": "n4",
+   "kind": "seq",
+   "label": "废标项清单 + 评分结构",
+   "dtype": "struct"
+  },
+  {
+   "id": "e5",
+   "from": "n4",
+   "to": "n5",
+   "kind": "seq",
+   "label": "投",
+   "dtype": "decision"
+  },
+  {
+   "id": "e6",
+   "from": "n4",
+   "to": "n14",
+   "kind": "seq",
+   "label": "不投",
+   "dtype": "decision"
+  },
+  {
+   "id": "e7",
+   "from": "n5",
+   "to": "n6",
+   "kind": "seq",
+   "label": "应答矩阵",
+   "dtype": "struct"
+  },
+  {
+   "id": "e8",
+   "from": "s3",
+   "to": "n6",
+   "kind": "data",
+   "label": "资质 / 业绩材料",
+   "dtype": "file"
+  },
+  {
+   "id": "e9",
+   "from": "n5",
+   "to": "n7",
+   "kind": "seq",
+   "label": "应答矩阵",
+   "dtype": "struct"
+  },
+  {
+   "id": "e10",
+   "from": "n6",
+   "to": "n7",
+   "kind": "data",
+   "label": "素材 + 待补清单",
+   "dtype": "struct"
+  },
+  {
+   "id": "e11",
+   "from": "n3",
+   "to": "n8",
+   "kind": "seq",
+   "label": "合同条款",
+   "dtype": "file"
+  },
+  {
+   "id": "e12",
+   "from": "n5",
+   "to": "n9",
+   "kind": "seq",
+   "label": "报价表框架",
+   "dtype": "struct"
+  },
+  {
+   "id": "e13",
+   "from": "s4",
+   "to": "n9",
+   "kind": "pending",
+   "label": "成本口径、历史报价",
+   "dtype": "sys"
+  },
+  {
+   "id": "e14",
+   "from": "n7",
+   "to": "n10",
+   "kind": "seq",
+   "label": "标书初稿",
+   "dtype": "file"
+  },
+  {
+   "id": "e15",
+   "from": "n8",
+   "to": "n10",
+   "kind": "data",
+   "label": "偏离表依据",
+   "dtype": "struct"
+  },
+  {
+   "id": "e16",
+   "from": "n9",
+   "to": "n10",
+   "kind": "seq",
+   "label": "报价",
+   "dtype": "struct"
+  },
+  {
+   "id": "e17",
+   "from": "n10",
+   "to": "n11",
+   "kind": "seq",
+   "label": "自查清单 + 三件套",
+   "dtype": "file"
+  },
+  {
+   "id": "e18",
+   "from": "s5",
+   "to": "n11",
+   "kind": "pending",
+   "label": "审批单",
+   "dtype": "sys"
+  },
+  {
+   "id": "e19",
+   "from": "n11",
+   "to": "n12",
+   "kind": "seq",
+   "label": "审批通过",
+   "dtype": "decision"
+  },
+  {
+   "id": "e20",
+   "from": "n11",
+   "to": "n9",
+   "kind": "back",
+   "label": "不通过 · 退回",
+   "dtype": "decision"
+  },
+  {
+   "id": "e21",
+   "from": "n12",
+   "to": "n13",
+   "kind": "seq",
+   "label": "中标结果",
+   "dtype": "event"
+  },
+  {
+   "id": "e22",
+   "from": "n13",
+   "to": "s3",
+   "kind": "loop",
+   "label": "新章节、评审意见",
+   "dtype": "file"
+  }
+ ]
+}

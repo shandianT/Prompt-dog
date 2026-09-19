@@ -1,0 +1,63 @@
+/* SPEC.md §7 的 token，唯一来源。组件里不写死颜色与圆角，只用这里的变量。 */
+@import 'tailwindcss';
+
+@theme {
+  /* 主色：主按钮、选中态、确认卡边框、人类触点。一屏只有一个主按钮 */
+  --color-amber: #d97706;
+  --color-amber-soft: #fdf0dd;
+  --color-amber-tint: #fef3e2;
+  --color-amber-hover: #b45309;
+
+  /* 中性 */
+  --color-ink: #1e232b;
+  --color-sub: #68707c;
+  --color-line: #e5e8ee;
+  --color-page: #f7f8fa;
+  --color-warm: #f5f2ec;
+  --color-side: #1b1f27;
+  --color-side-on: #2e3542;
+  --color-side-txt: #c8cdd6;
+
+  /* 语义色：只用于风险等级与四类来源，不当装饰 */
+  --color-hi: #dc2626;   /* 高风险 / 卡点 */
+  --color-lo: #2563eb;   /* 技能 / 待打通 */
+  --color-ok: #16a34a;   /* 达标 / know-how / 回填 */
+
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* 字号 */
+  --text-title: 26px;
+  --text-title--line-height: 1.25;
+  --text-card: 16px;
+  --text-body: 14px;
+  --text-body--line-height: 1.6;
+  --text-aux: 12.5px;
+  --text-tag: 11.5px;
+
+  /* 圆角 */
+  --radius-card: 14px;
+  --radius-btn: 10px;
+  --radius-tag: 8px;
+  --radius-badge: 6px;
+}
+
+:root {
+  /* 控件高度：点击目标 ≥ 44 */
+  --h-primary: 44px;
+  --h-secondary: 40px;
+  --h-compact: 36px;
+  --h-chip: 28px;
+  --h-source: 24px;
+  --h-badge: 22px;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--color-ink);
+  background: var(--color-page);
+  -webkit-font-smoothing: antialiased;
+}

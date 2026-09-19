@@ -14,8 +14,8 @@
     "README 链到 开源选型.md 而不是重复论证"
    ],
    "优先级": 1,
-   "passes": false,
-   "备注": ""
+   "passes": true,
+   "备注": "2026-09-19 建成 workbench/。四道检查（schema / 枚举漂移 / 引用完整性 / x-compat 四条规则）加十个反向测试，证明检查真的会报错。校验时发现并修掉两处契约漂移：① flow.py 的 children 是 {nodes, edges}，schema 要 children[] + childEdges[]，由导出脚本归一；② flow.py 的 irreversible 字段 schema 里没有（additionalProperties:false 会拒收），而 x-compat 规则 3「不可逆动作前的人定节点不可改为 auto」正需要它——给 schema 补上，这条规则才能机器检查。jspdf 按 npm audit 取 ≥4.2.1（4.2.0 及以下有 critical 漏洞）；html-to-image 按选型锁死 1.11.11。"
   },
   {
    "id": "S02",

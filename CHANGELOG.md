@@ -2,6 +2,15 @@
 
 > 这里记录 PromptDog 的主要产品迭代，让访问者能看到项目在持续运营和更新。
 
+## 2026-09-19
+
+### 工作台前端开建：S01 工程骨架与数据契约
+- **`workbench/`**：React 19 + TypeScript + Vite 7 + Tailwind v4；画布底座 `@xyflow/react` v12，导出 `html-to-image`（锁 1.11.11）+ `jspdf`（≥4.2.1，更低版本有 critical 漏洞），文本档图 `mermaid`，运行时校验 `ajv`。选型理由不重复论证，链到 `design/workbench/开源选型.md`。
+- **数据契约接入运行时**：`design/workbench/flow.schema.json` 是唯一来源，工程直接 import 不拷贝副本。四道检查，任一不过 `npm run check` 退出码 1——schema 校验、`types.ts` 与 schema 的枚举漂移、连线引用完整性、`x-compat` 四条规则；`scripts/check-guards.ts` 用十个故意改坏的流程图证明每道检查真的会报错。
+- **示例数据单一来源**：`design/workbench/export_flow_json.py` 从 `flow.py` 的 `NODES` / `EDGES` 导出 `workbench/sample/投标流程.json`，原型与工作台共用一份（19 节点含子图 7 · 23 条线 · 自动 7 · 人 7 · 卡点 2 · 缺口 1 · 待打通 4，与 stories.json S03 / S04 的验收数字一致）。
+- **校验查出两处契约漂移并修掉**：`children` 在 `flow.py` 里是 `{nodes, edges}` 而 schema 要 `children[]` + `childEdges[]`（导出时归一）；`irreversible` 字段原型在用但 schema 没有（`additionalProperties: false` 会拒收），而 `x-compat` 规则 3「不可逆动作前的人定节点不可改为 auto」正需要它——补进 schema，规则才能机器检查。
+- **SPEC §7 的 token 落地**：`src/styles/tokens.css` 用 Tailwind v4 `@theme` 定义颜色 / 字号 / 圆角 / 控件高度，组件不再写死颜色。首屏是契约自检页（不是产品的 01 首页）。
+
 ## 2026-09-08
 
 ### 流程重构入口、无人上岗与工作台设计沉淀
