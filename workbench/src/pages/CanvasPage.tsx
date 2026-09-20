@@ -95,6 +95,11 @@ export default function CanvasPage() {
               <Panel position="bottom-left">
                 <EdgeLegend counts={counts} />
               </Panel>
+              {editor.notice && (
+                <Panel position="bottom-center">
+                  <div className="toast" role="status" data-testid="toast" key={editor.notice.n}>{editor.notice.text}</div>
+                </Panel>
+              )}
             </FlowCanvas>
           </div>
           <Inspector editor={editor} />

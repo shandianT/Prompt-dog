@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useEdgesState, useNodesState, type OnEdgesChange, type OnNodeDrag, type OnNodesChange } from '@xyflow/react'
-import { NODE_H, NODE_W, laneExtent, type Flow, type FlowEdge, type FlowNode } from '../flow'
+import {
+  useEdgesState, useNodesState,
+  type IsValidConnection, type OnConnect, type OnConnectEnd, type OnEdgesChange, type OnNodeDrag, type OnNodesChange,
+} from '@xyflow/react'
+import { NODE_H, NODE_W, connectionProblem, laneExtent, newEdge, type Flow, type FlowEdge, type FlowNode } from '../flow'
 import { toRFEdges, toRFNodes, type FlowRFEdge, type FlowRFNode } from './toReactFlow'
 
 /** 撤销栈深度，SPEC §6.4：最多 40 步 */
@@ -38,6 +41,15 @@ export interface FlowEditor {
   reset: () => void
   undo: () => void
   canUndo: boolean
+  /** 拖线：RF 逐帧问「这样连合不合规」；松手合规就连，不合规就提示原因 */
+  isValidConnection: IsValidConnection<FlowRFEdge>
+  onConnect: OnConnect
+  onConnectEnd: OnConnectEnd
+  /** 连一条线；连不上返回 false 并提示原因 */
+  connect: (from: string, to: string) => boolean
+  /** 一条短提示（原型的 toast），2.2 秒后自己消失 */
+  notice: { text: string; n: number } | null
+  say: (text: string) => void
 }
 
 /**
@@ -145,6 +157,34 @@ export function useFlowEditor(initial: Flow): FlowEditor {
 
   const reset = useCallback(() => { commit(initial) }, [commit, initial])
 
+  const [notice, setNotice] = useState<{ text: string; n: number } | null>(null)
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const say = useCallback((text: string) => {
+    setNotice((cur) => ({ text, n: (cur?.n ?? 0) + 1 }))
+    clearTimeout(noticeTimer.current)
+    noticeTimer.current = setTimeout(() => setNotice(null), 2200)
+  }, [])
+  useEffect(() => () => clearTimeout(noticeTimer.current), [])
+
+  const connect = useCallback((from: string, to: string): boolean => {
+    const cur = flowRef.current
+    const problem = connectionProblem(cur, from, to)
+    if (problem) { say(problem); return false }
+    const edge = newEdge(cur, from, to)
+    commit({ ...cur, edges: [...cur.edges, edge] })
+    say(edge.kind === 'pending' ? '已连线 · 标为待打通' : '已连线')
+    return true
+  }, [commit, say])
+  const isValidConnection: IsValidConnection<FlowRFEdge> = useCallback((c) => connectionProblem(flowRef.current, c.source, c.target) === null, [])
+  const onConnect: OnConnect = useCallback((c) => { connect(c.source, c.target) }, [connect])
+  // 松手在一个连不上的节点上：RF 不会叫 onConnect，原因由这里说
+  const onConnectEnd: OnConnectEnd = useCallback((_e, state) => {
+    if (state.toNode && state.fromNode && state.isValid === false) {
+      const problem = connectionProblem(flowRef.current, state.fromNode.id, state.toNode.id)
+      if (problem) say(problem)
+    }
+  }, [say])
+
   const undo = useCallback(() => {
     const prev = history.current.pop()
     setDepth(history.current.length)
@@ -205,5 +245,6 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     flow, nodes, edges, onNodesChange, onEdgesChange, onNodeDragStop, onSelectionStart, onSelectionEnd,
     selectedIds, selectedEdgeIds, select, clearSelection, updateNode, updateEdge, deleteNodes, deleteEdges, deleteSelected, reset,
     undo, canUndo: depth > 0,
+    isValidConnection, onConnect, onConnectEnd, connect, notice, say,
   }
 }

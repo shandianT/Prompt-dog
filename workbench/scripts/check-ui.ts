@@ -136,6 +136,9 @@ const PD_INSTALL = `window.__pd = {
     setInput: (sel, v) => { const el = document.querySelector(sel); el.focus(); Object.getOwnPropertyDescriptor(el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value').set.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })); el.blur() },
     nodeText: (id, cls) => document.querySelector('.react-flow__node[data-id="' + id + '"] .' + cls)?.textContent ?? '',
     edgeDash: (id) => getComputedStyle(document.querySelector('.react-flow__edge[data-id="' + id + '"] path.react-flow__edge-path')).strokeDasharray,
+    edgeIds: () => [...document.querySelectorAll('.react-flow__edge')].map((g) => g.dataset.id).sort(),
+    toast: () => document.querySelector('[data-testid="toast"]')?.textContent ?? '',
+    connLine: () => { const p = document.querySelector('.react-flow__connectionline path'); if (!p) return null; const s = getComputedStyle(p); return { stroke: s.stroke, dash: s.strokeDasharray, why: document.querySelector('.cl__why')?.textContent ?? '' } },
   }; 'ok'`
 
 let failed = 0
@@ -598,6 +601,67 @@ try {
   check((await fiveText()) === fiveBase, '「重置示例」：回到示例')
   await undoBtn()
   check((await fiveText()).includes('卡点 1'), '重置也可撤销')
+
+  // ---- S07 拖线：从输出端口拖到另一节点生成线；不合规的线变红、松手不连并提示原因；契约判定与 check-guards 同一份代码
+  await cdp.navigate(`${BASE}/#/canvas`)
+  await cdp.evaluate(PD_INSTALL)
+  type Line = { stroke: string; dash: string; why: string } | null
+  const port = async (id: string): Promise<P> => { const p = await pos(id); if (!p) throw new Error(`找不到节点 ${id}`); return { x: p.x + 150, y: p.y + 32 } }
+  const body = async (id: string): Promise<P> => { const p = await pos(id); if (!p) throw new Error(`找不到节点 ${id}`); return { x: p.x + 75, y: p.y + 32 } }
+  const edgeIds = () => pd<string[]>('edgeIds()')
+  const toast = () => pd<string>('toast()')
+  const connLine = () => pd<Line>('connLine()')
+  const rgb = async (token: string) => (await cdp.evaluate(`(() => { const s = document.createElement('span'); s.style.color = getComputedStyle(document.documentElement).getPropertyValue('${token}').trim(); document.body.appendChild(s); const c = getComputedStyle(s).color; s.remove(); return c })()`)) as string
+  const hi = await rgb('--color-hi'), amberRgb = await rgb('--color-amber')
+  const legendText = () => text('[data-testid="edge-legend"]')
+
+  const before = await edgeIds()
+  let lineOk: Line = null
+  await drag(await port('n8'), await body('n13'), 300, async () => { lineOk = await connLine() })
+  const after = await edgeIds()
+  const added = after.filter((id) => !before.includes(id))
+  const lo = lineOk as Line
+  check(after.length === 24 && added.join() === 'e23', 'n8 → n13 拖线成功：线数 23 → 24，新线编号接着往下（e23）', added.join())
+  check(!!lo && lo.stroke !== hi && lo.why === '', '拖的过程中悬在合规节点上：线按将要生成的样子画，没有红字', lo ? `${lo.stroke} ${lo.why || '（无原因）'}` : '没抓到线')
+  check((await toast()) === '已连线' && (await legendText()).includes('顺序15'), '松手：提示「已连线」，图例 顺序 15', await toast())
+  await clickEdge('e23')
+  check((await mode()) === 'edge' && (await pd<string>('value(\'[data-testid="f-label"]\')')) === '结构化产物' && (await text('[data-testid="f-dtype"] [aria-checked="true"]')) === '结构化' && (await text('[data-testid="f-kind"] [aria-checked="true"]')) === '顺序',
+    '新线：顺序线，产物 = 工作狗的输出「结构化产物」', `${await pd<string>('value(\'[data-testid="f-label"]\')')} / ${await text('[data-testid="f-dtype"] [aria-checked="true"]')} / ${await text('[data-testid="f-kind"] [aria-checked="true"]')}`)
+  await shot('s07-connected')
+  await undoBtn()
+  check((await edgeIds()).length === 23 && (await mode()) === 'diag', '撤销：线回到 23 条')
+
+  // 决定类端口（人）拖到数据节点：红线 + 原因，松手不连
+  let lineBad: Line = null
+  await drag(await port('n1'), await body('s2'), 300, async () => { lineBad = await connLine(); await shot('s07-invalid') })
+  const lb = lineBad as Line
+  check(!!lb && lb.stroke === hi && lb.why.includes('决定类产物'), '商机进入（人 · 决定）拖到招标平台（数据）：线变红，原因跟着线', lb ? `${lb.stroke} · ${lb.why}` : '没抓到线')
+  check((await edgeIds()).length === 23 && (await toast()).includes('决定类产物不能直接进数据节点'), '松手不连，提示原因', await toast())
+
+  // 已经连过 / 连到自己
+  let lineDup: Line = null
+  await drag(await port('n1'), await body('n2'), 300, async () => { lineDup = await connLine() })
+  const ld = lineDup as Line
+  check(!!ld && ld.why === '已经连过了' && (await edgeIds()).length === 23 && (await toast()) === '已经连过了', '已经连过的一对：红线「已经连过了」，不连', ld?.why ?? '')
+  const n1 = await pos('n1')
+  let lineSelf: Line = null
+  await drag(await port('n1'), { x: (n1?.x ?? 20) - 1, y: (n1?.y ?? 500) + 32 }, 300, async () => { lineSelf = await connLine() })
+  const ls = lineSelf as Line
+  check(!!ls && ls.why === '不能连到自己' && (await edgeIds()).length === 23, '拖回自己的输入端口：「不能连到自己」', ls?.why ?? '')
+
+  // 待打通的数据节点出去：待打通线（蓝虚），产物 = 系统数据
+  await drag(await port('s5'), await body('n12'), 300)
+  check((await edgeIds()).length === 24 && (await count('.react-flow__edge.fe-pending[data-id="e23"]')) === 1 && (await toast()) === '已连线 · 标为待打通' && (await legendText()).includes('待打通5'),
+    'OA 审批（待打通）→ 递交：生成待打通线，提示「已连线 · 标为待打通」，图例 待打通 5', await toast())
+  await clickEdge('e23')
+  check((await text('[data-testid="f-dtype"] [aria-checked="true"]')) === '系统数据', '新线的产物 = 数据节点的输出「系统数据」')
+  await undoBtn()
+
+  // 拖到空白松手：橡皮筋是琥珀虚线，松手什么都不发生（拖到空白新建是 S08）
+  let lineFree: Line = null
+  await drag(await port('n8'), { x: 900, y: 320 }, 300, async () => { lineFree = await connLine() })
+  const lf = lineFree as Line
+  check(!!lf && lf.stroke === amberRgb && lf.why === '' && (await edgeIds()).length === 23, '拖到空白：琥珀橡皮筋，松手不生成线', lf ? lf.stroke : '没抓到线')
 
   check(cdp.errors.length === 0, '浏览器控制台没有报错', cdp.errors.slice(0, 2).join(' | '))
   cdp.close()

@@ -57,6 +57,29 @@
 .selbar__btn--ghost { background: transparent; color: #c8cdd6; }
 .selbar__btn--ghost:hover { color: #fff; }
 
+/* 铺满整块卡片的目标 Handle，看不见；平时不接指针事件（不挡点击与拖动），拖线中才接，让「拖到节点身上」也能连 */
+.flow-canvas .react-flow__handle.fnode__drop {
+  position: absolute; inset: 0; top: 0; left: 0; width: 100%; height: 100%;
+  margin: 0; transform: none; border: 0; border-radius: var(--radius-btn); background: transparent; opacity: 0;
+  min-width: 0; min-height: 0; pointer-events: none;
+}
+.flow-canvas.flow-canvas--connecting .react-flow__handle.fnode__drop { pointer-events: all; }
+/* 指针悬在输入端口上：合规琥珀圈，不合规红圈 */
+.react-flow__handle.fnode__port.connectingto.valid { box-shadow: 0 0 0 3px var(--color-amber-soft); }
+.react-flow__handle.fnode__port.connectingto:not(.valid) { border-color: var(--color-hi); box-shadow: 0 0 0 3px #fef2f2; }
+/* 拖线时连不上的原因，跟着线走 */
+.cl__why {
+  display: block; width: fit-content; max-width: 100%; margin: 0 auto;
+  font-size: 11px; font-weight: 600; line-height: 1.35; color: var(--color-hi); text-align: center;
+  background: rgb(255 255 255 / 92%); border: 1px solid #f3c2c2; border-radius: 4px; padding: 3px 6px;
+}
+/* 短提示（原型 .toast）：画布底部中央，2.2 秒后消失 */
+.toast {
+  background: var(--color-ink); color: #fff; padding: 10px 16px; border-radius: 10px;
+  font-size: 13px; max-width: 640px; text-align: center; pointer-events: none;
+  box-shadow: 0 8px 24px rgb(30 35 43 / 25%);
+}
+
 /* 连线：颜色 / 粗细 / 虚实由 FlowEdgeRF 内联（避开 RF 自带的 selected / hover 规则），这里只管手感 */
 .flow-canvas .react-flow__edge { cursor: pointer; }
 .flow-canvas .react-flow__edge-interaction { stroke-width: 14; }

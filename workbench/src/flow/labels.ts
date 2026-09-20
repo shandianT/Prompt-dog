@@ -42,6 +42,16 @@ export const EDGE_LABEL: Record<EdgeKind, string> = {
   back: '退回',
 }
 
+/** 新连的线默认叫什么（按产物类型），与原型 DEF_LABEL 一致 */
+export const DEF_LABEL: Record<DataType, string> = {
+  decision: '决定',
+  struct: '结构化产物',
+  text: '要点',
+  sys: '系统数据',
+  file: '文件',
+  event: '事件',
+}
+
 export const DTYPE_LABEL: Record<DataType, string> = {
   file: '文件',
   struct: '结构化',

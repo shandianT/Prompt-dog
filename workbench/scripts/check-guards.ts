@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { validateFlow } from '../src/flow/validate'
 import { checkCompat, checkRefs } from '../src/flow/compat'
+import { connectionProblem, newEdge } from '../src/flow/connect'
 import type { Flow, FlowNode, FlowEdge } from '../src/flow/types'
 
 const samplePath = fileURLToPath(new URL('../sample/投标流程.json', import.meta.url))
@@ -94,5 +95,17 @@ for (const c of cases) {
   if (!caught) failed += 1
 }
 
-console.log(failed ? `\n${failed} 道检查形同虚设` : `\n${cases.length} 道检查全部能抓到问题`)
+// 连线判定（S07）：什么能连、连出来是什么线
+const connects: { name: string; ok: boolean }[] = [
+  { name: '连线 · n8 → n13 合规，生成顺序线 / 结构化产物 / e23', ok: connectionProblem(good, 'n8', 'n13') === null && (() => { const e = newEdge(good, 'n8', 'n13'); return e.kind === 'seq' && e.dtype === 'struct' && e.label === '结构化产物' && e.id === 'e23' })() },
+  { name: '连线 · 决定类端口（人）拖到数据节点被拦（规则 1）', ok: (connectionProblem(good, 'n1', 's2') ?? '').includes('决定类产物') },
+  { name: '连线 · 已经连过的不再连', ok: connectionProblem(good, 'n1', 'n2') === '已经连过了' },
+  { name: '连线 · 不能连到自己', ok: connectionProblem(good, 'n1', 'n1') === '不能连到自己' },
+  { name: '连线 · 待打通的数据节点出去是待打通线', ok: newEdge(good, 's5', 'n12').kind === 'pending' },
+  { name: '连线 · 已打通的数据节点（缺口但非待打通）出去是数据线、产物系统数据', ok: newEdge(good, 's3', 'n7').kind === 'data' && newEdge(good, 's3', 'n7').dtype === 'sys' },
+]
+console.log('')
+for (const c of connects) { console.log(`${c.ok ? '✓' : '✗'} ${c.name}`); if (!c.ok) failed += 1 }
+
+console.log(failed ? `\n${failed} 道检查形同虚设` : `\n${cases.length + connects.length} 道检查全部能抓到问题`)
 process.exit(failed ? 1 : 0)

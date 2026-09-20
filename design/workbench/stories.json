@@ -100,8 +100,8 @@
     "在浏览器里验证并截图"
    ],
    "优先级": 7,
-   "passes": false,
-   "备注": ""
+   "passes": true,
+   "备注": "2026-09-20 建成。契约判定在 src/flow/connect.ts（不依赖浏览器，check-guards 加了六条）：connectionProblem 只拦三种——连到自己、已经连过、决定类产物直接进数据节点（规则 1）；newEdge 与原型 addEdge 同一套规则——两端有数据节点是数据线，数据节点还在待打通是待打通线，否则顺序线；产物 = 来源节点的输出类型，标签用 DEF_LABEL，编号接着往下。画布：nodesConnectable，只能从输出端口起线（输入端口 isConnectableStart=false）；每块卡片一直铺着一个看不见的目标 Handle（.fnode__drop），拖线中才接指针事件，拖到节点身上任何地方松手都能连——RF 只在节点挂载时量 Handle 位置，临时出现的 Handle 认不出来，这是踩出来的。ConnectionLineRF：悬在节点上按「松手会生成的那条线」画（同路径 / 颜色 / 虚实），连不上就红虚线 + 原因（foreignObject 里的 HTML）；没悬在节点上是琥珀橡皮筋。颜色写 style 不写属性——RF 样式表给 .react-flow__connection-path 定了灰色。松手：合规走 onConnect → editor.connect（commit 一步撤销，提示「已连线」/「已连线 · 标为待打通」）；不合规 RF 不叫 onConnect，由 onConnectEnd 提示原因。提示是画布底部的 toast（editor.say，2.2 秒）。check:ui 断言 13 条：n8 → n13 线数 +1、新线 e23 顺序 / 结构化产物、悬停时的线不红、松手提示、撤销回 23；人（决定）拖到数据节点线变红且原因跟着线、松手不连并提示；已经连过、连到自己；待打通数据节点出去是待打通线且产物系统数据；拖到空白琥珀橡皮筋、松手无事（拖到空白新建是 S08）。"
   },
   {
    "id": "S08",
