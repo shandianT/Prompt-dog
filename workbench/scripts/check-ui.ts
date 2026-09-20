@@ -30,6 +30,7 @@ async function waitFor(url: string, tries = 40): Promise<void> {
 interface Cdp {
   evaluate: (expression: string) => Promise<unknown>
   navigate: (url: string) => Promise<void>
+  send: (method: string, params?: Record<string, unknown>) => Promise<unknown>
   errors: string[]
   close: () => void
 }
@@ -66,6 +67,7 @@ async function connect(debugPort: number): Promise<Cdp> {
   return {
     evaluate: async (expression) => (await send('Runtime.evaluate', { expression, returnByValue: true })).result?.result?.value,
     navigate: async (url) => { await send('Page.navigate', { url }); await sleep(3500) },
+    send,
     errors,
     close: () => sock.close(),
   }
@@ -172,6 +174,74 @@ try {
   await cdp.navigate(`${BASE}/#/`)
   const contract = (await cdp.evaluate(`document.body.innerText.includes('契约自检全部通过')`)) as boolean
   check(contract, '契约自检页仍然全绿')
+
+  // ---- S03 画布：泳道、节点定位、五个数字、缩放范围、缩放后节点可点中
+  await cdp.navigate(`${BASE}/#/canvas`)
+  const CANVAS_SAMPLE = `(() => {
+    const vp = document.querySelector('.react-flow__viewport')
+    const m = vp ? getComputedStyle(vp).transform : 'none'
+    const scale = m && m !== 'none' ? Number(m.slice(m.indexOf('(') + 1).split(',')[0]) : 1
+    const mid = (el) => { const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 } }
+    const n9 = document.querySelector('.react-flow__node[data-id="n9"]')
+    const pane = document.querySelector('.react-flow__pane')
+    return {
+      five: (document.querySelector('[data-testid="five-numbers"]')?.textContent ?? ''),
+      nodes: document.querySelectorAll('.react-flow__node').length,
+      edges: document.querySelectorAll('.react-flow__edge').length,
+      lanes: [...document.querySelectorAll('.lane__name')].map((e) => e.textContent),
+      handles: document.querySelectorAll('.react-flow__handle.fnode__port').length,
+      scale,
+      n9: n9 ? mid(n9) : null,
+      n9Selected: !!document.querySelector('.react-flow__node[data-id="n9"].selected .fnode--selected'),
+      pane: pane ? mid(pane) : null,
+      zoomText: document.querySelector('[data-testid="zoom"]')?.textContent ?? '',
+    }
+  })()`
+  type CanvasSample = { five: string; nodes: number; edges: number; lanes: string[]; handles: number; scale: number; n9: { x: number; y: number } | null; n9Selected: boolean; pane: { x: number; y: number } | null; zoomText: string }
+  const sampleCanvas = async () => (await cdp.evaluate(CANVAS_SAMPLE)) as CanvasSample
+  const wheel = async (at: { x: number; y: number }, deltaY: number, times = 1) => {
+    for (let i = 0; i < times; i++) {
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseWheel', x: at.x, y: at.y, deltaX: 0, deltaY })
+      await sleep(60)
+    }
+    await sleep(400)
+  }
+
+  const c0 = await sampleCanvas()
+  const five = c0.five.replace(/\s+/g, ' ').trim()
+  check(/自动 7.*人 7.*卡点 2.*缺口 1.*待打通 4/.test(five), '顶栏五个数字：自动 7 · 人 7 · 卡点 2 · 缺口 1 · 待打通 4', five)
+  check(c0.nodes === 19, '投标示例 19 个节点全部渲染', `实际 ${c0.nodes}`)
+  check(c0.edges === 23, '23 条线全部渲染（S04 之前是素线）', `实际 ${c0.edges}`)
+  check(c0.lanes.join('/') === 'AI 自动/人/数据与系统', '三条泳道按序：AI 自动 / 人 / 数据与系统', c0.lanes.join(' / '))
+  check(c0.handles === 38, '每个节点两个端口，边框色 = 产物类型', `${c0.handles} 个 Handle`)
+  check(c0.scale > 0 && c0.pane !== null, '首帧 fitView 有效', `scale ${c0.scale.toFixed(3)}`)
+
+  if (c0.pane) {
+    await wheel(c0.pane, -200, 3)
+    const c1 = await sampleCanvas()
+    check(c1.scale > c0.scale, '滚轮放大：scale 变大', `${c0.scale.toFixed(3)} → ${c1.scale.toFixed(3)}`)
+    check(/\d+%/.test(c1.zoomText) && c1.zoomText.startsWith(String(Math.round(c1.scale * 100))), '顶栏缩放读数跟着变', c1.zoomText)
+
+    await wheel(c0.pane, -400, 12)
+    const cMax = await sampleCanvas()
+    check(cMax.scale <= 1.6 + 1e-6 && cMax.scale >= 1.6 - 1e-3, '放大封顶 160%', `scale ${cMax.scale.toFixed(3)}`)
+
+    await wheel(c0.pane, 400, 24)
+    const cMin = await sampleCanvas()
+    check(cMin.scale >= 0.5 - 1e-6 && cMin.scale <= 0.5 + 1e-3, '缩小到底 50%', `scale ${cMin.scale.toFixed(3)}`)
+
+    // 缩到 50% 后，按屏幕坐标点节点 n9：能选中说明坐标换算对
+    if (cMin.n9) {
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: cMin.n9.x, y: cMin.n9.y })
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: cMin.n9.x, y: cMin.n9.y, button: 'left', clickCount: 1 })
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: cMin.n9.x, y: cMin.n9.y, button: 'left', clickCount: 1 })
+      await sleep(400)
+      const cClick = await sampleCanvas()
+      check(cClick.n9Selected, '缩放后按屏幕坐标点中 n9，节点进入选中态', `点在 (${Math.round(cMin.n9.x)}, ${Math.round(cMin.n9.y)})，scale ${cMin.scale.toFixed(2)}`)
+    } else {
+      check(false, '找不到节点 n9')
+    }
+  }
 
   check(cdp.errors.length === 0, '浏览器控制台没有报错', cdp.errors.slice(0, 2).join(' | '))
   cdp.close()

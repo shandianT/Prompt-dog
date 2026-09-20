@@ -1,0 +1,32 @@
+/* 画布：泳道、端口、底纹。数值与原型 flow.py 的 CANVAS_CSS 一致，颜色走 tokens。 */
+
+.flow-canvas { width: 100%; height: 100%; }
+.flow-canvas .react-flow__pane { cursor: grab; }
+.flow-canvas .react-flow__pane.dragging { cursor: grabbing; }
+
+/* 泳道压在节点与连线下面 */
+.lanes { position: absolute; left: 0; top: 0; z-index: -1; pointer-events: none; }
+.lane { position: absolute; left: 0; right: 0; border-top: 1px dashed #d3d8e0; }
+.lane__name {
+  position: absolute; left: 10px; top: 6px;
+  font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: var(--color-port);
+}
+.lane__hint { position: absolute; right: 12px; top: 6px; font-size: 10.5px; color: var(--color-port); }
+.lane--human { border-top-color: #f0c78a; }
+.lane--human .lane__name { color: var(--color-amber); }
+
+/* React Flow 的 Handle 借用 .fnode__port 的样子：12px 白底圆点，边框色 = 产物类型 */
+.react-flow__handle.fnode__port {
+  width: 12px; height: 12px; min-width: 0; min-height: 0;
+  top: 50%; margin-top: -6px; transform: none;
+  background: #fff; border: 2px solid var(--color-port); border-radius: 50%;
+}
+.react-flow__handle.fnode__port--in { left: -7px; }
+.react-flow__handle.fnode__port--out { right: -7px; }
+
+/* 自定义节点的外框不要 RF 默认的圆角与投影，交给 FlowNodeCard */
+.react-flow__node-flow { border-radius: var(--radius-btn); }
+.react-flow__node-flow.selected { z-index: 10 !important; }
+
+/* S04 之前连线先用素线：灰、细、无标签，只为看清结构 */
+.flow-canvas .react-flow__edge-path { stroke: var(--color-port); stroke-width: 1.5; }

@@ -78,7 +78,7 @@ git clone https://github.com/shandianT/Prompt-dog
 
 把公司的流程画成一张能拖、能拼、能看出卡点的地图，再把 AI 段打包成工作狗。方法已进技能（说一段流程就会出图与诊断），界面在设计：[`design/workbench/`](design/workbench/)（产品定义 · 构建规范 · 构建故事 · 流程图契约）。
 
-前端已开建：[`workbench/`](workbench/) —— S01 工程骨架与数据契约、S02 FlowNode 组件与变体页已完成（React + TypeScript + Vite，画布底座 `@xyflow/react`，`flow.schema.json` 接入运行时校验，视觉编码有真浏览器断言），画布本身从 S03 起。
+前端已开建：[`workbench/`](workbench/) —— S01 数据契约、S02 FlowNode 组件、S03 画布与泳道已完成（React + TypeScript + Vite，画布底座 `@xyflow/react`，`flow.schema.json` 接入运行时校验，视觉编码与缩放都有真浏览器断言）。投标示例已能在画布上看到；连线、拖动、属性面板从 S04 起。
 
 产品本身的一条主线：四个入口（诊断 / 新建 / 流程重构 / 设计）汇入同一个主循环，交付后上岗、复盘、回流到图上。
 
@@ -93,6 +93,7 @@ git clone https://github.com/shandianT/Prompt-dog
 ## 最近更新
 
 - 2026-09-08：新增「设计」入口（产品想法 → 五问首行 + 一页产品定义 + 故事清单，四视角对抗审查）与产品主线（上岗 → 复盘 → 回流，回流表在 `复盘/README.md`）；图档位由环境决定。
+- 2026-09-20：S03 画布与泳道完成——投标流程第一次在真画布上渲染出来，缩放与点选有浏览器断言。
 - 2026-09-20：S02 FlowNode 组件与变体页完成，视觉编码由 `npm run check:ui` 在真浏览器里逐条断言。
 - 2026-09-19：工作台前端开建，S01 工程骨架与数据契约完成（[`workbench/`](workbench/)）。
 - 2026-09-08：新增 [`复用指南.md`](复用指南.md)——今天这套做法怎么搬到别的项目上。
