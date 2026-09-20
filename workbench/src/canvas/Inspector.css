@@ -1,0 +1,75 @@
+/* 属性面板：数值与原型 flow.py 的 .ins 一致，颜色走 tokens。宽 292（SPEC §5） */
+
+.ins {
+  width: 292px; flex: none;
+  background: #fff; border-left: 1px solid var(--color-line);
+  overflow: auto; padding: 14px 16px 18px;
+  display: flex; flex-direction: column; gap: 12px;
+  font-size: 13px; color: var(--color-ink);
+}
+.ins__h { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.ins__h b { font-weight: 800; }
+.ins__close { margin-left: auto; }
+.ins__muted { color: var(--color-sub); font-size: 12px; }
+.ins__f { display: flex; flex-direction: column; }
+.ins__lb { display: block; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; color: var(--color-sub); margin: 4px 0; }
+.ins__kv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ins__kv b { font-weight: 700; }
+.ins__fi {
+  width: 100%; border: 1px solid var(--color-line); border-radius: 8px; padding: 8px 10px;
+  font: inherit; font-size: 13px; color: var(--color-ink); background: var(--color-page); outline: none;
+}
+.ins__fi:focus { border-color: var(--color-amber); background: #fff; }
+.ins__ta { min-height: 60px; resize: vertical; line-height: 1.5; }
+.ins__pair { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ins__hint { font-size: 12px; color: var(--color-sub); line-height: 1.5; background: var(--color-page); border-radius: 8px; padding: 8px 10px; }
+.ins__warn {
+  font-size: 12px; line-height: 1.5; color: var(--color-hi);
+  background: #fef2f2; border: 1px solid #f3c2c2; border-radius: 8px; padding: 8px 10px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.ins__foot { margin-top: auto; display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; border-top: 1px solid var(--color-line); }
+
+/* 分段选择 */
+.seg { display: flex; gap: 4px; flex-wrap: wrap; }
+.seg__b {
+  font: inherit; font-size: 12px; font-weight: 600; min-height: 32px; padding: 0 10px;
+  border-radius: 8px; border: 1px solid var(--color-line); background: #fff; color: var(--color-sub); cursor: pointer;
+}
+.seg__b--on { border-color: var(--color-amber); background: var(--color-amber-soft); color: var(--color-amber); }
+.seg__b--on.seg__b--block, .seg__b--on.seg__b--back { border-color: var(--color-hi); background: #fef2f2; color: var(--color-hi); }
+.seg__b--on.seg__b--pending { border-color: var(--color-lo); background: #eff4ff; color: var(--color-lo); }
+.seg__b--on.seg__b--loop { border-color: var(--color-ok); background: #f0faf2; color: var(--color-ok); }
+.seg__b:disabled { opacity: 0.4; cursor: not-allowed; }
+.seg__b:focus-visible, .btn:focus-visible, .chip:focus-visible { outline: 2px solid var(--color-amber); outline-offset: 1px; }
+
+/* chip：可点，指向一个节点 */
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip {
+  display: inline-flex; align-items: center; min-height: 24px; padding: 0 8px;
+  border-radius: 6px; background: var(--color-page); border: 1px solid var(--color-line);
+  font: inherit; font-size: 12px; color: var(--color-ink); cursor: pointer;
+}
+.chip:hover { border-color: var(--color-amber); }
+
+/* 诊断三行 */
+.dg { display: flex; flex-direction: column; gap: 10px; }
+.dg__t { display: flex; align-items: center; gap: 6px; font-weight: 700; margin-bottom: 6px; }
+.dg__t b { font-weight: 800; }
+.dg__dot { width: 8px; height: 8px; border-radius: 50%; }
+.dg__hint { margin-left: auto; font-weight: 500; }
+
+/* 重构建议 */
+.sug { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; line-height: 1.55; }
+.sug__go { font: inherit; font-weight: 700; color: var(--color-ink); background: none; border: 0; padding: 0; cursor: pointer; }
+.sug__go:hover { color: var(--color-amber); }
+
+/* 按钮 */
+.btn {
+  font: inherit; font-size: 13px; font-weight: 700; min-height: 36px; padding: 0 14px;
+  border-radius: 8px; border: 1px solid var(--color-line); background: var(--color-page); color: var(--color-sub); cursor: pointer;
+}
+.btn:hover { background: #fff; }
+.btn--sm { min-height: 28px; padding: 0 10px; font-size: 12px; }
+.btn--danger { color: var(--color-hi); border-color: #f3c2c2; background: #fff; }
+.btn--danger:hover { background: #fef2f2; }

@@ -28,7 +28,7 @@ const edgeTypes: EdgeTypes = { flow: FlowEdgeRF }
  *
  * 操作约定（SPEC §6.4）：空白处拖 = 框选（相交即选中）；拖节点 = 移动，选中的一起动，锁在各自泳道内（S09 放开）；
  * Shift / Cmd / Ctrl + 点 = 加选。平移：按住空格拖、中键或右键拖；滚轮仍是缩放（S03 定的，等真人用过再议）。
- * Delete 先不删（S06 的事）；节点拖动 3px 起算，与原型一致，点一下不会抖成一步撤销。
+ * Delete / Backspace 由 useFlowEditor 的快捷键处理（RF 自带的 deleteKeyCode 关掉：不然删两次，而且它那次不进撤销栈）；节点拖动 3px 起算，点一下不会抖成一步撤销。
  */
 export function FlowCanvas({ editor, labels = false, children }: { editor: FlowEditor; labels?: boolean; children?: ReactNode }) {
   const { nodes, edges, onNodesChange, onEdgesChange, onNodeDragStop, onSelectionStart, onSelectionEnd } = editor

@@ -1,4 +1,4 @@
-import type { EdgeKind, NodeFlag, NodeKind, NodeRole } from './types'
+import type { DataDir, DataMethod, DataType, EdgeKind, NodeFlag, NodeKind, NodeRole } from './types'
 import type { LaneId } from './lanes'
 
 /** 界面上的中文说法，集中在这里，免得同一个词在不同屏上有两种叫法 */
@@ -40,4 +40,29 @@ export const EDGE_LABEL: Record<EdgeKind, string> = {
   pending: '待打通',
   loop: '回填',
   back: '退回',
+}
+
+export const DTYPE_LABEL: Record<DataType, string> = {
+  file: '文件',
+  struct: '结构化',
+  text: '文本',
+  decision: '决定',
+  event: '事件',
+  sys: '系统数据',
+}
+
+/** 数据节点的打通方式；空 = 还没定 */
+export const METHOD_LABEL: Record<DataMethod, string> = {
+  '': '未定',
+  api: '接口',
+  rpa: 'RPA',
+  file: '文件',
+  manual: '人工',
+}
+
+export const DIR_LABEL: Record<DataDir, string> = {
+  '': '未定',
+  read: '读',
+  write: '写',
+  rw: '读写',
 }

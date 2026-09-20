@@ -114,6 +114,30 @@ const SAMPLE = `(() => {
   }
 })()`
 
+const PD_INSTALL = `window.__pd = {
+    pos: (id) => { const el = document.querySelector('.react-flow__node[data-id="' + id + '"]'); const m = /translate\\(([-\\d.]+)px,\\s*([-\\d.]+)px\\)/.exec(el ? el.style.transform : ''); return m ? { x: Number(m[1]), y: Number(m[2]) } : null },
+    screen: (x, y) => { const m = new DOMMatrix(getComputedStyle(document.querySelector('.react-flow__viewport')).transform); const rf = document.querySelector('.react-flow').getBoundingClientRect(); return { x: rf.x + m.e + x * m.a, y: rf.y + m.f + y * m.d } },
+    edgeMid: (id) => { const p = document.querySelector('.react-flow__edge[data-id="' + id + '"] path.react-flow__edge-path'); if (!p) return null; const pt = p.getPointAtLength(p.getTotalLength() / 2); return window.__pd.screen(pt.x, pt.y) },
+    selected: () => [...document.querySelectorAll('.react-flow__node.selected')].map((n) => n.dataset.id).sort(),
+    selectedEdges: () => document.querySelectorAll('.react-flow__edge.selected').length,
+    undoDisabled: () => !!document.querySelector('[data-testid="undo"]')?.disabled,
+    undo: () => document.querySelector('[data-testid="undo"]').click(),
+    bar: () => document.querySelector('[data-testid="selection-bar"]')?.textContent ?? '',
+    barCancel: () => [...document.querySelectorAll('[data-testid="selection-bar"] button')].find((b) => b.textContent === '取消').click(),
+    marquee: () => { const el = document.querySelector('.react-flow__selection'); if (!el) return null; const s = getComputedStyle(el); return { color: s.borderTopColor, style: s.borderTopStyle, w: el.getBoundingClientRect().width } },
+    five: () => (document.querySelector('[data-testid="five-numbers"]')?.textContent ?? '').replace(/\\s+/g, ' '),
+    mode: () => document.querySelector('[data-testid="inspector"]')?.dataset.mode ?? '',
+    count: (sel) => document.querySelectorAll(sel).length,
+    text: (sel) => (document.querySelector(sel)?.textContent ?? '').replace(/\\s+/g, ' ').trim(),
+    value: (sel) => document.querySelector(sel)?.value ?? '',
+    labels: () => [...document.querySelectorAll('[data-testid="inspector"] .ins__lb')].map((l) => l.textContent),
+    click: (sel) => document.querySelector(sel).click(),
+    segPick: (testId, label) => [...document.querySelectorAll('[data-testid="' + testId + '"] button')].find((b) => b.textContent === label).click(),
+    setInput: (sel, v) => { const el = document.querySelector(sel); el.focus(); Object.getOwnPropertyDescriptor(el.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value').set.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })); el.blur() },
+    nodeText: (id, cls) => document.querySelector('.react-flow__node[data-id="' + id + '"] .' + cls)?.textContent ?? '',
+    edgeDash: (id) => getComputedStyle(document.querySelector('.react-flow__edge[data-id="' + id + '"] path.react-flow__edge-path')).strokeDasharray,
+  }; 'ok'`
+
 let failed = 0
 const check = (ok: boolean, label: string, detail = '') => {
   console.log(`${ok ? '✓' : '✗'} ${label}${detail ? `  ${detail}` : ''}`)
@@ -359,18 +383,7 @@ try {
 
   // ---- S05 选中、移动、框选、撤销：拖动写回 flow 并可撤销、锁在泳道与画布内、空白拖矩形框选、浮条、多选一起动、快捷键、撤销栈 40 步
   await cdp.navigate(`${BASE}/#/canvas`)
-  await cdp.evaluate(`window.__pd = {
-    pos: (id) => { const el = document.querySelector('.react-flow__node[data-id="' + id + '"]'); const m = /translate\\(([-\\d.]+)px,\\s*([-\\d.]+)px\\)/.exec(el ? el.style.transform : ''); return m ? { x: Number(m[1]), y: Number(m[2]) } : null },
-    screen: (x, y) => { const m = new DOMMatrix(getComputedStyle(document.querySelector('.react-flow__viewport')).transform); const rf = document.querySelector('.react-flow').getBoundingClientRect(); return { x: rf.x + m.e + x * m.a, y: rf.y + m.f + y * m.d } },
-    selected: () => [...document.querySelectorAll('.react-flow__node.selected')].map((n) => n.dataset.id).sort(),
-    selectedEdges: () => document.querySelectorAll('.react-flow__edge.selected').length,
-    undoDisabled: () => !!document.querySelector('[data-testid="undo"]')?.disabled,
-    undo: () => document.querySelector('[data-testid="undo"]').click(),
-    bar: () => document.querySelector('[data-testid="selection-bar"]')?.textContent ?? '',
-    barCancel: () => document.querySelector('[data-testid="selection-bar"] button').click(),
-    marquee: () => { const el = document.querySelector('.react-flow__selection'); if (!el) return null; const s = getComputedStyle(el); return { color: s.borderTopColor, style: s.borderTopStyle, w: el.getBoundingClientRect().width } },
-    five: () => (document.querySelector('[data-testid="five-numbers"]')?.textContent ?? '').replace(/\\s+/g, ' '),
-  }; 'ok'`)
+  await cdp.evaluate(PD_INSTALL)
   type P = { x: number; y: number }
   const pd = async <T,>(expr: string) => (await cdp.evaluate(`window.__pd.${expr}`)) as T
   const pos = (id: string) => pd<P | null>(`pos('${id}')`)
@@ -476,6 +489,116 @@ try {
     `41 次后 x=${xAfter41}，撤销 40 次后 x=${x40}（第 1 次拖完 x=${firstX}），再撤销 x=${x41}`)
 
   await shot('s05-final')
+  // ---- S06 属性面板：诊断 / 节点 / 连线三态、分类型字段、改字段可撤销、待打通改数据变实线、契约提示、删除三条路
+  await cdp.navigate(`${BASE}/#/canvas`)
+  await cdp.evaluate(PD_INSTALL)
+  const mode = () => pd<string>('mode()')
+  const fiveText = () => pd<string>('five()')
+  const count = (sel: string) => pd<number>(`count(${JSON.stringify(sel)})`)
+  const text = (sel: string) => pd<string>(`text(${JSON.stringify(sel)})`)
+  const labelsOf = () => pd<string[]>('labels()')
+  const pick = async (testId: string, label: string) => { await pd(`segPick(${JSON.stringify(testId)}, ${JSON.stringify(label)})`); await sleep(150) }
+  const clickSel = async (sel: string) => { await pd(`click(${JSON.stringify(sel)})`); await sleep(200) }
+  const undoBtn = async (n = 1) => { for (let i = 0; i < n; i++) { await pd('undo()'); await sleep(120) } }
+  /** 点一条线的中点（画布坐标经 viewport 变换成屏幕坐标） */
+  const clickEdge = async (id: string) => {
+    const at = await pd<P | null>(`edgeMid(${JSON.stringify(id)})`)
+    if (!at) throw new Error(`找不到线 ${id}`)
+    await click(at)
+  }
+
+  const fiveBase = await fiveText()
+  check((await mode()) === 'diag', '无选中：面板是诊断')
+  const dBlock = await text('[data-testid="diag-block"] b'), dMissing = await text('[data-testid="diag-missing"] b'), dPending = await text('[data-testid="diag-pending"] b')
+  check(fiveBase.includes(`卡点 ${dBlock}`) && fiveBase.includes(`缺口 ${dMissing}`) && fiveBase.includes(`待打通 ${dPending}`), '诊断三个数字与顶栏一致', `${dBlock} / ${dMissing} / ${dPending}`)
+  check((await count('[data-testid="diag-block"] .chip')) === 2 && (await count('[data-testid="diag-missing"] .chip')) === 1 && (await count('[data-testid="diag-pending"] .chip')) === 4, '三行各带节点 chip：2 / 1 / 4')
+  check((await count('[data-testid="diag-suggestions"] li')) === 7, '重构建议 7 条（每个带标记的节点一条）', `${await count('[data-testid="diag-suggestions"] li')} 条`)
+  await shot('s06-diag')
+
+  await clickSel('[data-testid="diag-block"] .chip')
+  check((await pd<string[]>('selected()')).join() === 'n2' && (await mode()) === 'node', '点卡点 chip：选中 n2，面板切到节点')
+  check((await text('[data-testid="node-kind"]')) === '人' && (await pd<string>('value(\'[data-testid="f-name"]\')')) === '获取招标文件', '节点面板：类型徽章「人」，名称已填', await pd<string>('value(\'[data-testid="f-name"]\')'))
+  const humanLabels = await labelsOf()
+  check(['谁来做', '状态', '负责人 / 部门', '时限', '通知', '怎么解', '输入', '输出'].every((l) => humanLabels.includes(l)) && !humanLabels.includes('打通方式'), '人节点：负责人 / 部门、时限、通知；有标记才有「怎么解」', humanLabels.join(' · '))
+  await shot('s06-node')
+
+  await click(await screen(20 + 75, 780 + 32))
+  const dataLabels = await labelsOf()
+  check((await mode()) === 'node' && ['打通方式', '方向', '系统负责人'].every((l) => dataLabels.includes(l)) && !dataLabels.includes('谁来做'), '数据节点：打通方式、方向、系统负责人，没有「谁来做」', dataLabels.join(' · '))
+  await click(await screen(360 + 75, 120 + 32))
+  const dogLabels = await labelsOf()
+  check(['子流程', '复用于'].every((l) => dogLabels.includes(l)), '工作狗：子流程环节数、复用于 N 条流程', dogLabels.join(' · '))
+  await click(await screen(530 + 75, 200 + 32))
+  const skillLabels = await labelsOf()
+  check(['复用于', '改一处'].every((l) => skillLabels.includes(l)), '技能：复用于 N 只工作狗、改一处全部同步（know-how 的「来源」示例里没有节点可验）', skillLabels.join(' · '))
+  await click(await screen(1040 + 75, 500 + 32))
+  check((await count('[data-testid="f-role"] button:disabled')) === 2, '受保护的人定节点（递交）：自动 / 人审两个选项灰掉')
+
+  // 改字段：谁来做 → 人审；状态 → 正常；名称；每一步可撤销
+  await click(await screen(190 + 75, 500 + 32))
+  await pick('f-role', '人审')
+  check((await pd<string>('nodeText("n2", "fnode__role")')) === '人审', '谁来做改人审：画布上的徽章跟着变')
+  await undoBtn()
+  check((await pd<string>('nodeText("n2", "fnode__role")')) === '人定', '撤销：回到人定')
+  await pick('f-flag', '正常')
+  check((await fiveText()).includes('卡点 1') && (await count('.react-flow__node[data-id="n2"] .fnode__flag')) === 0, '状态改正常：顶栏卡点 2 → 1，节点上的标记消失')
+  await undoBtn()
+  check((await fiveText()) === fiveBase, '撤销：五个数字回到原样')
+  await pd(`setInput('[data-testid="f-name"]', '获取招标文件 2')`); await sleep(200)
+  check((await pd<string>('nodeText("n2", "fnode__name")')) === '获取招标文件 2', '改名称、失焦写回：画布上的名字跟着变')
+  await undoBtn()
+  check((await pd<string>('nodeText("n2", "fnode__name")')) === '获取招标文件', '撤销：名字回来')
+
+  // 连线：待打通改数据 → 实线；产物类型改成决定进数据节点 → 契约提示
+  await clickEdge('e0')
+  check((await mode()) === 'edge' && (await text('[data-testid="edge-pair"]')).includes('CRM') && (await text('[data-testid="edge-pair"]')).includes('商机进入'), '点线：面板切到连线，显示 CRM → 商机进入', await text('[data-testid="edge-pair"]'))
+  await shot('s06-edge')
+  await pick('f-kind', '数据')
+  const dash1 = await pd<string>('edgeDash("e0")'), legend1 = await text('[data-testid="edge-legend"]')
+  check((await count('.react-flow__edge.fe-data[data-id="e0"]')) === 1 && dash1 === 'none' && legend1.includes('数据4') && legend1.includes('待打通3'), '待打通改为数据：变实线，图例 数据 4 · 待打通 3', `dasharray ${dash1}`)
+  await undoBtn()
+  check((await count('.react-flow__edge.fe-pending[data-id="e0"]')) === 1 && (await pd<string>('edgeDash("e0")')) !== 'none', '撤销：回到待打通虚线')
+  await clickEdge('e22')
+  await pick('f-dtype', '决定')
+  check((await count('[data-testid="compat-warning"]')) === 1 && (await text('[data-testid="compat-warning"]')).includes('契约规则 1'), '回填线的产物改成「决定」进数据节点：面板提示契约规则 1', await text('[data-testid="compat-warning"]'))
+  await undoBtn()
+  check((await count('[data-testid="compat-warning"]')) === 0, '撤销：提示消失')
+
+  // 数据节点打通方式改成接口：它的待打通线降为数据线，节点自己的待打通标记清掉
+  await click(await screen(20 + 75, 780 + 32))
+  await pick('f-method', '接口')
+  check((await count('.react-flow__edge.fe-data[data-id="e0"]')) === 1 && (await fiveText()).includes('待打通 3') && (await text('[data-testid="f-flag"] [aria-checked="true"]')) === '正常', 'CRM 打通方式改接口：e0 降为数据线，待打通 4 → 3，状态变正常')
+  await undoBtn()
+  check((await count('.react-flow__edge.fe-pending[data-id="e0"]')) === 1 && (await fiveText()) === fiveBase, '撤销：线与数字都回来')
+
+  // 删除三条路：面板按钮、Delete 键、浮条
+  await click(await screen(360 + 75, 620 + 32))
+  await clickSel('[data-testid="delete"]')
+  check((await count('.react-flow__node')) === 18 && (await count('.react-flow__edge')) === 22 && (await mode()) === 'diag', '删除节点「不投 · 归档」：18 节点 / 22 线，面板回到诊断')
+  await undoBtn()
+  check((await count('.react-flow__node')) === 19 && (await count('.react-flow__edge')) === 23, '撤销：19 / 23')
+  await clickEdge('e0')
+  await key('Delete', 'Delete', 46)
+  check((await count('.react-flow__edge')) === 22 && (await mode()) === 'diag', 'Delete 键删线：22 条')
+  await undoBtn()
+  await drag({ x: 350, y: 50 }, { x: 690, y: 270 }, 300)
+  await clickSel('[data-testid="bar-delete"]')
+  check((await count('.react-flow__node')) === 16 && (await count('.react-flow__edge')) === 14, '浮条「删除」：n3 / n5 / n6 连同 9 条线一起删，16 节点 / 14 线')
+  await undoBtn()
+  check((await count('.react-flow__node')) === 19 && (await count('.react-flow__edge')) === 23 && (await fiveText()) === fiveBase, '撤销一步：全部回来')
+
+  // 关闭与重置
+  await click(await screen(190 + 75, 500 + 32))
+  await clickSel('[data-testid="close"]')
+  check((await mode()) === 'diag' && (await pd<string[]>('selected()')).length === 0, '「关闭」：取消选中，面板回到诊断')
+  await click(await screen(190 + 75, 500 + 32))
+  await pick('f-flag', '正常')
+  await clickSel('[data-testid="close"]')
+  await clickSel('[data-testid="reset"]')
+  check((await fiveText()) === fiveBase, '「重置示例」：回到示例')
+  await undoBtn()
+  check((await fiveText()).includes('卡点 1'), '重置也可撤销')
+
   check(cdp.errors.length === 0, '浏览器控制台没有报错', cdp.errors.slice(0, 2).join(' | '))
   cdp.close()
 } finally {

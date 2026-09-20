@@ -5,12 +5,13 @@ import { FlowCanvas, ZOOM_MAX, ZOOM_MIN } from '../canvas/FlowCanvas'
 import { EdgeLegend } from '../canvas/EdgeLegend'
 import { fitFrame } from '../canvas/viewport'
 import { SelectionBar } from '../canvas/SelectionBar'
+import { Inspector } from '../canvas/Inspector'
 import { useFlowEditor } from '../canvas/useFlowEditor'
 import { edgeCounts, fiveNumbers, type Flow } from '../flow'
 
 /**
- * 07 流程画布的第一版：顶栏五个数字 + 画布。示例数据来自 sample/投标流程.json。
- * 侧栏、组件库面板、属性面板都还没有——它们各有自己的故事（S06、S08、S13+）。
+ * 07 流程画布：顶栏五个数字 + 画布 + 右栏属性面板（S06）。示例数据来自 sample/投标流程.json。
+ * 侧栏、组件库面板还没有——各有自己的故事（S08、S16+）。
  */
 
 const flow = sample as unknown as Flow
@@ -83,17 +84,20 @@ export default function CanvasPage() {
             产物{labels ? ' · 全部' : ''}
           </ToolButton>
         </header>
-        <div className="min-h-0 flex-1">
-          <FlowCanvas editor={editor} labels={labels}>
-            {editor.selectedIds.length >= 2 && (
-              <Panel position="top-center">
-                <SelectionBar count={editor.selectedIds.length} onClear={editor.clearSelection} />
+        <div className="flex min-h-0 flex-1">
+          <div className="min-w-0 flex-1">
+            <FlowCanvas editor={editor} labels={labels}>
+              {editor.selectedIds.length >= 2 && (
+                <Panel position="top-center">
+                  <SelectionBar count={editor.selectedIds.length} onDelete={editor.deleteSelected} onClear={editor.clearSelection} />
+                </Panel>
+              )}
+              <Panel position="bottom-left">
+                <EdgeLegend counts={counts} />
               </Panel>
-            )}
-            <Panel position="bottom-left">
-              <EdgeLegend counts={counts} />
-            </Panel>
-          </FlowCanvas>
+            </FlowCanvas>
+          </div>
+          <Inspector editor={editor} />
         </div>
       </div>
     </ReactFlowProvider>

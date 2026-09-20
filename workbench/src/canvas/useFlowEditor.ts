@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  useEdgesState, useNodesState,
-  type OnEdgesChange, type OnNodeDrag, type OnNodesChange,
-} from '@xyflow/react'
-import { NODE_H, NODE_W, laneExtent, type Flow } from '../flow'
+import { useEdgesState, useNodesState, type OnEdgesChange, type OnNodeDrag, type OnNodesChange } from '@xyflow/react'
+import { NODE_H, NODE_W, laneExtent, type Flow, type FlowEdge, type FlowNode } from '../flow'
 import { toRFEdges, toRFNodes, type FlowRFEdge, type FlowRFNode } from './toReactFlow'
 
 /** 撤销栈深度，SPEC §6.4：最多 40 步 */
@@ -25,14 +22,28 @@ export interface FlowEditor {
   onSelectionStart: () => void
   onSelectionEnd: () => void
   selectedIds: string[]
+  selectedEdgeIds: string[]
+  /** 只选这一个节点（面板里的 chip、输入 / 输出链接用） */
+  select: (id: string) => void
   clearSelection: () => void
+  /** 改节点字段；数据节点的打通方式改成非人工时，连着它的待打通线降为数据线（x-compat 规则 4 后半句） */
+  updateNode: (id: string, patch: Partial<FlowNode>) => void
+  updateEdge: (id: string, patch: Partial<FlowEdge>) => void
+  /** 删节点连带它的线 */
+  deleteNodes: (ids: string[]) => void
+  deleteEdges: (ids: string[]) => void
+  /** 删掉当前选中的：有节点删节点，否则删线；返回是否删了东西 */
+  deleteSelected: () => boolean
+  /** 回到示例（可撤销） */
+  reset: () => void
   undo: () => void
   canUndo: boolean
 }
 
 /**
- * 画布的编辑状态：flow（契约）是真相，React Flow 的 nodes / edges 是它的视图态（多了 selected、拖动中的位置）。
- * 拖动过程中只有 RF 的位置在变；松手才把整数坐标写回 flow，并推一份快照进撤销栈——一次拖动 = 一步撤销，与原型 snap() 同一节奏。
+ * 画布的编辑状态：flow（契约）是真相，React Flow 的 nodes / edges 是它的视图态（多了 selected、拖动中的位置、量出来的尺寸）。
+ * 所有改动都走 commit：推一份快照进撤销栈（40），换掉 flow，再把 flow 投回 RF 的视图——选中态保留、尺寸保留，其余以 flow 为准。
+ * 拖动过程中只有 RF 的位置在变；松手才把整数坐标写回 flow——一次拖动 = 一步撤销，与原型 snap() 同一节奏。
  * 撤销只回节点 / 连线，不回选中——选中是界面状态，不入文件（SPEC §5）。
  *
  * flowRef 是「此刻已提交的 flow」，与 state 同步改：同一个 tick 里第二次写入必须看到第一次的结果，否则一次动作会推两份快照。
@@ -57,30 +68,82 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     applyEdgeChanges(marquee.current ? changes.filter((c) => !(c.type === 'select' && c.selected)) : changes)
   }, [applyEdgeChanges])
 
+  /** flow → RF 视图：保留选中与量好的尺寸；flow 里没有的（已删）消失，新出现的出现 */
+  const syncView = useCallback((next: Flow) => {
+    setNodes((prev) => {
+      const by = new Map(prev.map((n) => [n.id, n]))
+      return toRFNodes(next).map((rn) => { const p = by.get(rn.id); return p ? { ...rn, selected: p.selected, measured: p.measured } : rn })
+    })
+    setEdges((prev) => {
+      const by = new Map(prev.map((e) => [e.id, e]))
+      return toRFEdges(next).map((re) => { const p = by.get(re.id); return p ? { ...re, selected: p.selected } : re })
+    })
+  }, [setNodes, setEdges])
+
   const commit = useCallback((next: Flow) => {
     history.current = [...history.current.slice(-(HISTORY_MAX - 1)), flowRef.current]
     flowRef.current = next
     setDepth(history.current.length)
     setFlow(next)
-  }, [])
+    syncView(next)
+  }, [syncView])
 
-  /** 把一批节点的新位置写回 flow（整数），同步 RF 节点的位置与 data；位置没变（或同一次松手已经写过）就什么都不做 */
+  /** 把一批节点的新位置写回 flow（整数）；位置没变（或同一次松手已经写过）就什么都不做 */
   const applyMoves = useCallback((moves: Map<string, Pt>) => {
     const cur = flowRef.current
     const changed = cur.nodes.some((n) => { const m = moves.get(n.id); return !!m && (m.x !== (n.x ?? 0) || m.y !== (n.y ?? 0)) })
     if (!changed) return
-    const next: Flow = { ...cur, nodes: cur.nodes.map((n) => { const m = moves.get(n.id); return m ? { ...n, x: m.x, y: m.y } : n }) }
-    commit(next)
-    setNodes((ns) => ns.map((rn) => {
-      const m = moves.get(rn.id), fn = next.nodes.find((n) => n.id === rn.id)
-      return m && fn ? { ...rn, position: { x: m.x, y: m.y }, data: { node: fn } } : rn
-    }))
-  }, [commit, setNodes])
+    commit({ ...cur, nodes: cur.nodes.map((n) => { const m = moves.get(n.id); return m ? { ...n, x: m.x, y: m.y } : n }) })
+  }, [commit])
 
-  const round = (p: Pt): Pt => ({ x: Math.round(p.x), y: Math.round(p.y) })
   const onNodeDragStop: OnNodeDrag<FlowRFNode> = useCallback((_e, _node, dragged) => {
-    applyMoves(new Map(dragged.map((d) => [d.id, round(d.position)])))
+    applyMoves(new Map(dragged.map((d) => [d.id, { x: Math.round(d.position.x), y: Math.round(d.position.y) }])))
   }, [applyMoves])
+
+  const updateNode = useCallback((id: string, patch: Partial<FlowNode>) => {
+    const cur = flowRef.current
+    const node = cur.nodes.find((n) => n.id === id)
+    if (!node) return
+    if (!(Object.keys(patch) as (keyof FlowNode)[]).some((k) => patch[k] !== node[k])) return
+    const merged: FlowNode = { ...node, ...patch }
+    let nextEdges = cur.edges
+    if (merged.kind === 'data' && patch.method !== undefined && patch.method !== '' && patch.method !== 'manual') {
+      nextEdges = cur.edges.map((e) => (e.kind === 'pending' && (e.from === id || e.to === id) ? { ...e, kind: 'data' as const } : e))
+      if (merged.flag === 'pending') merged.flag = 'ok'
+    }
+    commit({ ...cur, nodes: cur.nodes.map((n) => (n.id === id ? merged : n)), edges: nextEdges })
+  }, [commit])
+
+  const updateEdge = useCallback((id: string, patch: Partial<FlowEdge>) => {
+    const cur = flowRef.current
+    const edge = cur.edges.find((e) => e.id === id)
+    if (!edge) return
+    if (!(Object.keys(patch) as (keyof FlowEdge)[]).some((k) => patch[k] !== edge[k])) return
+    commit({ ...cur, edges: cur.edges.map((e) => (e.id === id ? { ...e, ...patch } : e)) })
+  }, [commit])
+
+  const deleteNodes = useCallback((ids: string[]) => {
+    const cur = flowRef.current, gone = new Set(ids)
+    if (!cur.nodes.some((n) => gone.has(n.id))) return
+    commit({ ...cur, nodes: cur.nodes.filter((n) => !gone.has(n.id)), edges: cur.edges.filter((e) => !gone.has(e.from) && !gone.has(e.to)) })
+  }, [commit])
+
+  const deleteEdges = useCallback((ids: string[]) => {
+    const cur = flowRef.current, gone = new Set(ids)
+    if (!cur.edges.some((e) => gone.has(e.id))) return
+    commit({ ...cur, edges: cur.edges.filter((e) => !gone.has(e.id)) })
+  }, [commit])
+
+  const selectedIds = useMemo(() => nodes.filter((n) => n.selected).map((n) => n.id), [nodes])
+  const selectedEdgeIds = useMemo(() => edges.filter((e) => e.selected).map((e) => e.id), [edges])
+
+  const deleteSelected = useCallback((): boolean => {
+    if (selectedIds.length) { deleteNodes(selectedIds); return true }
+    if (selectedEdgeIds.length) { deleteEdges(selectedEdgeIds); return true }
+    return false
+  }, [selectedIds, selectedEdgeIds, deleteNodes, deleteEdges])
+
+  const reset = useCallback(() => { commit(initial) }, [commit, initial])
 
   const undo = useCallback(() => {
     const prev = history.current.pop()
@@ -88,8 +151,12 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     if (!prev) return
     flowRef.current = prev
     setFlow(prev)
-    setNodes((ns) => toRFNodes(prev).map((rn) => ({ ...rn, selected: ns.find((c) => c.id === rn.id)?.selected ?? false })))
-    setEdges((es) => toRFEdges(prev).map((re) => ({ ...re, selected: es.find((c) => c.id === re.id)?.selected ?? false })))
+    syncView(prev)
+  }, [syncView])
+
+  const select = useCallback((id: string) => {
+    setNodes((ns) => ns.map((n) => (n.selected !== (n.id === id) ? { ...n, selected: n.id === id } : n)))
+    setEdges((es) => es.map((e) => (e.selected ? { ...e, selected: false } : e)))
   }, [setNodes, setEdges])
 
   const clearSelection = useCallback(() => {
@@ -113,7 +180,7 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     return true
   }, [nodes, applyMoves])
 
-  // 快捷键（SPEC §6.8 里 S05 这一段）：Cmd/Ctrl+Z 撤销、Esc 取消选中、方向键微移。
+  // 快捷键（SPEC §6.8）：Cmd/Ctrl+Z 撤销、Esc 取消选中、Delete / Backspace 删除、方向键微移。输入框里的按键不管。
   // 用 window 的捕获阶段：方向键要抢在 React Flow 自带的「焦点节点按方向键挪 1px」之前，否则一次按键挪两次、而且它那次不进撤销栈。
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -126,14 +193,17 @@ export function useFlowEditor(initial: Flow): FlowEditor {
         if (t?.closest('.react-flow__node')) { e.stopPropagation(); t.blur() }
         return
       }
+      if (e.key === 'Delete' || e.key === 'Backspace') { if (deleteSelected()) e.preventDefault(); return }
       const d = NUDGE[e.key]
       if (d && nudge(d, e.shiftKey ? 10 : 1)) { e.preventDefault(); e.stopPropagation() }
     }
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
-  }, [undo, clearSelection, nudge])
+  }, [undo, clearSelection, deleteSelected, nudge])
 
-  const selectedIds = useMemo(() => nodes.filter((n) => n.selected).map((n) => n.id), [nodes])
-
-  return { flow, nodes, edges, onNodesChange, onEdgesChange, onNodeDragStop, onSelectionStart, onSelectionEnd, selectedIds, clearSelection, undo, canUndo: depth > 0 }
+  return {
+    flow, nodes, edges, onNodesChange, onEdgesChange, onNodeDragStop, onSelectionStart, onSelectionEnd,
+    selectedIds, selectedEdgeIds, select, clearSelection, updateNode, updateEdge, deleteNodes, deleteEdges, deleteSelected, reset,
+    undo, canUndo: depth > 0,
+  }
 }
