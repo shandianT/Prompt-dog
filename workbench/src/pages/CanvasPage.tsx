@@ -1,20 +1,25 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Panel, ReactFlowProvider, useReactFlow, useViewport } from '@xyflow/react'
 import sample from '../../sample/投标流程.json'
+import paletteSample from '../../sample/组件库.json'
 import { FlowCanvas, ZOOM_MAX, ZOOM_MIN } from '../canvas/FlowCanvas'
 import { EdgeLegend } from '../canvas/EdgeLegend'
 import { fitFrame } from '../canvas/viewport'
 import { SelectionBar } from '../canvas/SelectionBar'
 import { Inspector } from '../canvas/Inspector'
+import { Palette } from '../canvas/Palette'
+import { QuickAdd } from '../canvas/QuickAdd'
+import { PlacingLayer } from '../canvas/Placing'
 import { useFlowEditor } from '../canvas/useFlowEditor'
-import { edgeCounts, fiveNumbers, type Flow } from '../flow'
+import { PLACEHOLDER_ITEM, edgeCounts, fiveNumbers, type Flow, type PaletteGroup, type PaletteItem } from '../flow'
 
 /**
- * 07 流程画布：顶栏五个数字 + 画布 + 右栏属性面板（S06）。示例数据来自 sample/投标流程.json。
- * 侧栏、组件库面板还没有——各有自己的故事（S08、S16+）。
+ * 07 流程画布：顶栏五个数字 + 左栏组件库（S08）+ 画布 + 右栏属性面板（S06）。示例数据来自 sample/投标流程.json 与 组件库.json。
+ * 侧栏还没有（S16+）。
  */
 
 const flow = sample as unknown as Flow
+const groups = paletteSample as PaletteGroup[]
 
 function Stat({ label, value, dot }: { label: string; value: number; dot?: string }) {
   return (
@@ -64,6 +69,11 @@ export default function CanvasPage() {
   const five = fiveNumbers(editor.flow)
   const counts = edgeCounts(editor.flow)
   const [labels, setLabels] = useState(false)
+  const [placing, setPlacing] = useState<PaletteItem | null>(null)
+  const { addNode } = editor
+  const onDrop = useCallback((item: PaletteItem, at: { x: number; y: number }) => { addNode(item, at.x, at.y); setPlacing(null) }, [addNode])
+  const cancelPlacing = useCallback(() => setPlacing(null), [])
+  const quick = editor.quick
   return (
     <ReactFlowProvider>
       <div className="flex h-full flex-col">
@@ -85,8 +95,15 @@ export default function CanvasPage() {
           </ToolButton>
         </header>
         <div className="flex min-h-0 flex-1">
+          <Palette groups={groups} onGrab={setPlacing} onNewComponent={() => addNode(PLACEHOLDER_ITEM, 600, 330)} />
           <div className="min-w-0 flex-1">
             <FlowCanvas editor={editor} labels={labels}>
+              {quick && (
+                <QuickAdd
+                  x={quick.x} y={quick.y} from={quick.from} flow={editor.flow} groups={groups}
+                  onPick={(it) => addNode(it, quick.x + 75, quick.y + 32, quick.from)} onClose={editor.closeQuick}
+                />
+              )}
               {editor.selectedIds.length >= 2 && (
                 <Panel position="top-center">
                   <SelectionBar count={editor.selectedIds.length} onDelete={editor.deleteSelected} onClear={editor.clearSelection} />
@@ -96,7 +113,7 @@ export default function CanvasPage() {
                 <EdgeLegend counts={counts} />
               </Panel>
               {editor.notice && (
-                <Panel position="bottom-center">
+                <Panel position="bottom-center" style={{ pointerEvents: 'none' }}>
                   <div className="toast" role="status" data-testid="toast" key={editor.notice.n}>{editor.notice.text}</div>
                 </Panel>
               )}
@@ -105,6 +122,7 @@ export default function CanvasPage() {
           <Inspector editor={editor} />
         </div>
       </div>
+      {placing && <PlacingLayer item={placing} onDrop={onDrop} onCancel={cancelPlacing} />}
     </ReactFlowProvider>
   )
 }

@@ -73,6 +73,23 @@
   font-size: 11px; font-weight: 600; line-height: 1.35; color: var(--color-hi); text-align: center;
   background: rgb(255 255 255 / 92%); border: 1px solid #f3c2c2; border-radius: 4px; padding: 3px 6px;
 }
+/* 组件搜索弹层（原型 .quick）：锚在画布坐标上，按 1 / zoom 反向缩放，压在节点之上 */
+.quick {
+  position: absolute; z-index: 2000; width: 240px; transform-origin: top left; pointer-events: all;
+  background: #fff; border: 1px solid var(--color-line); border-radius: 12px; box-shadow: 0 12px 32px rgb(30 35 43 / 16%);
+  padding: 8px; display: flex; flex-direction: column; gap: 6px; font-size: 13px;
+}
+.quick__list { display: flex; flex-direction: column; gap: 2px; max-height: 240px; overflow: auto; }
+.quick__item {
+  display: flex; align-items: center; gap: 7px; min-height: 30px; padding: 3px 8px; border-radius: 7px;
+  border: 0; background: none; font: inherit; font-size: 12.5px; color: var(--color-ink); cursor: pointer; text-align: left; width: 100%;
+}
+.quick__item:hover, .quick__item:focus-visible { background: var(--color-amber-soft); }
+.quick__item .ins__muted { margin-left: auto; font-size: 11px; }
+.quick__empty { padding: 6px 8px; }
+/* 幽灵节点：跟着指针走，不接事件 */
+.ghost { position: fixed; z-index: 60; width: 150px; opacity: 0.92; pointer-events: none; filter: drop-shadow(0 10px 30px rgb(30 35 43 / 18%)); }
+
 /* 短提示（原型 .toast）：画布底部中央，2.2 秒后消失 */
 .toast {
   background: var(--color-ink); color: #fff; padding: 10px 16px; border-radius: 10px;

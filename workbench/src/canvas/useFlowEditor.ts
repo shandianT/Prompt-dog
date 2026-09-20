@@ -3,7 +3,7 @@ import {
   useEdgesState, useNodesState,
   type IsValidConnection, type OnConnect, type OnConnectEnd, type OnEdgesChange, type OnNodeDrag, type OnNodesChange,
 } from '@xyflow/react'
-import { NODE_H, NODE_W, connectionProblem, laneExtent, newEdge, type Flow, type FlowEdge, type FlowNode } from '../flow'
+import { CANVAS_H, CANVAS_W, NODE_H, NODE_W, connectionProblem, laneExtent, newEdge, newNode, type Flow, type FlowEdge, type FlowNode, type PaletteItem } from '../flow'
 import { toRFEdges, toRFNodes, type FlowRFEdge, type FlowRFNode } from './toReactFlow'
 
 /** 撤销栈深度，SPEC §6.4：最多 40 步 */
@@ -44,12 +44,19 @@ export interface FlowEditor {
   /** 拖线：RF 逐帧问「这样连合不合规」；松手合规就连，不合规就提示原因 */
   isValidConnection: IsValidConnection<FlowRFEdge>
   onConnect: OnConnect
-  onConnectEnd: OnConnectEnd
+  /** 松手：RF 的回调 + 松手点的画布坐标（RF 状态里的 to 不是画布坐标，FlowCanvas 用 screenToFlowPosition 换好再传） */
+  onConnectEnd: (event: MouseEvent | TouchEvent, state: Parameters<OnConnectEnd>[1], at: { x: number; y: number }) => void
   /** 连一条线；连不上返回 false 并提示原因 */
   connect: (from: string, to: string) => boolean
   /** 一条短提示（原型的 toast），2.2 秒后自己消失 */
   notice: { text: string; n: number } | null
   say: (text: string) => void
+  /** 组件搜索弹层：画布坐标；from = 接在谁之后（端口拖到空白）；双击空白没有 from */
+  quick: { x: number; y: number; from?: string } | null
+  openQuick: (x: number, y: number, from?: string) => void
+  closeQuick: () => void
+  /** 从组件库的一项新建节点，中心尽量在 (cx, cy)；给了 from 就顺手连上（合规才连）。返回新节点 id */
+  addNode: (item: PaletteItem, cx: number, cy: number, from?: string) => string
 }
 
 /**
@@ -166,6 +173,10 @@ export function useFlowEditor(initial: Flow): FlowEditor {
   }, [])
   useEffect(() => () => clearTimeout(noticeTimer.current), [])
 
+  const [quick, setQuick] = useState<{ x: number; y: number; from?: string } | null>(null)
+  const openQuick = useCallback((x: number, y: number, from?: string) => setQuick({ x, y, from }), [])
+  const closeQuick = useCallback(() => setQuick(null), [])
+
   const connect = useCallback((from: string, to: string): boolean => {
     const cur = flowRef.current
     const problem = connectionProblem(cur, from, to)
@@ -177,13 +188,18 @@ export function useFlowEditor(initial: Flow): FlowEditor {
   }, [commit, say])
   const isValidConnection: IsValidConnection<FlowRFEdge> = useCallback((c) => connectionProblem(flowRef.current, c.source, c.target) === null, [])
   const onConnect: OnConnect = useCallback((c) => { connect(c.source, c.target) }, [connect])
-  // 松手在一个连不上的节点上：RF 不会叫 onConnect，原因由这里说
-  const onConnectEnd: OnConnectEnd = useCallback((_e, state) => {
-    if (state.toNode && state.fromNode && state.isValid === false) {
-      const problem = connectionProblem(flowRef.current, state.fromNode.id, state.toNode.id)
-      if (problem) say(problem)
+  // 松手在一个连不上的节点上：RF 不会叫 onConnect，原因由这里说。
+  // 松手在空白处（离端口够远、在画布内）：弹组件搜索，接在这个节点之后（SPEC §6.4「拖到空白新建」）
+  const onConnectEnd = useCallback((_e: MouseEvent | TouchEvent, state: Parameters<OnConnectEnd>[1], at: { x: number; y: number }) => {
+    if (!state.fromNode) return
+    if (state.toNode) {
+      if (state.isValid === false) { const problem = connectionProblem(flowRef.current, state.fromNode.id, state.toNode.id); if (problem) say(problem) }
+      return
     }
-  }, [say])
+    const p = state.fromNode.internals.positionAbsolute
+    const port = { x: p.x + NODE_W, y: p.y + NODE_H / 2 }
+    if (Math.hypot(at.x - port.x, at.y - port.y) > 24 && at.x >= 0 && at.x <= CANVAS_W && at.y >= 0 && at.y <= CANVAS_H) openQuick(at.x, at.y, state.fromNode.id)
+  }, [say, openQuick])
 
   const undo = useCallback(() => {
     const prev = history.current.pop()
@@ -192,6 +208,7 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     flowRef.current = prev
     setFlow(prev)
     syncView(prev)
+    setQuick(null)
   }, [syncView])
 
   const select = useCallback((id: string) => {
@@ -203,6 +220,23 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     setNodes((ns) => ns.map((n) => (n.selected ? { ...n, selected: false } : n)))
     setEdges((es) => es.map((e) => (e.selected ? { ...e, selected: false } : e)))
   }, [setNodes, setEdges])
+
+  const addNode = useCallback((item: PaletteItem, cx: number, cy: number, from?: string): string => {
+    const cur = flowRef.current
+    const node = newNode(cur, item, cx, cy)
+    let next: Flow = { ...cur, nodes: [...cur.nodes, node] }
+    let msg = item.kind === 'data' ? `已加入「${item.name}」· 默认待打通` : `已加入「${item.name}」`
+    if (from) {
+      const problem = connectionProblem(next, from, node.id)
+      if (problem) msg = `已加入「${item.name}」，但没连上：${problem}`
+      else { next = { ...next, edges: [...next.edges, newEdge(next, from, node.id)] }; msg = `已新建「${item.name}」并连上` }
+    }
+    commit(next)
+    select(node.id)
+    setQuick(null)
+    say(msg)
+    return node.id
+  }, [commit, select, say])
 
   /** 方向键：选中的节点一起挪，仍锁在各自泳道与画布内；每按一次是一步撤销 */
   const nudge = useCallback((d: readonly [number, number], step: number): boolean => {
@@ -228,6 +262,7 @@ export function useFlowEditor(initial: Flow): FlowEditor {
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return }
       if (e.key === 'Escape') {
+        setQuick(null)
         clearSelection()
         // 焦点在节点上时 React Flow 自己也接 Esc（反选那一个）。我们的清空先在微任务里落地，它再看那节点已不是选中态，就会把它重新选上——所以到它之前截住。
         if (t?.closest('.react-flow__node')) { e.stopPropagation(); t.blur() }
@@ -246,5 +281,6 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     selectedIds, selectedEdgeIds, select, clearSelection, updateNode, updateEdge, deleteNodes, deleteEdges, deleteSelected, reset,
     undo, canUndo: depth > 0,
     isValidConnection, onConnect, onConnectEnd, connect, notice, say,
+    quick, openQuick, closeQuick, addNode,
   }
 }

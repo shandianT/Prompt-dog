@@ -117,7 +117,7 @@ const SAMPLE = `(() => {
 const PD_INSTALL = `window.__pd = {
     pos: (id) => { const el = document.querySelector('.react-flow__node[data-id="' + id + '"]'); const m = /translate\\(([-\\d.]+)px,\\s*([-\\d.]+)px\\)/.exec(el ? el.style.transform : ''); return m ? { x: Number(m[1]), y: Number(m[2]) } : null },
     screen: (x, y) => { const m = new DOMMatrix(getComputedStyle(document.querySelector('.react-flow__viewport')).transform); const rf = document.querySelector('.react-flow').getBoundingClientRect(); return { x: rf.x + m.e + x * m.a, y: rf.y + m.f + y * m.d } },
-    edgeMid: (id) => { const p = document.querySelector('.react-flow__edge[data-id="' + id + '"] path.react-flow__edge-path'); if (!p) return null; const pt = p.getPointAtLength(p.getTotalLength() / 2); return window.__pd.screen(pt.x, pt.y) },
+    edgeMid: (id, t) => { const p = document.querySelector('.react-flow__edge[data-id="' + id + '"] path.react-flow__edge-path'); if (!p) return null; const pt = p.getPointAtLength(p.getTotalLength() * (t ?? 0.5)); return window.__pd.screen(pt.x, pt.y) },
     selected: () => [...document.querySelectorAll('.react-flow__node.selected')].map((n) => n.dataset.id).sort(),
     selectedEdges: () => document.querySelectorAll('.react-flow__edge.selected').length,
     undoDisabled: () => !!document.querySelector('[data-testid="undo"]')?.disabled,
@@ -139,6 +139,9 @@ const PD_INSTALL = `window.__pd = {
     edgeIds: () => [...document.querySelectorAll('.react-flow__edge')].map((g) => g.dataset.id).sort(),
     toast: () => document.querySelector('[data-testid="toast"]')?.textContent ?? '',
     connLine: () => { const p = document.querySelector('.react-flow__connectionline path'); if (!p) return null; const s = getComputedStyle(p); return { stroke: s.stroke, dash: s.strokeDasharray, why: document.querySelector('.cl__why')?.textContent ?? '' } },
+    attr: (sel, name) => document.querySelector(sel)?.getAttribute(name) ?? '',
+    center: (sel) => { const el = document.querySelector(sel); if (!el) return null; el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 } },
+    type: (sel, v) => { const el = document.querySelector(sel); el.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })) },
   }; 'ok'`
 
 let failed = 0
@@ -503,9 +506,9 @@ try {
   const pick = async (testId: string, label: string) => { await pd(`segPick(${JSON.stringify(testId)}, ${JSON.stringify(label)})`); await sleep(150) }
   const clickSel = async (sel: string) => { await pd(`click(${JSON.stringify(sel)})`); await sleep(200) }
   const undoBtn = async (n = 1) => { for (let i = 0; i < n; i++) { await pd('undo()'); await sleep(120) } }
-  /** 点一条线的中点（画布坐标经 viewport 变换成屏幕坐标） */
-  const clickEdge = async (id: string) => {
-    const at = await pd<P | null>(`edgeMid(${JSON.stringify(id)})`)
+  /** 点一条线上的一点（默认中点；画布坐标经 viewport 变换成屏幕坐标）。回填线的中点在画布右下角、压在缩放按钮下面，要点它就取 1/4 处 */
+  const clickEdge = async (id: string, t = 0.5) => {
+    const at = await pd<P | null>(`edgeMid(${JSON.stringify(id)}, ${t})`)
     if (!at) throw new Error(`找不到线 ${id}`)
     await click(at)
   }
@@ -561,7 +564,7 @@ try {
   check((await count('.react-flow__edge.fe-data[data-id="e0"]')) === 1 && dash1 === 'none' && legend1.includes('数据4') && legend1.includes('待打通3'), '待打通改为数据：变实线，图例 数据 4 · 待打通 3', `dasharray ${dash1}`)
   await undoBtn()
   check((await count('.react-flow__edge.fe-pending[data-id="e0"]')) === 1 && (await pd<string>('edgeDash("e0")')) !== 'none', '撤销：回到待打通虚线')
-  await clickEdge('e22')
+  await clickEdge('e22', 0.25)
   await pick('f-dtype', '决定')
   check((await count('[data-testid="compat-warning"]')) === 1 && (await text('[data-testid="compat-warning"]')).includes('契约规则 1'), '回填线的产物改成「决定」进数据节点：面板提示契约规则 1', await text('[data-testid="compat-warning"]'))
   await undoBtn()
@@ -662,6 +665,95 @@ try {
   await drag(await port('n8'), { x: 900, y: 320 }, 300, async () => { lineFree = await connLine() })
   const lf = lineFree as Line
   check(!!lf && lf.stroke === amberRgb && lf.why === '' && (await edgeIds()).length === 23, '拖到空白：琥珀橡皮筋，松手不生成线', lf ? lf.stroke : '没抓到线')
+
+  // ---- S08 快速添加：端口拖到空白弹组件搜索并连上；双击空白弹搜索；组件库拖入（数据类默认待打通，工作狗带子图）；新组件占位
+  await cdp.navigate(`${BASE}/#/canvas`)
+  await cdp.evaluate(PD_INSTALL)
+  const quickOpen = () => count('[data-testid="quick"]')
+  const placeholder = () => pd<string>('attr(\'[data-testid="quick-search"]\', "placeholder")')
+  const typeQuick = async (q: string) => { await pd(`type('[data-testid="quick-search"]', ${JSON.stringify(q)})`); await sleep(150) }
+  const dblclick = async (at: P) => {
+    await mouse('mouseMoved', at, { button: 'none' })
+    await mouse('mousePressed', at); await mouse('mouseReleased', at)
+    await mouse('mousePressed', at, { clickCount: 2 }); await mouse('mouseReleased', at, { clickCount: 2 })
+    await sleep(300)
+  }
+  const nodesN = () => count('.react-flow__node'), edgesN = () => count('.react-flow__edge')
+  const paletteDrag = async (name: string, to: P, midway?: () => Promise<void>) => {
+    const r = await pd<{ x: number; y: number } | null>(`center('[data-testid="palette"] [data-name=${JSON.stringify(name)}]')`)
+    if (!r) throw new Error(`组件库里没有「${name}」`)
+    const b = await screen(to.x, to.y)
+    await mouse('mouseMoved', r, { button: 'none' })
+    await mouse('mousePressed', r)
+    await sleep(30)
+    await mouse('mouseMoved', { x: r.x + 40, y: r.y }, { buttons: 1 })
+    await sleep(30)
+    await mouse('mouseMoved', b, { buttons: 1 })
+    await sleep(80)
+    if (midway) await midway()
+    await mouse('mouseReleased', b)
+    await sleep(300)
+  }
+
+  // 端口拖到空白 → 弹层 → 搜「联网」→ 点选：节点 +1 且已连上，一步撤销
+  await drag(await port('n6'), { x: 790, y: 330 }, 300)
+  check((await quickOpen()) === 1 && (await placeholder()).includes('素材检索'), '从 n6 端口拖到空白：弹出组件搜索，提示「接在「素材检索」之后…」', await placeholder())
+  await typeQuick('联网')
+  check((await count('[data-testid="quick"] .quick__item')) === 1 && (await text('[data-testid="quick"] .quick__item')).includes('联网检索'), '输入即过滤：只剩「联网检索」')
+  await shot('s08-quick')
+  await clickSel('[data-testid="quick"] .quick__item')
+  const np1 = await pos('x1')
+  check((await nodesN()) === 20 && (await edgesN()) === 24 && near(np1, 797, 337, 8) && (await pd<string>('nodeText("x1", "fnode__name")')) === '联网检索' && (await pd<string[]>('selected()')).join() === 'x1',
+    '选「联网检索」：节点 20 / 线 24，新节点 x1 的左上角就是松手点（与原型一致）、选中，两个动作加了一个连好线的节点', `${fmt(np1)} · ${await toast()}`)
+  check((await toast()) === '已新建「联网检索」并连上' && (await quickOpen()) === 0, '提示「已新建「联网检索」并连上」，弹层关闭')
+  await undoBtn()
+  check((await nodesN()) === 19 && (await edgesN()) === 23, '撤销一步：节点和线一起回去')
+
+  // 端口拖到空白但离端口太近：不弹（用右边没有邻居的 n13，免得落到别的节点身上）
+  const p13 = await port('n13')
+  await drag(p13, { x: p13.x + 3, y: p13.y + 1 }, 300)
+  check((await quickOpen()) === 0 && (await edgesN()) === 23, '离端口不到 24px 就松手：不当作「拖到空白新建」，也不连线', `${await edgesN()} 线`)
+
+  // 双击空白 → 弹层 → 搜「人审」→ 选：人节点落进人泳道（双击点在 AI 泳道）
+  await dblclick(await screen(300, 300))
+  check((await quickOpen()) === 1 && (await placeholder()).startsWith('搜组件'), '双击空白：弹出组件搜索', await placeholder())
+  await typeQuick('人审')
+  await clickSel('[data-testid="quick"] .quick__item')
+  const np2 = await pos('x1'), np2n = await nodesN(), np2e = await edgesN(), np2r = await pd<string>('nodeText("x1", "fnode__role")'), np2f = await fiveText()
+  check(np2n === 20 && np2e === 23 && !!np2 && np2.y === 440 && np2r === '人审' && np2f.includes('人 8'),
+    '选「人审」：人节点新建在人泳道顶（双击点在 AI 泳道也归到人泳道），人 7 → 8', `${fmt(np2)} · ${np2n} 节点 / ${np2e} 线 · 角色「${np2r}」· ${np2f} · ${await toast()}`)
+  await undoBtn()
+
+  // Esc 关弹层；点空白关弹层
+  await dblclick(await screen(300, 300))
+  await key('Escape', 'Escape', 27)
+  check((await quickOpen()) === 0, 'Esc：弹层关闭')
+  await dblclick(await screen(300, 300))
+  await click(await screen(900, 930))
+  check((await quickOpen()) === 0, '点空白：弹层关闭')
+
+  // 组件库拖入：CRM（数据）拖到 AI 泳道 → 归到数据泳道、默认待打通；拖的过程中有幽灵节点
+  let ghost = 0
+  await paletteDrag('CRM', { x: 300, y: 300 }, async () => { ghost = await count('[data-testid="ghost"]'); await shot('s08-ghost') })
+  const np3 = await pos('x1')
+  check(ghost === 1, '拖的过程中幽灵节点跟着指针')
+  check((await nodesN()) === 20 && !!np3 && np3.y === 720 && (await fiveText()).includes('待打通 5') && (await toast()) === '已加入「CRM」· 默认待打通',
+    '拖入 CRM：落进数据泳道顶、默认待打通（4 → 5）', `${fmt(np3)} · ${await toast()}`)
+  await undoBtn()
+  await paletteDrag('合同审查', { x: 600, y: 300 })
+  check((await nodesN()) === 20 && (await pd<string>('nodeText("x1", "fnode__kids")')) === '7 环节 · 双击打开', '拖入工作狗「合同审查」：带 7 环节的子图', await pd<string>('nodeText("x1", "fnode__kids")'))
+  await undoBtn()
+  await paletteDrag('联网检索', { x: 1500, y: 300 })
+  check((await nodesN()) === 19, '拖到画布外松手：取消，不新建')
+
+  // 组件库搜索、新组件占位
+  await pd(`type('[data-testid="palette-search"]', '检索')`); await sleep(150)
+  check((await count('[data-testid="palette"] .pal__item')) === 2, '组件库搜索「检索」：只剩联网检索、素材检索', `${await count('[data-testid="palette"] .pal__item')} 项`)
+  await pd(`type('[data-testid="palette-search"]', '')`); await sleep(150)
+  await clickSel('[data-testid="palette-new"]')
+  check((await nodesN()) === 20 && (await pd<string>('nodeText("x1", "fnode__name")')) === '新组件（待定义）' && (await fiveText()).includes('缺口 2'), '「新组件（占位缺口）」：加一个标缺口的占位节点，缺口 1 → 2')
+  await undoBtn()
+  check((await nodesN()) === 19 && (await fiveText()) === fiveBase, '撤销：回到示例')
 
   check(cdp.errors.length === 0, '浏览器控制台没有报错', cdp.errors.slice(0, 2).join(' | '))
   cdp.close()

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""把 flow.py 的投标流程导出成符合 flow.schema.json 的 JSON，供工作台（workbench/）当示例数据。
+"""把 flow.py 的投标流程导出成符合 flow.schema.json 的 JSON，供工作台（workbench/）当示例数据；顺带导出组件库（PALETTE）。
 
 flow.py 是示例数据的单一来源；这个脚本只做两件事：
   1. 形状归一：flow.py 的 children 是 {nodes, edges}，schema 要 children[] + childEdges[]
   2. 去掉 N() 给每个节点铺的默认空值（"" / 0 / 非人节点的 notify），让 JSON 可读
 
 用法：python3 design/workbench/export_flow_json.py [输出路径]
-默认写到 workbench/sample/投标流程.json
+默认写到 workbench/sample/投标流程.json，组件库写到同目录的 组件库.json
 """
 import json, os, sys
 
@@ -48,6 +48,19 @@ def clean_edge(e):
     return {k: v for k, v in e.items() if k in ("id", "from", "to", "kind") or v not in EMPTY}
 
 
+def clean_item(it):
+    out = {k: v for k, v in it.items() if k != "children" and v not in EMPTY and v is not None}
+    kids = it.get("children")
+    if kids:
+        out["children"] = [clean_node(c) for c in kids["nodes"]]
+        out["childEdges"] = [clean_edge(e) for e in kids["edges"]]
+    return out
+
+
+def build_palette():
+    return [dict(title=g["title"], sub=g.get("sub", ""), items=[clean_item(it) for it in g["items"]]) for g in flow.PALETTE]
+
+
 def build():
     return {
         "name": flow.FLOW_NAME,
@@ -70,3 +83,9 @@ if __name__ == "__main__":
         f.write("\n")
     kids = sum(len(n.get("children", [])) for n in data["nodes"])
     print(f"{path}: {len(data['nodes'])} 节点（含子图 {kids}）· {len(data['edges'])} 条线")
+    pal_path = os.path.join(os.path.dirname(path), "组件库.json")
+    palette = build_palette()
+    with open(pal_path, "w", encoding="utf-8") as f:
+        json.dump(palette, f, ensure_ascii=False, indent=1)
+        f.write("\n")
+    print(f"{pal_path}: {len(palette)} 组 · {sum(len(g['items']) for g in palette)} 项")

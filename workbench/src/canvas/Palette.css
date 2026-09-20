@@ -1,0 +1,25 @@
+/* 组件库面板：宽 200（SPEC §5），数值与原型 .pal 一致，颜色走 tokens */
+.pal {
+  width: 200px; flex: none; background: #fff; border-right: 1px solid var(--color-line);
+  overflow: auto; padding: 12px 12px 16px; display: flex; flex-direction: column; gap: 12px; font-size: 13px;
+}
+.pal__group { display: flex; flex-direction: column; gap: 4px; }
+.pal__title { margin: 0 0 2px; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; display: flex; flex-direction: column; gap: 1px; }
+.pal__title small { font-weight: 500; color: var(--color-sub); font-size: 11px; letter-spacing: 0; }
+.pal__item {
+  display: flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 6px;
+  border-radius: 8px; border: 1px solid var(--color-line); background: #fff; cursor: grab; user-select: none;
+}
+.pal__item:hover { border-color: var(--color-amber); background: #fffaf2; }
+.pal__grip { color: #cfd4dc; font-size: 10px; letter-spacing: -2px; flex: none; }
+.pal__col { display: flex; flex-direction: column; min-width: 0; }
+.pal__name { font-weight: 700; font-size: 12.5px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pal__sub { font-size: 11px; color: var(--color-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pal__new { margin-top: 4px; }
+
+/* 类型圆点：与端口 / 徽章同一套颜色 */
+.kdot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.kdot--dog, .kdot--human { background: var(--color-amber); }
+.kdot--skill { background: var(--color-lo); }
+.kdot--know { background: var(--color-ok); }
+.kdot--data { background: #fff; border: 2px solid var(--color-ink); box-sizing: border-box; }

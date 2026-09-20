@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from 'react'
 import {
-  ReactFlow, Background, BackgroundVariant, Controls, SelectionMode, useConnection,
-  type NodeTypes, type EdgeTypes, type ReactFlowInstance,
+  ReactFlow, Background, BackgroundVariant, Controls, SelectionMode, useConnection, useReactFlow,
+  type NodeTypes, type EdgeTypes, type OnConnectEnd, type ReactFlowInstance,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import './canvas.css'
@@ -23,7 +23,7 @@ const nodeTypes: NodeTypes = { flow: FlowNodeRF }
 const edgeTypes: EdgeTypes = { flow: FlowEdgeRF }
 
 /**
- * 流程画布本体。S03 泳道 + 节点定位 + 平移缩放；S04 五种连线与标签；S05 选中 / 拖动 / 框选；S07 从输出端口拖线。
+ * 流程画布本体。S03 泳道 + 节点定位 + 平移缩放；S04 五种连线与标签；S05 选中 / 拖动 / 框选；S07 从输出端口拖线；S08 双击空白弹组件搜索。
  * 状态不在这里：nodes / edges 与所有改动都来自 useFlowEditor，这里只负责把 React Flow 配成规范要的样子。
  * 首帧取景到整幅画布（viewport.ts），所以关掉了 Controls 自带的「适应」——它按节点外框取景，会裁掉贴边绕的回填线。
  *
@@ -32,7 +32,19 @@ const edgeTypes: EdgeTypes = { flow: FlowEdgeRF }
  * Delete / Backspace 由 useFlowEditor 的快捷键处理（RF 自带的 deleteKeyCode 关掉：不然删两次，而且它那次不进撤销栈）；节点拖动 3px 起算，点一下不会抖成一步撤销。
  */
 export function FlowCanvas({ editor, labels = false, children }: { editor: FlowEditor; labels?: boolean; children?: ReactNode }) {
-  const { nodes, edges, onNodesChange, onEdgesChange, onNodeDragStop, onSelectionStart, onSelectionEnd, isValidConnection, onConnect, onConnectEnd } = editor
+  const { nodes, edges, onNodesChange, onEdgesChange, onNodeDragStop, onSelectionStart, onSelectionEnd, isValidConnection, onConnect, onConnectEnd, openQuick, closeQuick } = editor
+  const rf = useReactFlow()
+  // RF 连线状态里的 to 是容器坐标，不是画布坐标；松手点从事件坐标换算，交给 editor 判断「离端口够远、在画布内」
+  const onConnectEndAt: OnConnectEnd = useCallback((e, state) => {
+    const c = 'clientX' in e ? { x: e.clientX, y: e.clientY } : { x: e.changedTouches[0]?.clientX ?? 0, y: e.changedTouches[0]?.clientY ?? 0 }
+    onConnectEnd(e, state, rf.screenToFlowPosition(c))
+  }, [onConnectEnd, rf])
+  // 双击空白：在那个点弹组件搜索（RF 自带的双击缩放关掉）
+  const onDoubleClick = useCallback((e: React.MouseEvent) => {
+    if (!(e.target as HTMLElement).classList.contains('react-flow__pane')) return
+    const p = rf.screenToFlowPosition({ x: e.clientX, y: e.clientY })
+    openQuick(p.x, p.y)
+  }, [rf, openQuick])
   const onInit = useCallback((inst: ReactFlowInstance<FlowRFNode, FlowRFEdge>) => { void fitFrame(inst) }, [])
   // 拖线中给容器加个类：节点整块的落点 Handle 只在这时接指针事件
   const connecting = useConnection((c) => c.inProgress)
@@ -60,7 +72,11 @@ export function FlowCanvas({ editor, labels = false, children }: { editor: FlowE
       connectionLineComponent={ConnectionLineRF}
       isValidConnection={isValidConnection}
       onConnect={onConnect}
-      onConnectEnd={onConnectEnd}
+      onConnectEnd={onConnectEndAt}
+      zoomOnDoubleClick={false}
+      onDoubleClick={onDoubleClick}
+      onPaneClick={closeQuick}
+      onMoveStart={closeQuick}
       elementsSelectable
       selectionOnDrag
       selectionMode={SelectionMode.Partial}

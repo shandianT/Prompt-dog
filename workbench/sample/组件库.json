@@ -1,0 +1,557 @@
+[
+ {
+  "title": "工作狗",
+  "sub": "整只当一个节点，双击可钻取",
+  "items": [
+   {
+    "kind": "dog",
+    "name": "合同审查",
+    "sub": "7 环节",
+    "children": [
+     {
+      "id": "p0c1",
+      "kind": "skill",
+      "role": "auto",
+      "name": "文件解析",
+      "sub": "合同审查 · 环节 1",
+      "x": 20,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p0c2",
+      "kind": "skill",
+      "role": "auto",
+      "name": "事实提取",
+      "sub": "合同审查 · 环节 2",
+      "x": 190,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p0c3",
+      "kind": "skill",
+      "role": "auto",
+      "name": "风险扫描",
+      "sub": "合同审查 · 环节 3",
+      "x": 360,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p0c4",
+      "kind": "skill",
+      "role": "auto",
+      "name": "法律核查",
+      "sub": "合同审查 · 环节 4",
+      "x": 530,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p0c5",
+      "kind": "skill",
+      "role": "auto",
+      "name": "条款建议",
+      "sub": "合同审查 · 环节 5",
+      "x": 700,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p0c6",
+      "kind": "skill",
+      "role": "auto",
+      "name": "对抗审查",
+      "sub": "合同审查 · 环节 6",
+      "x": 870,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p0c7",
+      "kind": "skill",
+      "role": "auto",
+      "name": "交付生成",
+      "sub": "合同审查 · 环节 7",
+      "x": 1040,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     }
+    ],
+    "childEdges": [
+     {
+      "id": "p0ce0",
+      "from": "p0c1",
+      "to": "p0c2",
+      "kind": "seq",
+      "label": "环节 1 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p0ce1",
+      "from": "p0c2",
+      "to": "p0c3",
+      "kind": "seq",
+      "label": "环节 2 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p0ce2",
+      "from": "p0c3",
+      "to": "p0c4",
+      "kind": "seq",
+      "label": "环节 3 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p0ce3",
+      "from": "p0c4",
+      "to": "p0c5",
+      "kind": "seq",
+      "label": "环节 4 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p0ce4",
+      "from": "p0c5",
+      "to": "p0c6",
+      "kind": "seq",
+      "label": "环节 5 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p0ce5",
+      "from": "p0c6",
+      "to": "p0c7",
+      "kind": "seq",
+      "label": "环节 6 产物",
+      "dtype": "struct"
+     }
+    ]
+   },
+   {
+    "kind": "dog",
+    "name": "标书撰写",
+    "sub": "4 环节",
+    "children": [
+     {
+      "id": "p1c1",
+      "kind": "skill",
+      "role": "auto",
+      "name": "招标解析与废标项",
+      "sub": "标书撰写 · 环节 1",
+      "x": 20,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p1c2",
+      "kind": "skill",
+      "role": "auto",
+      "name": "评分拆解与应答矩阵",
+      "sub": "标书撰写 · 环节 2",
+      "x": 190,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p1c3",
+      "kind": "skill",
+      "role": "auto",
+      "name": "分章撰写",
+      "sub": "标书撰写 · 环节 3",
+      "x": 360,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p1c4",
+      "kind": "skill",
+      "role": "auto",
+      "name": "合规自查与模拟评审",
+      "sub": "标书撰写 · 环节 4",
+      "x": 530,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     }
+    ],
+    "childEdges": [
+     {
+      "id": "p1ce0",
+      "from": "p1c1",
+      "to": "p1c2",
+      "kind": "seq",
+      "label": "环节 1 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p1ce1",
+      "from": "p1c2",
+      "to": "p1c3",
+      "kind": "seq",
+      "label": "环节 2 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p1ce2",
+      "from": "p1c3",
+      "to": "p1c4",
+      "kind": "seq",
+      "label": "环节 3 产物",
+      "dtype": "struct"
+     }
+    ]
+   },
+   {
+    "kind": "dog",
+    "name": "内容营销",
+    "sub": "4 环节",
+    "children": [
+     {
+      "id": "p2c1",
+      "kind": "skill",
+      "role": "auto",
+      "name": "选题与钩子",
+      "sub": "内容营销 · 环节 1",
+      "x": 20,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p2c2",
+      "kind": "skill",
+      "role": "auto",
+      "name": "骨架与初稿",
+      "sub": "内容营销 · 环节 2",
+      "x": 190,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p2c3",
+      "kind": "skill",
+      "role": "auto",
+      "name": "语言打磨",
+      "sub": "内容营销 · 环节 3",
+      "x": 360,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p2c4",
+      "kind": "skill",
+      "role": "auto",
+      "name": "自检与三吃",
+      "sub": "内容营销 · 环节 4",
+      "x": 530,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     }
+    ],
+    "childEdges": [
+     {
+      "id": "p2ce0",
+      "from": "p2c1",
+      "to": "p2c2",
+      "kind": "seq",
+      "label": "环节 1 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p2ce1",
+      "from": "p2c2",
+      "to": "p2c3",
+      "kind": "seq",
+      "label": "环节 2 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p2ce2",
+      "from": "p2c3",
+      "to": "p2c4",
+      "kind": "seq",
+      "label": "环节 3 产物",
+      "dtype": "struct"
+     }
+    ]
+   },
+   {
+    "kind": "dog",
+    "name": "竞品分析",
+    "sub": "5 环节",
+    "children": [
+     {
+      "id": "p3c1",
+      "kind": "skill",
+      "role": "auto",
+      "name": "采集",
+      "sub": "竞品分析 · 环节 1",
+      "x": 20,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p3c2",
+      "kind": "skill",
+      "role": "auto",
+      "name": "变化检测",
+      "sub": "竞品分析 · 环节 2",
+      "x": 190,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p3c3",
+      "kind": "skill",
+      "role": "auto",
+      "name": "归因与打分",
+      "sub": "竞品分析 · 环节 3",
+      "x": 360,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p3c4",
+      "kind": "skill",
+      "role": "auto",
+      "name": "成稿",
+      "sub": "竞品分析 · 环节 4",
+      "x": 530,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p3c5",
+      "kind": "skill",
+      "role": "auto",
+      "name": "自检与找茬",
+      "sub": "竞品分析 · 环节 5",
+      "x": 700,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     }
+    ],
+    "childEdges": [
+     {
+      "id": "p3ce0",
+      "from": "p3c1",
+      "to": "p3c2",
+      "kind": "seq",
+      "label": "环节 1 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p3ce1",
+      "from": "p3c2",
+      "to": "p3c3",
+      "kind": "seq",
+      "label": "环节 2 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p3ce2",
+      "from": "p3c3",
+      "to": "p3c4",
+      "kind": "seq",
+      "label": "环节 3 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p3ce3",
+      "from": "p3c4",
+      "to": "p3c5",
+      "kind": "seq",
+      "label": "环节 4 产物",
+      "dtype": "struct"
+     }
+    ]
+   },
+   {
+    "kind": "dog",
+    "name": "数据看板",
+    "sub": "3 环节",
+    "children": [
+     {
+      "id": "p4c1",
+      "kind": "skill",
+      "role": "auto",
+      "name": "读取 Excel",
+      "sub": "数据看板 · 环节 1",
+      "x": 20,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p4c2",
+      "kind": "skill",
+      "role": "auto",
+      "name": "清洗与口径",
+      "sub": "数据看板 · 环节 2",
+      "x": 190,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     },
+     {
+      "id": "p4c3",
+      "kind": "skill",
+      "role": "auto",
+      "name": "分析成图",
+      "sub": "数据看板 · 环节 3",
+      "x": 360,
+      "y": 140,
+      "flag": "ok",
+      "reuse": 1
+     }
+    ],
+    "childEdges": [
+     {
+      "id": "p4ce0",
+      "from": "p4c1",
+      "to": "p4c2",
+      "kind": "seq",
+      "label": "环节 1 产物",
+      "dtype": "struct"
+     },
+     {
+      "id": "p4ce1",
+      "from": "p4c2",
+      "to": "p4c3",
+      "kind": "seq",
+      "label": "环节 2 产物",
+      "dtype": "struct"
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "title": "技能",
+  "sub": "可复用的一步",
+  "items": [
+   {
+    "kind": "skill",
+    "name": "联网检索",
+    "sub": "带来源"
+   },
+   {
+    "kind": "skill",
+    "name": "文件解析",
+    "sub": "PDF / OCR"
+   },
+   {
+    "kind": "skill",
+    "name": "对抗审查",
+    "sub": "只找问题"
+   },
+   {
+    "kind": "skill",
+    "name": "来源核查",
+    "sub": "逐条核对"
+   },
+   {
+    "kind": "skill",
+    "name": "素材检索",
+    "sub": "按矩阵取材"
+   }
+  ]
+ },
+ {
+  "title": "行业 know-how",
+  "sub": "行业库 / 你的材料",
+  "items": [
+   {
+    "kind": "know",
+    "name": "废标项清单",
+    "sub": "行业库"
+   },
+   {
+    "kind": "know",
+    "name": "评分点写法",
+    "sub": "你的中标标书"
+   },
+   {
+    "kind": "know",
+    "name": "报价策略",
+    "sub": "缺 · 待沉淀",
+    "flag": "missing"
+   }
+  ]
+ },
+ {
+  "title": "数据与系统",
+  "sub": "拖进来即标待打通",
+  "items": [
+   {
+    "kind": "data",
+    "name": "CRM",
+    "sub": "商机 · 客户"
+   },
+   {
+    "kind": "data",
+    "name": "招标平台",
+    "sub": "公告 · 下载"
+   },
+   {
+    "kind": "data",
+    "name": "ERP",
+    "sub": "成本 · 报价"
+   },
+   {
+    "kind": "data",
+    "name": "OA",
+    "sub": "审批 · 签章"
+   },
+   {
+    "kind": "data",
+    "name": "邮箱",
+    "sub": "收发件"
+   },
+   {
+    "kind": "data",
+    "name": "网盘",
+    "sub": "文件"
+   }
+  ]
+ },
+ {
+  "title": "人",
+  "sub": "人审 / 人定",
+  "items": [
+   {
+    "kind": "human",
+    "name": "人审",
+    "sub": "看一眼，可退回",
+    "role": "review"
+   },
+   {
+    "kind": "human",
+    "name": "人定",
+    "sub": "不可逆前拍板",
+    "role": "decide"
+   }
+  ]
+ }
+]
