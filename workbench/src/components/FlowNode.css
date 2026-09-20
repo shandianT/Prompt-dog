@@ -1,0 +1,189 @@
+/*
+ * FlowNode 的样式。数值与 SPEC.md §6.3「视觉编码」和原型 design/workbench/flow.py 的 NODE_CSS 一致，
+ * 颜色一律走 tokens.css 的变量，不写死十六进制。
+ */
+
+.fnode {
+  position: relative;
+  box-sizing: border-box;
+  width: var(--fnode-w, 150px);
+  height: var(--fnode-h, 64px);
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-btn);
+  background: #fff;
+  color: var(--color-ink);
+  box-shadow: 0 1px 2px rgb(30 35 43 / 5%);
+  user-select: none;
+  outline: none;
+}
+.fnode--interactive { cursor: grab; }
+.fnode--interactive:focus-visible { box-shadow: 0 0 0 3px var(--color-amber-soft); }
+
+/* 人节点：琥珀 1.5px 边框——人类触点在图上一眼可辨 */
+.fnode--human { border: 1.5px solid var(--color-amber); }
+/* 数据节点：暖灰底 */
+.fnode--data { background: var(--color-warm); }
+
+/* 状态标记的边框。卡点实边，缺口与待打通虚边——虚线表示「还没落地」 */
+.fnode--block { border: 1.5px solid var(--color-hi); }
+.fnode--missing { border: 1.5px dashed var(--color-amber); }
+.fnode--pending { border: 1.5px dashed var(--color-lo); }
+
+.fnode--selected {
+  border-color: var(--color-amber);
+  border-style: solid;
+  box-shadow: 0 0 0 3px var(--color-amber-soft), 0 6px 18px rgb(217 119 6 / 18%);
+}
+.fnode--connecting { box-shadow: 0 0 0 3px #eff4ff; }
+.fnode--running {
+  border-color: var(--color-amber);
+  box-shadow: 0 0 0 3px var(--color-amber-soft), 0 0 0 6px rgb(217 119 6 / 25%);
+}
+.fnode--dim { opacity: 0.38; }
+
+.fnode__head { display: flex; align-items: center; gap: 6px; font-size: 10.5px; line-height: 1; }
+
+/* 类型徽章 */
+.fnode__kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.fnode__kind--human,
+.fnode__kind--dog { background: var(--color-amber-soft); color: var(--color-amber); }
+.fnode__kind--skill { background: #eff4ff; color: var(--color-lo); }
+.fnode__kind--know { background: #f0faf2; color: var(--color-ok); }
+.fnode__kind--data { background: #fff; color: var(--color-ink); border: 1px solid #cfd4dc; }
+
+/* 角色徽章：自动灰底、人审琥珀线框、人定琥珀实底 */
+.fnode__role {
+  margin-left: auto;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.fnode__role--auto { background: var(--color-line); color: var(--color-ink); }
+.fnode__role--review { border-color: var(--color-amber); color: var(--color-amber); }
+.fnode__role--decide { background: var(--color-amber); color: #fff; }
+button.fnode__role { cursor: pointer; font: inherit; font-weight: 700; }
+button.fnode__role:hover { outline: 2px solid var(--color-amber-soft); }
+
+.fnode__name {
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.fnode__sub {
+  font-size: 11px;
+  color: var(--color-sub);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 三种标记压在右上角 */
+.fnode__flag {
+  position: absolute;
+  top: -9px;
+  right: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+.fnode__flag--block { background: var(--color-hi); }
+.fnode__flag--missing { background: var(--color-amber); }
+.fnode__flag--pending { background: var(--color-lo); }
+
+/* 对照现状的 chip 压在左上角，与状态标记分列两侧 */
+.fnode__diff {
+  position: absolute;
+  top: -9px;
+  left: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  background: var(--color-ink);
+  color: #fff;
+}
+.fnode__diff--new { background: var(--color-ok); }
+
+/* 子图数量在右下角 */
+.fnode__kids {
+  position: absolute;
+  right: 8px;
+  bottom: -9px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid var(--color-line);
+  color: var(--color-sub);
+  white-space: nowrap;
+}
+
+/* 运行态徽章在左下角，数字来自 验收清单.json */
+.fnode__run {
+  position: absolute;
+  left: 8px;
+  bottom: -10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  background: #fff;
+  border: 1px solid var(--color-line);
+  color: var(--color-sub);
+  white-space: nowrap;
+}
+.fnode__run--ok { border-color: var(--color-ok); color: var(--color-ok); }
+.fnode__run--running { border-color: var(--color-amber); color: var(--color-amber); background: var(--color-amber-soft); }
+.fnode__run--wait { border-color: var(--color-amber); color: var(--color-amber); }
+
+/* 端口：颜色 = 产物类型 */
+.fnode__port {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--color-port);
+  box-sizing: border-box;
+}
+.fnode__port--in { left: -7px; }
+.fnode__port--out { right: -7px; cursor: crosshair; }
+.fnode--interactive .fnode__port--out:hover { background: var(--color-amber-soft); transform: scale(1.25); }
+
+/* 受保护：不可逆动作前的人定节点，不能改成自动 */
+.fnode__lock {
+  position: absolute;
+  right: 8px;
+  bottom: -9px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--color-ink);
+  color: #fff;
+  white-space: nowrap;
+}

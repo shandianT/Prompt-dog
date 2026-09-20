@@ -22,6 +22,8 @@
   --color-hi: #dc2626;   /* 高风险 / 卡点 */
   --color-lo: #2563eb;   /* 技能 / 待打通 */
   --color-ok: #16a34a;   /* 达标 / know-how / 回填 */
+  --color-slate: #64748b; /* 结构化产物的端口与数据线 */
+  --color-port: #9aa4af;  /* 端口默认边框、顺序线 */
 
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', sans-serif;

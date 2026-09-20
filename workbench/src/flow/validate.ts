@@ -101,5 +101,7 @@ export function enumDrift(): Problem[] {
   compare('edge.kind', EDGE_KINDS, edgeKind?.properties?.kind?.enum)
   const dtype = flowSchema.definitions.edge as { properties?: { dtype?: { enum?: string[] } } } | undefined
   compare('edge.dtype', DATA_TYPES, dtype?.properties?.dtype?.enum)
+  // 端口配色表（ports.ts）必须覆盖全部产物类型，不多不少
+  compare('x-compat/port', DATA_TYPES, Object.keys(flowSchema['x-compat'].port))
   return out
 }

@@ -1,6 +1,6 @@
 # PromptDog 工作台
 
-流程画布 MVP 的前端工程。**目前只有 S01 的骨架与数据契约**，画布本身从 S02 / S03 开始建。
+流程画布 MVP 的前端工程。**已完成 S01 骨架与数据契约、S02 FlowNode 组件**，画布本身从 S03 开始建。
 
 ## 跑起来
 
@@ -18,6 +18,7 @@ npm run check      # 类型 + lint + 契约自检，CI 用这条
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run lint` | ESLint |
 | `npm run validate:sample` | 校验示例流程图：schema + 枚举漂移 + 引用 + x-compat 四条规则 |
+| `npm run check:ui` | 真浏览器验收：起 preview、用 CDP 读计算样式、逐条断言 SPEC §6.3 的视觉编码 |
 | `npm run sample` | 从 `design/workbench/flow.py` 重新导出示例再校验 |
 | `npx tsx scripts/check-guards.ts` | 反向测试：故意改坏流程图，确认每道检查真的会报错 |
 
@@ -62,6 +63,25 @@ src/flow/
 
 `scripts/check-guards.ts` 用十个故意改坏的流程图证明这四道检查真的会报错。
 
+## 组件
+
+```
+src/components/
+└── FlowNode.tsx / .css    画布上的一个节点：kind × role × flag 全部变体，
+                           加选中 / 连线中 / 运行中 / 压暗、对照 chip、子图与运行角标
+src/pages/
+├── ContractCheck.tsx      契约自检页（S01）
+└── FlowNodeVariants.tsx   FlowNode 变体矩阵（S02）
+```
+
+没有引 Storybook：变体页就是它的替代品——一个组件家族一页，每个状态一格，
+`npm run dev` 里点开就能看，`npm run check:ui` 在无头浏览器里逐条断言。
+样式写在同名 `.css` 里而不是 Tailwind 类名：节点的状态组合（边框 × 虚实 × 角标 × 光晕）
+用类名表达会长到读不动，而且颜色必须走 `tokens.css` 的变量，不能在组件里写死十六进制。
+
+`check:ui` 跑在 **devicePixelRatio = 2** 下。SPEC §6.3 要求人节点 1.5px 边框，
+而 DPR 1 时 Chrome 会把 1.5px 的「用值」舍成 1px，在那个密度下断言 1.5px 会假报错。
+
 ## 示例数据
 
 `sample/投标流程.json` 由 `design/workbench/export_flow_json.py` 从 `flow.py` 的 `NODES` / `EDGES` 导出——
@@ -71,6 +91,9 @@ src/flow/
 ## 接着建什么
 
 按 [`../design/workbench/stories.json`](../design/workbench/stories.json) 的顺序，一次一条：
-S02 FlowNode 变体页 → S03 画布与泳道 → S04 五种连线 → S05 选中移动框选撤销 → S06 属性面板 …
+S03 画布与泳道 → S04 五种连线 → S05 选中移动框选撤销 → S06 属性面板 …
+
+S03 会把 `FlowNodeCard` 包成 React Flow 的自定义 node：端口换成 `<Handle>`，传 `ports="none"`
+关掉组件自己画的圆点，其余不动。
 
 界面长什么样见 `../design/workbench/` 的设计画布与 `组件清单.md`（每个组件的 props、状态、用哪个 shadcn/ui 件承接）。

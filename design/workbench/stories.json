@@ -28,8 +28,8 @@
     "在浏览器里验证并截图"
    ],
    "优先级": 2,
-   "passes": false,
-   "备注": ""
+   "passes": true,
+   "备注": "2026-09-20 建成 src/components/FlowNode.tsx + 变体页 #/flow-node（60 个组合 + 交互态 + 对照 chip + 三种角标 + 端口配色）。新增 npm run check:ui：起 preview、用 CDP 读计算样式，逐条断言 SPEC §6.3——矩阵格数、人节点琥珀 1.5px、数据节点暖灰底且不画角色徽章、三种标记压右上角、对照 chip 压左上角、颜色等于 tokens.css 的变量（防止组件里写死相近色）。两处记录：① 断言跑在 DPR=2，因为 DPR=1 时 Chrome 把 1.5px 边框的用值舍成 1px，在那个密度下断言会假报错；② 端口配色 ports.ts 覆盖全部六种产物类型，原型 CSS 只定义了四种（file / event 漏了），以 schema 的 x-compat.port 为准并加了 key 漂移检查。"
   },
   {
    "id": "S03",

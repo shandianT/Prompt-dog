@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "validate:sample": "tsx scripts/validate-sample.ts",
     "sample": "python3 ../design/workbench/export_flow_json.py && npm run validate:sample",
-    "check": "npm run typecheck && npm run lint && npm run validate:sample"
+    "check": "npm run typecheck && npm run lint && npm run validate:sample && npm run check:ui",
+    "check:ui": "vite build && tsx scripts/check-ui.ts"
   },
   "dependencies": {
     "@xyflow/react": "^12.11.6",
