@@ -29,6 +29,34 @@
 .react-flow__node-flow { border-radius: var(--radius-btn); }
 .react-flow__node-flow.selected { z-index: 10 !important; }
 
+/* 框选矩形：1.5px 琥珀虚线 + 6% 琥珀底（原型 .mq） */
+.flow-canvas .react-flow__selection {
+  border: 1.5px dashed var(--color-amber);
+  background: color-mix(in srgb, var(--color-amber) 6%, transparent);
+}
+/* 框选完成后 RF 画在所选节点外面的框：拖它整组一起动。淡一点，别抢节点自己的光晕 */
+.flow-canvas .react-flow__nodesselection-rect {
+  border: 1px dashed color-mix(in srgb, var(--color-amber) 55%, transparent);
+  background: transparent;
+  border-radius: 6px;
+}
+.flow-canvas .react-flow__node.dragging { cursor: grabbing; }
+
+/* 浮条：已选 N 个（原型 .bar）——墨底白字，主按钮琥珀，幽灵按钮浅灰 */
+.selbar {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--color-ink); color: #fff;
+  border-radius: 10px; padding: 6px 8px 6px 14px;
+  font-size: 13px; box-shadow: 0 8px 24px rgb(30 35 43 / 25%);
+}
+.selbar b { font-weight: 800; }
+.selbar__btn {
+  font: inherit; font-size: 12.5px; font-weight: 700; height: 30px; padding: 0 12px;
+  border-radius: 8px; border: 0; background: var(--color-amber); color: #fff; cursor: pointer;
+}
+.selbar__btn--ghost { background: transparent; color: #c8cdd6; }
+.selbar__btn--ghost:hover { color: #fff; }
+
 /* 连线：颜色 / 粗细 / 虚实由 FlowEdgeRF 内联（避开 RF 自带的 selected / hover 规则），这里只管手感 */
 .flow-canvas .react-flow__edge { cursor: pointer; }
 .flow-canvas .react-flow__edge-interaction { stroke-width: 14; }

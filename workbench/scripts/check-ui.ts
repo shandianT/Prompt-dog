@@ -7,6 +7,7 @@
  * 颜色不写死十六进制：从 :root 上解析同一个 token 再比，所以「组件里偷偷写了个相近的颜色」也会被抓到。
  */
 import { spawn, type ChildProcess } from 'node:child_process'
+import { writeFileSync } from 'node:fs'
 import sample from '../sample/投标流程.json'
 import { CANVAS_H, CANVAS_W, EDGE_KINDS, LANE_HUMAN_TOP, NODE_FLAGS, NODE_KINDS, edgeCounts, type Flow } from '../src/flow'
 
@@ -14,6 +15,8 @@ const CHROME = '/opt/pw-browsers/chromium_headless_shell-1194/chrome-linux/headl
 const PORT = Number(process.env.UI_PORT ?? 4183)
 const BASE = `http://localhost:${PORT}`
 const ROLES_IN_MATRIX = 3
+/** 设了就把关键时刻的截图存到这个目录（证据，不是断言） */
+const SHOT_DIR = process.env.UI_SHOT_DIR
 const flow = sample as unknown as Flow
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
@@ -68,7 +71,8 @@ async function connect(debugPort: number): Promise<Cdp> {
   await send('Runtime.enable')
   return {
     evaluate: async (expression) => (await send('Runtime.evaluate', { expression, returnByValue: true })).result?.result?.value,
-    navigate: async (url) => { await send('Page.navigate', { url }); await sleep(3500) },
+    // 先去 about:blank 再来：同一个 URL 只换 hash 是「同文档导航」，页面不会重载，上一段留下的缩放 / 选中会串进下一段
+    navigate: async (url) => { await send('Page.navigate', { url: 'about:blank' }); await sleep(200); await send('Page.navigate', { url }); await sleep(3500) },
     send,
     errors,
     close: () => sock.close(),
@@ -173,11 +177,19 @@ try {
   check(s.diffNew.length > 0 && s.diffNew.every((p) => p.bg === s.tokens.ok), '「新增」chip 绿底，其余黑底')
   check(s.ports > 0, '端口渲染', `${s.ports} 个`)
 
+  const shot = async (name: string) => {
+    if (!SHOT_DIR) return
+    const r = (await cdp.send('Page.captureScreenshot', { format: 'png' })) as { result?: { data?: string } }
+    if (r.result?.data) writeFileSync(`${SHOT_DIR}/${name}.png`, Buffer.from(r.result.data, 'base64'))
+  }
+
   await cdp.navigate(`${BASE}/#/`)
   const contract = (await cdp.evaluate(`document.body.innerText.includes('契约自检全部通过')`)) as boolean
   check(contract, '契约自检页仍然全绿')
 
   // ---- S03 画布：泳道、节点定位、五个数字、缩放范围、缩放后节点可点中
+  // 画布页按真实的 1400 × 900 视口跑（变体页需要长窗口，画布页不需要），截图才是用户看到的样子
+  await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 900, deviceScaleFactor: 2, mobile: false })
   await cdp.navigate(`${BASE}/#/canvas`)
   const CANVAS_SAMPLE = `(() => {
     const vp = document.querySelector('.react-flow__viewport')
@@ -345,6 +357,125 @@ try {
   const e3 = await sampleEdges()
   check(e3.pressed === 'false' && e3.labels === wantDefault + e3.selected, '再点一次关掉，回到默认（选中那条仍显示）', `实际 ${e3.labels}`)
 
+  // ---- S05 选中、移动、框选、撤销：拖动写回 flow 并可撤销、锁在泳道与画布内、空白拖矩形框选、浮条、多选一起动、快捷键、撤销栈 40 步
+  await cdp.navigate(`${BASE}/#/canvas`)
+  await cdp.evaluate(`window.__pd = {
+    pos: (id) => { const el = document.querySelector('.react-flow__node[data-id="' + id + '"]'); const m = /translate\\(([-\\d.]+)px,\\s*([-\\d.]+)px\\)/.exec(el ? el.style.transform : ''); return m ? { x: Number(m[1]), y: Number(m[2]) } : null },
+    screen: (x, y) => { const m = new DOMMatrix(getComputedStyle(document.querySelector('.react-flow__viewport')).transform); const rf = document.querySelector('.react-flow').getBoundingClientRect(); return { x: rf.x + m.e + x * m.a, y: rf.y + m.f + y * m.d } },
+    selected: () => [...document.querySelectorAll('.react-flow__node.selected')].map((n) => n.dataset.id).sort(),
+    selectedEdges: () => document.querySelectorAll('.react-flow__edge.selected').length,
+    undoDisabled: () => !!document.querySelector('[data-testid="undo"]')?.disabled,
+    undo: () => document.querySelector('[data-testid="undo"]').click(),
+    bar: () => document.querySelector('[data-testid="selection-bar"]')?.textContent ?? '',
+    barCancel: () => document.querySelector('[data-testid="selection-bar"] button').click(),
+    marquee: () => { const el = document.querySelector('.react-flow__selection'); if (!el) return null; const s = getComputedStyle(el); return { color: s.borderTopColor, style: s.borderTopStyle, w: el.getBoundingClientRect().width } },
+    five: () => (document.querySelector('[data-testid="five-numbers"]')?.textContent ?? '').replace(/\\s+/g, ' '),
+  }; 'ok'`)
+  type P = { x: number; y: number }
+  const pd = async <T,>(expr: string) => (await cdp.evaluate(`window.__pd.${expr}`)) as T
+  const pos = (id: string) => pd<P | null>(`pos('${id}')`)
+  const screen = (x: number, y: number) => pd<P>(`screen(${x}, ${y})`)
+  const mouse = (type: 'mousePressed' | 'mouseReleased' | 'mouseMoved', at: P, extra: Record<string, unknown> = {}) =>
+    cdp.send('Input.dispatchMouseEvent', { type, x: at.x, y: at.y, button: 'left', clickCount: 1, ...extra })
+  /**
+   * 按画布坐标拖：from 按下，先挪 5px 越过 3px 的拖动阈值，再到 to 松手。
+   * React Flow 从越过阈值那一刻起算位移（节点不跳），所以松手点要补回那 5px，节点才正好落在 to。
+   */
+  const drag = async (from: P, to: P, settle = 250, midway?: () => Promise<void>) => {
+    const a = await screen(from.x, from.y), b = await screen(to.x, to.y)
+    const end = { x: b.x + 5, y: b.y + 5 }
+    await mouse('mouseMoved', a, { button: 'none' })
+    await mouse('mousePressed', a)
+    await sleep(30)
+    await mouse('mouseMoved', { x: a.x + 5, y: a.y + 5 }, { buttons: 1 })
+    await sleep(30)
+    await mouse('mouseMoved', end, { buttons: 1 })
+    await sleep(60)
+    if (midway) await midway()
+    await mouse('mouseReleased', end)
+    await sleep(settle)
+  }
+  const key = async (k: string, code: string, vk: number, modifiers = 0) => {
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, modifiers })
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk, modifiers })
+    await sleep(150)
+  }
+  const near = (p: P | null, x: number, y: number, tol = 2) => !!p && Math.abs(p.x - x) <= tol && Math.abs(p.y - y) <= tol
+  const fmt = (p: P | null) => (p ? `(${p.x}, ${p.y})` : 'null')
+  const center = (x: number, y: number): P => ({ x: x + 75, y: y + 32 })
+
+  const five0 = await pd<string>('five()')
+  check((await pd<boolean>('undoDisabled()')) && (await pd<string[]>('selected()')).length === 0 && near(await pos('n9'), 700, 500, 0), '初始：没有选中、撤销按钮灰着、n9 在 (700, 500)')
+
+  await drag(center(700, 500), center(760, 540))
+  const p1 = await pos('n9')
+  check(near(p1, 760, 540), '拖 n9 (+60, +40)：位置写回并取整', fmt(p1))
+  check(!(await pd<boolean>('undoDisabled()')) && (await pd<string>('five()')) === five0, '拖完撤销按钮亮起，五个数字不变')
+
+  await drag(center(p1?.x ?? 760, p1?.y ?? 540), center(-100, 940))
+  const p2 = await pos('n9')
+  check(near(p2, 0, 656, 0), '往左下拖出画布和泳道：锁在画布左边与人泳道底（y = 720 − 64）', fmt(p2))
+
+  await pd('undo()'); await sleep(200); await pd('undo()'); await sleep(200)
+  check(near(await pos('n9'), 700, 500, 0), '撤销两步回到 (700, 500)', fmt(await pos('n9')))
+  await pd('undo()'); await sleep(200)
+  check(near(await pos('n9'), 700, 500, 0) && (await pd<boolean>('undoDisabled()')), '栈空再撤销：什么都不发生，按钮灰掉')
+
+  // 空白处拖矩形：从 (350, 50) 到 (690, 270)，与 n3 / n5 / n6 相交
+  let mq: { color: string; style: string; w: number } | null = null
+  await drag({ x: 350, y: 50 }, { x: 690, y: 270 }, 300, async () => { mq = await pd('marquee()') })
+  const amber = (await cdp.evaluate(`(() => { const s = document.createElement('span'); s.style.color = getComputedStyle(document.documentElement).getPropertyValue('--color-amber').trim(); document.body.appendChild(s); const c = getComputedStyle(s).color; s.remove(); return c })()`)) as string
+  const mqv = mq as { color: string; style: string; w: number } | null
+  check(!!mqv && mqv.color === amber && mqv.style === 'dashed' && mqv.w > 100, '拖的过程中有琥珀虚线框', mqv ? `${mqv.color} ${mqv.style} 宽 ${Math.round(mqv.w)}px` : '没抓到框')
+  const sel1 = await pd<string[]>('selected()'), selE = await pd<number>('selectedEdges()')
+  check(sel1.join(',') === 'n3,n5,n6' && selE === 0, '框选相交即选中：n3 / n5 / n6，只选节点不选线', `${sel1.join(',')}，选中的线 ${selE} 条`)
+  const bar1 = await pd<string>('bar()')
+  check(bar1.includes('已选 3 个节点') && bar1.includes('取消'), '浮条：已选 3 个节点 · 取消', bar1)
+  await shot('s05-marquee')
+
+  // 多选一起动：拖 n5 (+20, +30)，n3 / n6 跟着
+  await drag(center(530, 60), center(550, 90))
+  const [q3, q5, q6] = [await pos('n3'), await pos('n5'), await pos('n6')]
+  check(near(q3, 380, 150) && near(q5, 550, 90) && near(q6, 550, 230), '多选一起动：三个节点同一位移', `${fmt(q3)} ${fmt(q5)} ${fmt(q6)}`)
+  await shot('s05-group-moved')
+  await pd('barCancel()'); await sleep(200)
+  check((await pd<string[]>('selected()')).length === 0 && (await pd<string>('bar()')) === '', '浮条「取消」：清空选中，浮条消失')
+  await pd('undo()'); await sleep(200)
+  check(near(await pos('n3'), 360, 120, 0) && near(await pos('n5'), 530, 60, 0) && near(await pos('n6'), 530, 200, 0), '撤销一步：三个节点一起回去')
+
+  // 快捷键：点 n9 选中 → 方向键 1px / Shift 10px → Esc 取消选中 → Ctrl+Z 撤销两步
+  await click(await screen(775, 532))
+  check((await pd<string[]>('selected()')).join(',') === 'n9', '点 n9 选中')
+  await key('ArrowRight', 'ArrowRight', 39)
+  const k1 = await pos('n9')
+  await key('ArrowRight', 'ArrowRight', 39, 8)
+  const k2 = await pos('n9')
+  check(near(k1, 701, 500, 0) && near(k2, 711, 500, 0), '方向键微移 1px，Shift 10px（各一步撤销）', `${fmt(k1)} → ${fmt(k2)}`)
+  await key('Escape', 'Escape', 27)
+  check((await pd<string[]>('selected()')).length === 0, 'Esc 取消选中')
+  await key('z', 'KeyZ', 90, 2); await key('z', 'KeyZ', 90, 2)
+  const kz = await pos('n9'), kzDisabled = await pd<boolean>('undoDisabled()')
+  check(near(kz, 700, 500, 0) && kzDisabled, 'Ctrl+Z 两次回到 (700, 500)，栈空', `${fmt(kz)}，撤销按钮${kzDisabled ? '灰' : '亮'}`)
+
+  // 撤销栈 40 步：拖 41 次，撤销 40 次回到第 1 次拖完的位置（最早那份被挤掉），再撤销无事发生
+  let x = 700
+  let firstX = 0
+  for (let i = 0; i < 41; i++) {
+    await drag(center(x, 500), center(x + 6, 500), 90)
+    x = (await pos('n9'))?.x ?? x
+    if (i === 0) firstX = x
+  }
+  const xAfter41 = (await pos('n9'))?.x ?? -1
+  for (let i = 0; i < 40; i++) { await pd('undo()'); await sleep(25) }
+  await sleep(200)
+  const x40 = (await pos('n9'))?.x ?? -1
+  await pd('undo()'); await sleep(150)
+  const x41 = (await pos('n9'))?.x ?? -1
+  check(xAfter41 > 900 && x40 === firstX && firstX !== 700 && x41 === x40 && (await pd<boolean>('undoDisabled()')),
+    '拖 41 次、撤销 40 次：回到第 1 次拖完的位置，最早那步已挤出栈，第 41 次撤销无事发生',
+    `41 次后 x=${xAfter41}，撤销 40 次后 x=${x40}（第 1 次拖完 x=${firstX}），再撤销 x=${x41}`)
+
+  await shot('s05-final')
   check(cdp.errors.length === 0, '浏览器控制台没有报错', cdp.errors.slice(0, 2).join(' | '))
   cdp.close()
 } finally {

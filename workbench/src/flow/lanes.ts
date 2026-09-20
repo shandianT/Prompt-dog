@@ -22,6 +22,17 @@ export const LANES = [
 
 export type LaneId = (typeof LANES)[number]['id']
 
+/**
+ * 节点能动的范围（S05）：整块留在自己那条泳道里、不出画布——拖完的图仍过 x-compat 规则 2（data 只能在数据泳道）。
+ * 跨泳道的语义（人 → AI = 要自动化并标缺口，AI → 人 = 改人审，不可逆前的人定受保护）是 S09 的事，到那时再放开。
+ */
+export function laneExtent(y: number | undefined): [[number, number], [number, number]] {
+  const lane = laneOf(y)
+  const top = lane === 'ai' ? 0 : lane === 'human' ? LANE_HUMAN_TOP : LANE_DATA_TOP
+  const bottom = lane === 'ai' ? LANE_HUMAN_TOP : lane === 'human' ? LANE_DATA_TOP : CANVAS_H
+  return [[0, top], [CANVAS_W, bottom]]
+}
+
 /** 节点归哪条泳道：按节点中心的 y 判定，与原型 laneRule 同一套算法 */
 export function laneOf(y: number | undefined): LaneId {
   const cy = (y ?? 0) + NODE_H / 2

@@ -4,6 +4,8 @@ import sample from '../../sample/投标流程.json'
 import { FlowCanvas, ZOOM_MAX, ZOOM_MIN } from '../canvas/FlowCanvas'
 import { EdgeLegend } from '../canvas/EdgeLegend'
 import { fitFrame } from '../canvas/viewport'
+import { SelectionBar } from '../canvas/SelectionBar'
+import { useFlowEditor } from '../canvas/useFlowEditor'
 import { edgeCounts, fiveNumbers, type Flow } from '../flow'
 
 /**
@@ -23,14 +25,15 @@ function Stat({ label, value, dot }: { label: string; value: number; dot?: strin
 }
 
 /** 顶栏工具按钮：与原型 tb-btn 同款，开着是浅琥珀 */
-function ToolButton({ on, onClick, children, testId }: { on?: boolean; onClick: () => void; children: React.ReactNode; testId?: string }) {
+function ToolButton({ on, disabled, onClick, children, testId }: { on?: boolean; disabled?: boolean; onClick: () => void; children: React.ReactNode; testId?: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled}
       data-testid={testId}
       aria-pressed={on}
-      className={`text-aux flex h-9 items-center gap-1.5 rounded-btn border px-3 font-medium whitespace-nowrap ${
+      className={`text-aux flex h-9 items-center gap-1.5 rounded-btn border px-3 font-medium whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-40 ${
         on ? 'border-amber bg-amber-soft text-amber' : 'border-line bg-page text-sub hover:bg-white'
       }`}
     >
@@ -56,15 +59,16 @@ function FitButton() {
 }
 
 export default function CanvasPage() {
-  const five = fiveNumbers(flow)
-  const counts = edgeCounts(flow)
+  const editor = useFlowEditor(flow)
+  const five = fiveNumbers(editor.flow)
+  const counts = edgeCounts(editor.flow)
   const [labels, setLabels] = useState(false)
   return (
     <ReactFlowProvider>
       <div className="flex h-full flex-col">
         <header className="flex h-14 items-center gap-3 border-b border-line bg-white px-5">
-          <span className="text-[15px] font-bold whitespace-nowrap">{flow.name} · 组织流程画布</span>
-          <span className="text-aux text-sub hidden md:inline">{flow.essence}</span>
+          <span className="text-[15px] font-bold whitespace-nowrap">{editor.flow.name} · 组织流程画布</span>
+          <span className="text-aux text-sub hidden md:inline">{editor.flow.essence}</span>
           <div className="ml-auto flex items-center gap-1.5" data-testid="five-numbers">
             <Stat label="自动" value={five.auto} />
             <Stat label="人" value={five.human} />
@@ -74,12 +78,18 @@ export default function CanvasPage() {
           </div>
           <ZoomReadout />
           <FitButton />
+          <ToolButton onClick={editor.undo} disabled={!editor.canUndo} testId="undo">撤销</ToolButton>
           <ToolButton on={labels} onClick={() => setLabels((v) => !v)} testId="toggle-labels">
             产物{labels ? ' · 全部' : ''}
           </ToolButton>
         </header>
         <div className="min-h-0 flex-1">
-          <FlowCanvas flow={flow} labels={labels}>
+          <FlowCanvas editor={editor} labels={labels}>
+            {editor.selectedIds.length >= 2 && (
+              <Panel position="top-center">
+                <SelectionBar count={editor.selectedIds.length} onClear={editor.clearSelection} />
+              </Panel>
+            )}
             <Panel position="bottom-left">
               <EdgeLegend counts={counts} />
             </Panel>

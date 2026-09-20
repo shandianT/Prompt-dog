@@ -1,6 +1,6 @@
 import type { Edge, Node } from '@xyflow/react'
 import type { Flow, FlowNode, FlowEdge } from '../flow'
-import { NODE_H, NODE_W } from '../flow'
+import { NODE_H, NODE_W, laneExtent } from '../flow'
 
 /**
  * flow.schema.json 的节点 / 连线 → React Flow 的节点 / 连线。
@@ -19,6 +19,8 @@ export function toRFNodes(flow: Flow): FlowRFNode[] {
     // 先告诉 RF 尺寸，fitView 首帧就能算对，不用等 DOM 量完
     width: NODE_W,
     height: NODE_H,
+    // 能动的范围：自己那条泳道 × 画布；RF 按节点整块裁，不是按中心
+    extent: laneExtent(node.y),
   }))
 }
 

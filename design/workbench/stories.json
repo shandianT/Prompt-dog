@@ -71,8 +71,8 @@
     "在浏览器里验证并截图"
    ],
    "优先级": 5,
-   "passes": false,
-   "备注": ""
+   "passes": true,
+   "备注": "2026-09-20 建成 src/canvas/useFlowEditor.ts（flow 是真相、RF nodes 是视图态；松手把整数坐标写回 flow 并推快照，栈 40；撤销回节点与连线不回选中）、SelectionBar（浮条：已选 N 个 · 取消；「打包」S11、「删除」S06 到时再加按钮）。FlowCanvas 改为受控：nodesDraggable + 3px 阈值、selectionOnDrag（相交即选中）、平移用空格 / 中键 / 右键拖、Shift / Cmd / Ctrl 加选、Delete 先关（S06）。节点 extent = 自己的泳道 × 画布（laneExtent）：S05 先锁在本泳道，拖完的图仍过 x-compat 规则 2，S09 放开并加语义。快捷键 Cmd/Ctrl+Z、Esc、方向键 1px / Shift 10px，挂在 window 捕获阶段——要抢在 RF 自带的方向键与 Esc 之前：它挪的那步不进撤销栈，而且我们清空选中后它会把焦点节点重新选上。check:ui 断言：拖 n9 (+60, +40) 写回取整、拖出画布 / 泳道锁在 (0, 656)、撤销两步回原位、栈空再撤销无事、框选中有琥珀虚线框、框选 n3 / n5 / n6 出浮条、多选一起动、浮条取消、撤销一步三个回去、方向键 / Esc / Ctrl+Z、拖 41 次撤销 40 次回到第 1 次拖完的位置。两个坑：① 同 URL 只换 hash 的 Page.navigate 不重载页面，上一段的缩放串进下一段，脚本改为先去 about:blank；② 拖选框松手 RF 同时叫 onNodeDragStop 和 onSelectionDragStop，用闭包里的 flow 比较会推两份快照——改为 flowRef 并只接前者。"
   },
   {
    "id": "S06",

@@ -4,6 +4,12 @@
 
 ## 2026-09-20
 
+### S05 选中、移动、框选、撤销
+- **画布能改了**：`workbench/src/canvas/useFlowEditor.ts` 持有编辑状态——flow（契约）是真相，React Flow 的 nodes / edges 是视图态；拖动过程中只有视图在变，松手才把整数坐标写回 flow 并推一份快照，栈 40 步（Cmd/Ctrl+Z 或顶栏「撤销」），撤销回节点与连线、不回选中。操作约定按 SPEC §6.4：拖节点 = 移动，选中的一起动；空白处拖 = 框选（相交即选中）；Shift / Cmd / Ctrl + 点 = 加选；≥ 2 个选中出浮条「已选 N 个 · 取消」；方向键微移 1px、Shift 10px；Esc 取消选中。平移用空格 / 中键 / 右键拖，滚轮仍是缩放。
+- **节点先锁在自己的泳道里**（RF 的 per-node `extent`）：跨泳道的语义是 S09 的事，S05 不让跨，拖完的图仍过 x-compat 规则 2；Delete 先不删（S06）。
+- **`check:ui` 加编辑断言**：拖 n9 写回取整、拖出画布 / 泳道被锁在 (0, 656)、撤销回原位、栈空再撤销无事、框选中有琥珀虚线框、框选 n3 / n5 / n6 出浮条、多选一起动、方向键 / Esc / Ctrl+Z、拖 41 次撤销 40 次回到第 1 次拖完的位置。画布页改在 1400 × 900 的视口里跑，设 `UI_SHOT_DIR` 可存关键时刻的截图。
+- **三个值得记下的坑**：① 快捷键挂在 window 的捕获阶段——React Flow 自带的方向键挪动不进撤销栈，自带的 Esc 会在我们清空选中之后把焦点节点重新选上（React 在微任务里先刷新了我们的更新）；② 拖选框松手 React Flow 同时叫 `onNodeDragStop` 与 `onSelectionDragStop`，用闭包里的 flow 比较会推两份快照——改为 `flowRef`，只接前者；③ 同 URL 只换 hash 的 `Page.navigate` 不重载页面，上一段测试的缩放串进下一段，脚本改为先去 about:blank。
+
 ### S04 FlowEdge 五种线与标签
 - **五种连线**：`workbench/src/canvas/edgeGeometry.ts` 的路径逐字移植自原型 `flow.py` 的 `edgePath`——顺序 / 数据 / 待打通走右端口到左端口的贝塞尔，退回从两个节点顶部拱起，回填贴画布右边、沿底边绕回目标底部；颜色按 SPEC §6.3 走 token，选中琥珀 2.6px 并换琥珀箭头。标签是 HTML（`EdgeLabelRenderer`），默认只显示非顺序线与决定类，顶栏「产物」开关显示全部；图例一行贴画布左下角。
 - **首帧取景整幅画布**：React Flow 默认按节点外框取景，会把贴边绕的回填线裁掉；改为取景到 1220 × 1024 的画布（`viewport.ts`），顶栏加「适应」回到整幅。
