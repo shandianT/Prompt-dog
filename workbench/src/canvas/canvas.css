@@ -11,7 +11,8 @@
   position: absolute; left: 10px; top: 6px;
   font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: var(--color-port);
 }
-.lane__hint { position: absolute; right: 12px; top: 6px; font-size: 10.5px; color: var(--color-port); }
+/* 提示语右边留 24px：回填线贴画布右边（x = 1208）走，12px 会被它划过 */
+.lane__hint { position: absolute; right: 24px; top: 6px; font-size: 10.5px; color: var(--color-port); }
 .lane--human { border-top-color: #f0c78a; }
 .lane--human .lane__name { color: var(--color-amber); }
 
@@ -28,5 +29,24 @@
 .react-flow__node-flow { border-radius: var(--radius-btn); }
 .react-flow__node-flow.selected { z-index: 10 !important; }
 
-/* S04 之前连线先用素线：灰、细、无标签，只为看清结构 */
-.flow-canvas .react-flow__edge-path { stroke: var(--color-port); stroke-width: 1.5; }
+/* 连线：颜色 / 粗细 / 虚实由 FlowEdgeRF 内联（避开 RF 自带的 selected / hover 规则），这里只管手感 */
+.flow-canvas .react-flow__edge { cursor: pointer; }
+.flow-canvas .react-flow__edge-interaction { stroke-width: 14; }
+
+/* 线上标签：HTML，10.5px，浅底小圆角；颜色跟着线的语义 */
+.fe-label {
+  position: absolute;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  line-height: 1;
+  font-weight: 600;
+  color: var(--color-sub);
+  background: rgb(247 248 250 / 92%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+.fe-label--decision { color: var(--color-amber); }
+.fe-label--pending { color: var(--color-lo); }
+.fe-label--back { color: var(--color-hi); }
+.fe-label--loop { color: var(--color-ok); }

@@ -126,7 +126,7 @@ CANVAS_CSS = r'''
     .fc .canvas { position: relative; width: 1220px; height: 1024px; transform-origin: 0 0; background-color: #f7f8fa; background-image: radial-gradient(#dfe3ea 1px, transparent 1px); background-size: 20px 20px; user-select: none; }
     .fc .lane { position: absolute; left: 0; right: 0; border-top: 1px dashed #d3d8e0; pointer-events: none; }
     .fc .lane .ll { position: absolute; left: 10px; top: 6px; font-size: 11px; font-weight: 800; letter-spacing: .08em; color: #9aa4af; display: flex; align-items: center; gap: 5px; }
-    .fc .lane .lh { position: absolute; right: 12px; top: 6px; font-size: 10.5px; color: #9aa4af; }
+    .fc .lane .lh { position: absolute; right: 24px; top: 6px; font-size: 10.5px; color: #9aa4af; }
     .fc .lane.human { border-top-color: #f0c78a; } .fc .lane.human .ll { color: #d97706; }
     .fc .defs { position: absolute; width: 0; height: 0; }
     .fc .esvg { position: absolute; left: 0; top: 0; width: 1220px; height: 1024px; overflow: visible; pointer-events: none; }
@@ -515,7 +515,10 @@ class Component extends DCLogic {
     if (kind === 'back') { var sx = ax + NW / 2, tx = bx + NW / 2; var top = Math.min(ay, by) - 64; return { d: 'M ' + sx + ' ' + ay + ' C ' + sx + ' ' + top + ', ' + tx + ' ' + top + ', ' + tx + ' ' + by, lx: (sx + tx) / 2, ly: top + 18 }; }
     if (Math.abs(bx - ax) < 40) { var x = ax + NW / 2, xb = bx + NW / 2; if (by > ay) return { d: 'M ' + x + ' ' + (ay + NH) + ' C ' + x + ' ' + (ay + NH + 40) + ', ' + xb + ' ' + (by - 40) + ', ' + xb + ' ' + by, lx: x + 4, ly: (ay + NH + by) / 2 + 4 }; return { d: 'M ' + x + ' ' + ay + ' C ' + x + ' ' + (ay - 40) + ', ' + xb + ' ' + (by + NH + 40) + ', ' + xb + ' ' + (by + NH), lx: x + 4, ly: (ay + by + NH) / 2 + 4 }; }
     var px1 = ax + NW, py1 = ay + NH / 2, px2 = bx, py2 = by + NH / 2, c = Math.max(50, Math.abs(px2 - px1) / 2);
-    return { d: 'M ' + px1 + ' ' + py1 + ' C ' + (px1 + c) + ' ' + py1 + ', ' + (px2 - c) + ' ' + py2 + ', ' + px2 + ' ' + py2, lx: (px1 + px2) / 2, ly: (py1 + py2) / 2 - 5 };
+    // 横向端口距 < 60 时线近乎竖着（S04 工作台发现，同步回来）：并排紧挨的标签抬到节点顶边之上，否则被两边节点盖住；上下错开的居中在两节点之间的空带里
+    var dx = Math.abs(px2 - px1), dy = Math.abs(py2 - py1), midY = (py1 + py2) / 2;
+    var ly = dx >= 60 ? midY - 5 : (dy < NH ? Math.min(ay, by) - 9 : midY);
+    return { d: 'M ' + px1 + ' ' + py1 + ' C ' + (px1 + c) + ' ' + py1 + ', ' + (px2 - c) + ' ' + py2 + ', ' + px2 + ' ' + py2, lx: (px1 + px2) / 2, ly: ly };
   }
   renderVals() {
     var self = this, S = this.init(), g = this.graph();
@@ -656,7 +659,7 @@ STRIPS = [
      "row-c", "C · 新建 / 工作流　02.1 → 02.2 → 03.1 / 03.2 → 04\n合理：卡片是纠错窗口不是审批关卡——最多两题架构级，其余转 H，产物同时在右侧生成，不回复也交付。\n缺少（已补）：02.1 判级旁的换形态逃生口（只要一条提示词 / 我要的是图，complexity-routing 允许用户覆盖判级）；02.2 生效复述——回复后只重出受影响的环节 2、5，其余不动；03.1 「怎么用它」卡（启动指令一行 + 无人上岗）；03.2 L1 单提示词交付——判为 L1 时不能硬塞资产包目录树，出口是组件库。\n没用（已换）：03.1 「四道保险」四个绿勾是宣传语不是状态，换成真实计数（试跑 5/6 · 环节 5 · 假设 2 · 未达标 1）。"),
     ("D 流程重构", [("CanvasEmpty.dc.html", "07.0 空态 · 三条进法（说 / 导入 JSON / 行业模板）"), ("FlowCanvas.dc.html", "07 流程画布（可交互）· 拖连线 · 框选打包 · 钻取 · 对照 · 运行态", 1920, 1080, {"is_interactive": True, "expand": "fill"}),
                     ("CanvasDrag.dc.html", "07.2 拖拽反馈 · 人的步骤进 AI 泳道标缺口 · n12 受保护"), ("CanvasBuild.dc.html", "07.3 构建预览 · 停机点① 按下前看得见会得到什么"), ("CanvasDiff.dc.html", "07.4 对照现状 · 变过的标出来，没变的压暗，卡点 2 → 0"), ("CanvasRun.dc.html", "07.5 运行态 · 验收清单.json 的打钩数回到图上"), ("Report.dc.html", "08 汇报模式 · 主按钮改为老板的决定")],
-     "row-d", "D · 流程重构　07.0 → 07 → 07.2 → 07.3 → 07.4 → 07.5 → 08\n合理：泳道 + 三种标记 + 五个数字回答五问；拖过泳道边界改「谁来做」；诊断建议一键「应用」。\n缺少（已补）：07.0 空态——画布是中心，中心不能是一片空白点阵；07.2 拖拽反馈——两条提示原来只写在规格里，n12 递交受保护这条规则原型里也没实现，已补进 laneRule；07.3 构建预览——停机点①按下前必须看到会建成什么；07.4 对照现状与 07.5 运行态——原来只在原型里靠开关出现，逐步看时应是独立一屏。\n没用（已改）：工具栏「试跑」按顺序点亮节点，像画布能跑——改名「运行态」，读 验收清单.json 把打钩数放回图上（原型同步改）；08 主按钮「先打通招标平台」是给 IT 的动作，改成老板要拍的板「同意：先建标书撰写」。\n原型修正：应用建议后数据节点不再跳出数据泳道。"),
+     "row-d", "D · 流程重构　07.0 → 07 → 07.2 → 07.3 → 07.4 → 07.5 → 08\n合理：泳道 + 三种标记 + 五个数字回答五问；拖过泳道边界改「谁来做」；诊断建议一键「应用」。\n缺少（已补）：07.0 空态——画布是中心，中心不能是一片空白点阵；07.2 拖拽反馈——两条提示原来只写在规格里，n12 递交受保护这条规则原型里也没实现，已补进 laneRule；07.3 构建预览——停机点①按下前必须看到会建成什么；07.4 对照现状与 07.5 运行态——原来只在原型里靠开关出现，逐步看时应是独立一屏。\n没用（已改）：工具栏「试跑」按顺序点亮节点，像画布能跑——改名「运行态」，读 验收清单.json 把打钩数放回图上（原型同步改）；08 主按钮「先打通招标平台」是给 IT 的动作，改成老板要拍的板「同意：先建标书撰写」。\n原型修正：应用建议后数据节点不再跳出数据泳道；线标签在并排紧挨的节点之间抬到顶边之上、近竖 S 线居中在空带里，泳道提示语让开回填线（S04 工作台建成时发现）。"),
     ("E 设计", [("DesignScreen.dc.html", "11.1 产品定义 · 五问首行 + 一页定义 + 找茬结果条"), ("DesignStories.dc.html", "11.2 故事清单 · stories.json 的界面 · 按这个建 S07"), ("DesignReview.dc.html", "11.3 四视角找茬 · 每条反驳三选一处理 · 门槛 12 / 12")],
      "row-e", "E · 设计　11.1 → 11.2 → 11.3\n合理：五问首行即验收，动笔前先填；一页产品定义写不下就是范围没收住。\n缺少（已补）：11.2 故事清单——stories.json 是搭建者的开工单，不画等于没交付；passes 由搭建者置 true，不驱动上岗；只有「转主循环」的故事按这个建进 02。11.3 四视角找茬——老板 / 搭建者 / 执行者 / 反方各至少一条反驳，处理三选一（采纳并改 / 写入 H / 驳回附理由），门槛 12 项逐条打钩。\n没用（不画）：SPEC 是可选件（design-mode.md），保留 tab 不画屏。"),
     ("F 上岗", [("RunStart.dc.html", "05.1 启动 · 只要材料，参数来自资产包"), ("RunRunning.dc.html", "05.2 运行中 · 一轮一环节，右栏中间产物"), ("WorkdogRun.dc.html", "05.3 人工确认点 · 停机点②（删了 promise 标记）"), ("RunDone.dc.html", "05.4 完成 · 交付就是完成，下一步三选一"), ("RunStop.dc.html", "05.5 止损 · 同时给已达标 / 未达标 / 卡点报告")],

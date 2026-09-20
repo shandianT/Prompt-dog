@@ -1,7 +1,10 @@
-import { ReactFlowProvider, useViewport } from '@xyflow/react'
+import { useState } from 'react'
+import { Panel, ReactFlowProvider, useReactFlow, useViewport } from '@xyflow/react'
 import sample from '../../sample/投标流程.json'
 import { FlowCanvas, ZOOM_MAX, ZOOM_MIN } from '../canvas/FlowCanvas'
-import { fiveNumbers, type Flow } from '../flow'
+import { EdgeLegend } from '../canvas/EdgeLegend'
+import { fitFrame } from '../canvas/viewport'
+import { edgeCounts, fiveNumbers, type Flow } from '../flow'
 
 /**
  * 07 流程画布的第一版：顶栏五个数字 + 画布。示例数据来自 sample/投标流程.json。
@@ -19,6 +22,23 @@ function Stat({ label, value, dot }: { label: string; value: number; dot?: strin
   )
 }
 
+/** 顶栏工具按钮：与原型 tb-btn 同款，开着是浅琥珀 */
+function ToolButton({ on, onClick, children, testId }: { on?: boolean; onClick: () => void; children: React.ReactNode; testId?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={testId}
+      aria-pressed={on}
+      className={`text-aux flex h-9 items-center gap-1.5 rounded-btn border px-3 font-medium whitespace-nowrap ${
+        on ? 'border-amber bg-amber-soft text-amber' : 'border-line bg-page text-sub hover:bg-white'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
 function ZoomReadout() {
   const { zoom } = useViewport()
   return (
@@ -29,8 +49,16 @@ function ZoomReadout() {
   )
 }
 
+/** 「适应」：回到整幅画布（与首帧同一种取景） */
+function FitButton() {
+  const inst = useReactFlow()
+  return <ToolButton onClick={() => void fitFrame(inst, 200)} testId="fit">适应</ToolButton>
+}
+
 export default function CanvasPage() {
   const five = fiveNumbers(flow)
+  const counts = edgeCounts(flow)
+  const [labels, setLabels] = useState(false)
   return (
     <ReactFlowProvider>
       <div className="flex h-full flex-col">
@@ -45,9 +73,17 @@ export default function CanvasPage() {
             <Stat label="待打通" value={five.pending} dot="var(--color-lo)" />
           </div>
           <ZoomReadout />
+          <FitButton />
+          <ToolButton on={labels} onClick={() => setLabels((v) => !v)} testId="toggle-labels">
+            产物{labels ? ' · 全部' : ''}
+          </ToolButton>
         </header>
         <div className="min-h-0 flex-1">
-          <FlowCanvas flow={flow} />
+          <FlowCanvas flow={flow} labels={labels}>
+            <Panel position="bottom-left">
+              <EdgeLegend counts={counts} />
+            </Panel>
+          </FlowCanvas>
         </div>
       </div>
     </ReactFlowProvider>

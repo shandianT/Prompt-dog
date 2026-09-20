@@ -56,8 +56,8 @@
     "在浏览器里验证并截图"
    ],
    "优先级": 4,
-   "passes": false,
-   "备注": ""
+   "passes": true,
+   "备注": "2026-09-20 建成 src/canvas/edgeGeometry.ts（五种路径逐字移植自 flow.py 的 edgePath）、FlowEdgeRF（BaseEdge + EdgeLabelRenderer，标签是 HTML）、EdgeMarkers（六个箭头 marker）、EdgeLegend（图例一行贴左下）、options.ts（「产物」开关走 context）。首帧改为取景整幅画布（viewport.ts fitFrame）：按节点外框取景会裁掉贴右边和底边绕的回填线；Controls 自带的适应按钮因此关掉，顶栏加「适应」。check:ui 断言：五种线计数 14 / 3 / 4 / 1 / 1、svg 里没有 text、默认 13 个标签（9 非顺序 + 4 决定）、没有标签被节点盖住、退回线拱顶在泳道线之下节点顶之上、回填线右到 x=1208 底到 y=1002（getBBox 读 flow 坐标，与缩放无关）、图例计数、点线中点选中 → 琥珀 2.6px + 琥珀箭头 + 临时显示标签、「产物」开 23 关回 13。建成时发现原型两处并同步回 flow.py：① 并排紧挨的两个节点之间标签被节点盖住（跟进的线索 / 审批通过只剩一个字），近竖 S 线抬 5px 会顶进上面的节点（偏离表依据）——横向端口距 < 60 时标签改为抬到顶边之上 / 居中在空带里；② 泳道提示语 right 12px 会被回填线划过，改 24px。设计画布未重新发布（只是标签位置）。"
   },
   {
    "id": "S05",

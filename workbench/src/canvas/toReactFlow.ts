@@ -29,5 +29,7 @@ export function toRFEdges(flow: Flow): FlowRFEdge[] {
     source: edge.from,
     target: edge.to,
     data: { edge },
+    // 落到 <g class> 上，验收脚本按种类数线用
+    className: `fe-${edge.kind}`,
   }))
 }

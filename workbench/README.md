@@ -1,6 +1,6 @@
 # PromptDog 工作台
 
-流程画布 MVP 的前端工程。**已完成 S01 骨架与数据契约、S02 FlowNode 组件、S03 画布与泳道**；连线、选中移动、属性面板从 S04 起。
+流程画布 MVP 的前端工程。**已完成 S01 骨架与数据契约、S02 FlowNode 组件、S03 画布与泳道、S04 五种连线与标签**；选中移动、属性面板从 S05 起。
 
 ## 这个工程是干什么的
 
@@ -85,18 +85,26 @@ src/components/
 └── FlowNode.tsx / .css    画布上的一个节点：kind × role × flag 全部变体，
                            加选中 / 连线中 / 运行中 / 压暗、对照 chip、子图与运行角标
 src/canvas/
-├── FlowCanvas.tsx         React Flow 画布本体：缩放 50%–160%、fitView、底纹
+├── FlowCanvas.tsx         React Flow 画布本体：缩放 50%–160%、首帧取景整幅画布、底纹
+├── viewport.ts            fitFrame：按 1220 × 1024 的画布取景，不按节点外框（否则裁掉贴边绕的回填线）
 ├── FlowNodeRF.tsx         FlowNodeCard 包成 RF 自定义节点：端口换 <Handle>，卡片 ports="none"
+├── edgeGeometry.ts        五种线的路径与标签位置，逐字移植自 flow.py 的 edgePath；颜色 / 虚线表；marker id
+├── FlowEdgeRF.tsx         一条线：BaseEdge 画路径，EdgeLabelRenderer 放 HTML 标签；选中琥珀加粗换箭头
+├── EdgeMarkers.tsx        六个箭头 marker（五种线 + 选中），画在一个 0×0 的 svg 里供 url(#id) 引用
+├── EdgeLegend.tsx         图例一行：五种线的样子与计数，贴画布左下角
+├── options.ts             画布级开关（「产物」标签全显）走 context，不写进每条线的 data
 ├── Lanes.tsx              三条泳道，画在 ViewportPortal 里，跟节点同一套坐标
 ├── toReactFlow.ts         flow JSON → RF 节点 / 连线；RF 节点的 data 里原样放契约对象，不另存一份
-└── canvas.css             泳道、Handle 借用 .fnode__port 的样子、素线
+└── canvas.css             泳道、Handle 借用 .fnode__port 的样子、连线手感与标签样式
 src/pages/
 ├── ContractCheck.tsx      契约自检页（S01）
 ├── FlowNodeVariants.tsx   FlowNode 变体矩阵（S02）
-└── CanvasPage.tsx         07 流程画布第一版：顶栏五个数字 + 画布（S03）
+└── CanvasPage.tsx         07 流程画布第一版：顶栏五个数字、缩放读数、「适应」「产物」+ 画布与图例（S03 / S04）
 ```
 
-S03 的画布故意**还不能拖节点**：没有泳道规则的拖动会让数据节点跑出数据泳道，违反 x-compat 规则 2。S05 加移动与撤销，S09 加泳道规则。连线暂时是素线，S04 换成五种 FlowEdge。
+画布故意**还不能拖节点**：没有泳道规则的拖动会让数据节点跑出数据泳道，违反 x-compat 规则 2。S05 加移动与撤销，S09 加泳道规则。
+
+S04 的连线：路径**逐字移植**自原型 `flow.py` 的 `edgePath`，两边算出来的线必须一样；标签用 HTML（`EdgeLabelRenderer`）而不是 SVG `<text>`——要省略号、要用 token，只有 HTML 能做；默认只显示非顺序线与决定类的标签，顶栏「产物」开关显示全部。首帧取景到**整幅画布**而不是节点外框：回填线贴着画布右边和底边绕，按节点外框取景会把它裁掉。建到这里发现原型两处问题（紧挨的节点之间标签被盖住、泳道提示语被回填线划过），已同步改回 `flow.py`——建产品是对设计最严的评审。
 
 没有引 Storybook：变体页就是它的替代品——一个组件家族一页，每个状态一格，
 `npm run dev` 里点开就能看，`npm run check:ui` 在无头浏览器里逐条断言。
@@ -115,9 +123,10 @@ S03 的画布故意**还不能拖节点**：没有泳道规则的拖动会让数
 ## 接着建什么
 
 按 [`../design/workbench/stories.json`](../design/workbench/stories.json) 的顺序，一次一条：
-S04 五种连线 → S05 选中移动框选撤销 → S06 属性面板 → S07 端口类型校验 …
+S05 选中移动框选撤销 → S06 属性面板 → S07 端口类型校验 …
 
 `npm run check:ui` 对画布的断言：五个数字、19 节点 / 23 线 / 3 泳道 / 38 端口、滚轮放大 scale 变大、
 封顶 160%、到底 50%、**缩到 50% 后按屏幕坐标点 n9 能选中**（坐标换算对了才点得中）。
+对连线的断言：五种线计数 14 / 3 / 4 / 1 / 1、svg 里没有 `<text>`、默认 13 个标签且没有一个被节点盖住、退回线拱顶在泳道线之下节点顶之上、回填线右到 x=1208 底到 y=1002（`getBBox()` 读的是 flow 坐标，与缩放无关）、图例计数、**点线的中点能选中**并变琥珀 2.6px 换箭头、「产物」开 23 关回 13。
 
 界面长什么样见 `../design/workbench/` 的设计画布与 `组件清单.md`（每个组件的 props、状态、用哪个 shadcn/ui 件承接）。

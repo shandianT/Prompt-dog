@@ -7,6 +7,9 @@ export const NODE_H = 64
 export const CANVAS_W = 1220
 export const CANVAS_H = 1024
 
+/** 整幅画布的矩形：首帧与「适应」按它取景，不按节点外框——回填线贴着右边和底边走，按节点外框取景会把它裁掉 */
+export const FRAME = { x: 0, y: 0, width: CANVAS_W, height: CANVAS_H } as const
+
 export const LANE_AI_TOP = 28
 export const LANE_HUMAN_TOP = 440
 export const LANE_DATA_TOP = 720
