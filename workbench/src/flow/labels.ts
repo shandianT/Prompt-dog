@@ -1,4 +1,4 @@
-import type { DataDir, DataMethod, DataType, EdgeKind, NodeFlag, NodeKind, NodeRole } from './types'
+import type { DataDir, DataMethod, DataType, EdgeKind, NodeFlag, NodeKind, NodeRole, NodeWas } from './types'
 import type { LaneId } from './lanes'
 
 /** 界面上的中文说法，集中在这里，免得同一个词在不同屏上有两种叫法 */
@@ -50,6 +50,14 @@ export const DEF_LABEL: Record<DataType, string> = {
   sys: '系统数据',
   file: '文件',
   event: '事件',
+}
+
+/** 对照现状的 chip：原来谁做 / 怎么搬 / 新增；空 = 没变过，不出 chip */
+export const WAS_LABEL: Record<NodeWas, '原：人做' | '原：手工搬' | '新增' | undefined> = {
+  '': undefined,
+  human: '原：人做',
+  manual: '原：手工搬',
+  new: '新增',
 }
 
 export const DTYPE_LABEL: Record<DataType, string> = {

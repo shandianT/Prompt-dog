@@ -1,5 +1,6 @@
 import type { CSSProperties, MouseEvent } from 'react'
-import type { FlowNode, NodeFlag, NodeRole } from '../flow'
+import type { FlowNode, NodeFlag, NodeRole, RunBadge } from '../flow'
+export type { RunBadge }
 import { FLAG_LABEL, KIND_BADGE, NODE_H, NODE_W, OUTPUT_TYPE, PORT_COLOR, ROLE_LABEL, inputType, nextRole } from '../flow'
 import './FlowNode.css'
 
@@ -11,11 +12,6 @@ import './FlowNode.css'
 /** 对照现状的三种 chip：前两种黑底，新增绿底 */
 export type DiffChip = '原：人做' | '原：手工搬' | '新增'
 
-/** 运行态徽章，数字来自这只狗的 验收清单.json */
-export interface RunBadge {
-  state: 'ok' | 'running' | 'wait' | 'todo'
-  text: string
-}
 
 export interface FlowNodeCardProps {
   node: FlowNode

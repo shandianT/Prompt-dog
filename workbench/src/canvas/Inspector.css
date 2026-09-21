@@ -64,6 +64,27 @@
 .sug__go { font: inherit; font-weight: 700; color: var(--color-ink); background: none; border: 0; padding: 0; cursor: pointer; }
 .sug__go:hover { color: var(--color-amber); }
 
+/* 运行态的行：名称 + 徽章，点了选中节点 */
+.runrow {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
+  min-height: 30px; padding: 3px 8px; border-radius: 7px; border: 0; background: none;
+  font: inherit; font-size: 12.5px; color: var(--color-ink); cursor: pointer; text-align: left;
+}
+.runrow:hover { background: var(--color-page); }
+.runrow__name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.runrow__badge { flex: none; font-size: 11px; font-weight: 800; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--color-line); color: var(--color-sub); white-space: nowrap; }
+.runrow__badge--ok { border-color: var(--color-ok); color: var(--color-ok); }
+.runrow__badge--running { border-color: var(--color-amber); color: var(--color-amber); background: var(--color-amber-soft); }
+.runrow__badge--wait { border-color: var(--color-amber); color: var(--color-amber); }
+
+/* 建议列表里的「应用」（原型 .ap） */
+.sug__apply {
+  display: inline-flex; align-items: center; height: 24px; padding: 0 8px; margin-left: 6px;
+  border-radius: 6px; border: 1px solid var(--color-amber); background: #fff; color: var(--color-amber);
+  font: inherit; font-size: 11.5px; font-weight: 700; cursor: pointer;
+}
+.sug__apply:hover { background: var(--color-amber-soft); }
+
 /* 按钮 */
 .btn {
   font: inherit; font-size: 13px; font-weight: 700; min-height: 36px; padding: 0 14px;
@@ -71,5 +92,7 @@
 }
 .btn:hover { background: #fff; }
 .btn--sm { min-height: 28px; padding: 0 10px; font-size: 12px; }
+.btn--amber { color: var(--color-amber); border-color: var(--color-amber); background: #fff; }
+.btn--amber:hover { background: var(--color-amber-soft); }
 .btn--danger { color: var(--color-hi); border-color: #f3c2c2; background: #fff; }
 .btn--danger:hover { background: #fef2f2; }

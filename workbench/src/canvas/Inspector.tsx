@@ -1,26 +1,30 @@
 import { useState, type ReactNode } from 'react'
 import './Inspector.css'
 import {
-  DATA_TYPES, EDGE_KINDS, checkCompat, fiveNumbers,
+  DATA_TYPES, EDGE_KINDS, checkCompat, diffSummary, fiveNumbers, runBadges, runSummary,
   DIR_LABEL, DTYPE_LABEL, EDGE_LABEL, FLAG_LABEL, KIND_LABEL, METHOD_LABEL, ROLE_LABEL,
-  type CompatFinding, type DataDir, type DataMethod, type DataType, type EdgeKind, type FlowEdge, type FlowNode, type NodeFlag, type NodeRole,
+  type CompatFinding, type DataDir, type DataMethod, type DataType, type EdgeKind, type Flow, type FlowEdge, type FlowNode, type NodeFlag, type NodeRole,
+  type RunBadge, type RunList,
 } from '../flow'
+import type { CanvasView } from './options'
 import type { FlowEditor } from './useFlowEditor'
 
 /**
- * 属性面板（SPEC §6.5）：右栏三态——无选中显示诊断，选一个节点显示分类型字段，选一条线显示产物 / 类型 / 关系 / 契约。
+ * 属性面板（SPEC §6.5）：右栏——无选中时按画布的看图方式显示诊断 / 对照汇总 / 运行态，选一个节点显示分类型字段，选一条线显示产物 / 类型 / 关系 / 契约。
  * 所有改动走 editor.updateNode / updateEdge，一次改动一步撤销；文本框失焦或回车才写回，不是每个键一步。
- * 「应用建议」是 S10、「打开子流程」是 S11——到那两条故事再加，这里不放灰按钮。
+ * 「应用建议」把节点切到 target（S10）；「打开子流程」是 S11——到那条故事再加，这里不放灰按钮。
  */
-export function Inspector({ editor }: { editor: FlowEditor }) {
+export function Inspector({ editor, view = 'edit', initial, run }: { editor: FlowEditor; view?: CanvasView; initial: Flow; run?: RunList }) {
   const { flow, selectedIds, selectedEdgeIds } = editor
   const node = selectedIds.length === 1 ? flow.nodes.find((n) => n.id === selectedIds[0]) : undefined
   const edge = !node && selectedIds.length === 0 && selectedEdgeIds.length === 1 ? flow.edges.find((e) => e.id === selectedEdgeIds[0]) : undefined
-  const mode = node ? 'node' : edge ? 'edge' : 'diag'
+  const mode = node ? 'node' : edge ? 'edge' : view === 'diff' ? 'diff' : view === 'run' && run ? 'run' : 'diag'
   return (
     <aside className="ins" data-testid="inspector" data-mode={mode} aria-label="属性面板">
       {node ? <NodeView key={node.id} node={node} editor={editor} />
         : edge ? <EdgeView key={edge.id} edge={edge} editor={editor} />
+        : mode === 'diff' ? <DiffView editor={editor} initial={initial} />
+        : mode === 'run' && run ? <RunView editor={editor} run={run} />
         : <DiagView editor={editor} />}
     </aside>
   )
@@ -129,11 +133,12 @@ function DiagView({ editor }: { editor: FlowEditor }) {
           </div>
         ))}
       </div>
-      <div className="ins__h"><b>重构建议</b><span className="ins__muted">每条写着怎么解</span></div>
+      <div className="ins__h"><b>重构建议</b><span className="ins__muted">「应用」= 把它改成打通后的样子</span></div>
       <ol className="sug" data-testid="diag-suggestions">
         {flagged.map((n) => (
           <li key={n.id}>
             <button type="button" className="sug__go" onClick={() => editor.select(n.id)}>{n.name}</button>：{n.fix || n.note || '还没写怎么解'}
+            {n.target && <button type="button" className="sug__apply" data-apply={n.id} onClick={() => editor.applyFix(n.id)}>应用</button>}
           </li>
         ))}
       </ol>
@@ -198,6 +203,9 @@ function NodeView({ node, editor }: { node: FlowNode; editor: FlowEditor }) {
       {node.flag && node.flag !== 'ok' && (
         <Field label="怎么解"><TextField key={node.fix ?? ''} value={node.fix ?? ''} onCommit={(v) => set({ fix: v })} multiline /></Field>
       )}
+      {node.target && (
+        <button type="button" className="btn btn--amber" onClick={() => editor.applyFix(node.id)} data-testid="apply">应用建议 · 变成打通后的样子</button>
+      )}
       <Field label="输入"><Chips items={ins} onPick={editor.select} /></Field>
       <Field label="输出"><Chips items={outs} onPick={editor.select} /></Field>
       <Warnings items={warnings} />
@@ -226,6 +234,80 @@ function EdgeView({ edge, editor }: { edge: FlowEdge; editor: FlowEditor }) {
       <div className="ins__hint">待打通 = 现在靠人搬；打通后改成「数据」就变实线。退回 = 人审不通过回到哪一步。回填 = 结果回流到上游资产。</div>
       <Warnings items={warnings} />
       <div className="ins__foot"><button type="button" className="btn btn--danger" onClick={() => editor.deleteEdges([edge.id])} data-testid="delete">删除连线</button></div>
+    </>
+  )
+}
+
+// ---- 对照现状 / 运行态（S10）：无选中时按画布的看图方式显示
+
+const DIFF_ROWS: { flag: NodeFlag; label: string; color: string }[] = [
+  { flag: 'block', label: '卡点', color: 'var(--color-hi)' },
+  { flag: 'missing', label: '缺口', color: 'var(--color-amber)' },
+  { flag: 'pending', label: '待打通', color: 'var(--color-lo)' },
+]
+
+/** 对照汇总（07.4）：五个数字前后对照，变过的节点按「原：人做 / 原：手工搬 / 新增」分组。这一层不改图，只改标注 */
+function DiffView({ editor, initial }: { editor: FlowEditor; initial: Flow }) {
+  const d = diffSummary(initial, editor.flow)
+  const names = (nodes: FlowNode[]) => nodes.map((n) => n.name).join('、')
+  const count = (five: typeof d.before, flag: NodeFlag) => (flag === 'block' ? five.block : flag === 'missing' ? five.missing : five.pending)
+  return (
+    <>
+      <div className="ins__h"><b>对照现状</b><span className="ins__muted">变过的标出来，没变的压暗</span></div>
+      <div className="dg">
+        {DIFF_ROWS.map((r) => (
+          <div key={r.flag} className="dg__row" data-testid={`diff-${r.flag}`}>
+            <div className="dg__t"><span className="dg__dot" style={{ background: r.color }} />{r.label} {count(d.before, r.flag)} → {count(d.after, r.flag)}</div>
+            <div className="ins__muted">{names(initial.nodes.filter((n) => n.flag === r.flag)) || '—'}</div>
+          </div>
+        ))}
+      </div>
+      <Field label="变化汇总">
+        <ol className="sug" data-testid="diff-summary">
+          <li>{d.was.human.length} 步从人做变自动（原：人做）{d.was.human.length ? `：${names(d.was.human)}` : ''}</li>
+          <li>{d.was.manual.length} 处数据从手工搬变接口（原：手工搬）{d.was.manual.length ? `：${names(d.was.manual)}` : ''}</li>
+          <li>{d.was.new.length} 步新增{d.was.new.length ? `：${names(d.was.new)}` : ''}</li>
+          <li>人的步骤 {d.before.human} → {d.after.human}；自动 {d.before.auto} → {d.after.auto}</li>
+        </ol>
+      </Field>
+      <div className="ins__hint">这一层不改图，只改标注。变化来自「应用建议」和拖过泳道边界；给老板看用汇报模式。</div>
+    </>
+  )
+}
+
+function RunRow({ id, name, badge, onPick }: { id?: string; name: string; badge?: RunBadge; onPick: (id: string) => void }) {
+  return (
+    <button type="button" className="runrow" onClick={() => id && onPick(id)} data-node={id}>
+      <span className="runrow__name">{name}</span>
+      <span className={`runrow__badge runrow__badge--${badge?.state ?? 'todo'}`}>{badge?.text ?? '—'}</span>
+    </button>
+  )
+}
+
+/** 运行态（07.5）：来自 验收清单.json。画布不执行任何东西，只把打钩数放回图上 */
+function RunView({ editor, run }: { editor: FlowEditor; run: RunList }) {
+  const s = runSummary(run), badges = runBadges(run)
+  const nameOf = (id: string) => editor.flow.nodes.find((n) => n.id === id)?.name ?? id
+  return (
+    <>
+      <div className="ins__h"><b>运行态</b><span className="ins__muted">来自 验收清单.json</span></div>
+      <div className="ins__kv" data-testid="run-summary">
+        <Field label="正在跑"><b>{s.title}</b></Field>
+        <Field label="停机"><b>{s.stop}</b></Field>
+        <Field label="验收"><b>{s.passed} / {s.total} 通过</b></Field>
+        <Field label="更新于"><b>{s.updated || '—'}</b></Field>
+      </div>
+      <Field label="环节">
+        {run.环节.map((st) => <RunRow key={st.id} id={st.节点} name={st.名称} badge={st.节点 ? badges[st.节点] : undefined} onPick={editor.select} />)}
+      </Field>
+      {run.复用?.length ? (
+        <Field label="复用的狗">{run.复用.map((r) => <RunRow key={r.节点} id={r.节点} name={r.名称} badge={badges[r.节点]} onPick={editor.select} />)}</Field>
+      ) : null}
+      {run.节点状态?.length ? (
+        <Field label="其他节点">{run.节点状态.map((n) => <RunRow key={n.节点} id={n.节点} name={nameOf(n.节点)} badge={badges[n.节点]} onPick={editor.select} />)}</Field>
+      ) : null}
+      {s.current?.备注 && <div className="ins__hint">{s.current.名称}：{s.current.备注}</div>}
+      <div className="ins__hint">画布不执行任何东西：狗在上岗时每轮把打钩写回 验收清单.json，这里只是把数据放回图上。</div>
     </>
   )
 }

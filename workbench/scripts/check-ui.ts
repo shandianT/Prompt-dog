@@ -840,6 +840,53 @@ try {
   await undoBtn()
   check((await count('.react-flow__node')) === 19 && (await fiveText()) === baseFive, '撤销：回到示例')
 
+  // ---- S10 对照现状与运行态：chip 与压暗、位置不变、对照汇总；应用建议（面板按钮 + 诊断列表）卡点 2 → 0；运行态徽章与汇总
+  await cdp.navigate(`${BASE}/#/canvas`)
+  await cdp.evaluate(PD_INSTALL)
+  const base10 = await fiveText()
+  await clickSel('[data-testid="toggle-diff"]')
+  const chips = await count('.fnode__diff'), dims = await count('.fnode--dim')
+  check(chips === 12 && dims === 7 && near(await pos('n9'), 700, 500, 0), '对照现状：12 个 chip（原：人做 6 · 原：手工搬 5 · 新增 1），7 个没变的压暗，节点位置不变', `${chips} chip · ${dims} 压暗`)
+  check((await mode()) === 'diff' && (await text('[data-testid="diff-block"]')).includes('卡点 2 → 2'), '面板切到对照汇总：卡点 2 → 2（还没应用建议）', await text('[data-testid="diff-block"]'))
+  await shot('s10-diff')
+  await clickSel('[data-testid="toggle-diff"]')
+  check((await count('.fnode__diff')) === 0 && (await mode()) === 'diag', '关掉对照现状：chip 消失，面板回到诊断')
+
+  await click(await screen(190 + 75, 500 + 32))
+  await clickSel('[data-testid="apply"]')
+  const a2 = await pos('n2')
+  check(
+    (await badge('n2', 'fnode__kind')) === '技能' && (await badge('n2', 'fnode__role')) === '自动' && (await count('.react-flow__node[data-id="n2"] .fnode__flag')) === 0 && !!a2 && a2.y === 300 && (await fiveText()).includes('卡点 1'),
+    '面板「应用建议」n2：变技能 / 自动、卡点消失、归到 AI 泳道，卡点 2 → 1', `${fmt(a2)} · ${await badge('n2', 'fnode__kind')} / ${await badge('n2', 'fnode__role')} · ${await fiveText()}`,
+  )
+  check((await toast()).includes('已应用') && (await count('[data-testid="apply"]')) === 0, '提示「已应用」，按钮随 target 一起消失', await toast())
+  await clickSel('[data-testid="close"]')
+  await clickSel('[data-apply="n9"]')
+  check((await badge('n9', 'fnode__role')) === '人审' && (await fiveText()).includes('卡点 0'), '诊断列表「应用」n9：人定 → 人审，卡点 1 → 0（验收：应用 n2 与 n9 后卡点 2 → 0）', await fiveText())
+  await clickSel('[data-apply="s1"]')
+  check((await count('.react-flow__edge.fe-data[data-id="e0"]')) === 1 && (await fiveText()).includes('待打通 3'), '应用 s1：打通方式接口，e0 变实线，待打通 4 → 3')
+  for (const id of ['s2', 's3', 's4', 's5']) await clickSel(`[data-apply="${id}"]`)
+  check((await fiveText()).includes('缺口 0') && (await fiveText()).includes('待打通 0') && (await count('[data-apply]')) === 0, '七条建议全应用：缺口 0 · 待打通 0，列表里没有可应用的了', await fiveText())
+  await clickSel('[data-testid="toggle-diff"]')
+  check(
+    (await text('[data-testid="diff-block"]')).includes('卡点 2 → 0') && (await text('[data-testid="diff-missing"]')).includes('缺口 1 → 0') && (await text('[data-testid="diff-pending"]')).includes('待打通 4 → 0') && (await count('.fnode__diff')) === 13,
+    '对照汇总：卡点 2 → 0 · 缺口 1 → 0 · 待打通 4 → 0；chip 13 个（n2 多了一个原：人做）', `${await count('.fnode__diff')} chip`,
+  )
+  await shot('s10-diff-applied')
+  await clickSel('[data-testid="toggle-diff"]')
+  await undoBtn(7)
+  check((await fiveText()) === base10 && (await count('[data-apply]')) === 7, '撤销七步：回到示例，七条建议又能应用')
+
+  await clickSel('[data-testid="toggle-run"]')
+  const b3 = await badge('n3', 'fnode__run'), b7 = await badge('n7', 'fnode__run')
+  check((await count('.fnode__run')) === 13 && (await count('.fnode--running')) === 1 && b3 === '✓ 2 / 2' && b7.startsWith('● 1 / 4'), '运行态：13 个徽章，当前环节「分章撰写」高亮，招标解析 ✓ 2 / 2', `${b3} · ${b7}`)
+  const rs = await text('[data-testid="run-summary"]')
+  check((await mode()) === 'run' && rs.includes('标书撰写 · 第 3 轮') && rs.includes('6 / 13'), '面板运行态：标书撰写 · 第 3 轮，验收 6 / 13', rs)
+  check((await toast()).includes('运行态') && (await toast()).includes('验收清单.json'), '提示来源是 验收清单.json', await toast())
+  await shot('s10-run')
+  await clickSel('[data-testid="toggle-run"]')
+  check((await count('.fnode__run')) === 0 && (await mode()) === 'diag', '关掉运行态：徽章消失，面板回到诊断')
+
   check(cdp.errors.length === 0, '浏览器控制台没有报错', cdp.errors.slice(0, 2).join(' | '))
   cdp.close()
 } finally {

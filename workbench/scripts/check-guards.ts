@@ -8,6 +8,8 @@ import { validateFlow } from '../src/flow/validate'
 import { checkCompat, checkRefs } from '../src/flow/compat'
 import { connectionProblem, newEdge } from '../src/flow/connect'
 import { applyLaneRule, borderMessage } from '../src/flow/laneRule'
+import { applyTarget } from '../src/flow/target'
+import { runBadges, runSummary, type RunList } from '../src/flow/run'
 import type { Flow, FlowNode, FlowEdge } from '../src/flow/types'
 
 const samplePath = fileURLToPath(new URL('../sample/投标流程.json', import.meta.url))
@@ -118,5 +120,17 @@ const lanes: { name: string; ok: boolean }[] = [
 ]
 for (const c of lanes) { console.log(`${c.ok ? '✓' : '✗'} ${c.name}`); if (!c.ok) failed += 1 }
 
-console.log(failed ? `\n${failed} 道检查形同虚设` : `\n${cases.length + connects.length + lanes.length} 道检查全部能抓到问题`)
+// 应用建议与运行态（S10）
+const runList = JSON.parse(readFileSync(fileURLToPath(new URL('../sample/验收清单.json', import.meta.url)), 'utf8')) as RunList
+const after = (id: string) => { const o = applyTarget(good, id); return { n: o?.flow.nodes.find((x) => x.id === id), e: (eid: string) => o?.flow.edges.find((x) => x.id === eid) } }
+const s10: { name: string; ok: boolean }[] = [
+  { name: '建议 · n2 应用后变技能 / 自动 / 正常、记原：人做、归到 AI 泳道、target 清掉', ok: (() => { const { n } = after('n2'); return !!n && n.kind === 'skill' && n.role === 'auto' && n.flag === 'ok' && n.was === 'human' && n.y === 300 && !n.target })() },
+  { name: '建议 · s1 应用后打通方式接口、记原：手工搬、待打通线 e0 降为数据线', ok: (() => { const { n, e } = after('s1'); return !!n && n.method === 'api' && n.flag === 'ok' && n.was === 'manual' && e('e0')?.kind === 'data' })() },
+  { name: '建议 · n9 应用后人定 → 人审，仍是人、位置不动、不记原：人做', ok: (() => { const { n } = after('n9'); return !!n && n.kind === 'human' && n.role === 'review' && n.flag === 'ok' && n.y === 500 && !n.was })() },
+  { name: '建议 · 没有 target 的节点应用无事', ok: applyTarget(good, 'n1') === null },
+  { name: '运行态 · 示例 验收清单.json：13 个徽章、当前环节分章撰写、验收 6 / 13', ok: (() => { const b = runBadges(runList), s = runSummary(runList); return Object.keys(b).length === 13 && b.n7?.current === true && b.n3?.text === '✓ 2 / 2' && s.passed === 6 && s.total === 13 })() },
+]
+for (const c of s10) { console.log(`${c.ok ? '✓' : '✗'} ${c.name}`); if (!c.ok) failed += 1 }
+
+console.log(failed ? `\n${failed} 道检查形同虚设` : `\n${cases.length + connects.length + lanes.length + s10.length} 道检查全部能抓到问题`)
 process.exit(failed ? 1 : 0)

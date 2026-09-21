@@ -4,7 +4,7 @@ import {
   type IsValidConnection, type OnConnect, type OnConnectEnd, type OnEdgesChange, type OnNodeDrag, type OnNodesChange,
 } from '@xyflow/react'
 import {
-  CANVAS_H, CANVAS_W, NODE_H, NODE_W, ROLE_LABEL, applyLaneRule, borderMessage, connectionProblem, laneExtent, newEdge, newNode, nextRole,
+  CANVAS_H, CANVAS_W, NODE_H, NODE_W, ROLE_LABEL, applyLaneRule, applyTarget, borderMessage, connectionProblem, laneExtent, newEdge, newNode, nextRole,
   type Flow, type FlowEdge, type FlowNode, type PaletteItem,
 } from '../flow'
 import { toRFEdges, toRFNodes, type FlowRFEdge, type FlowRFNode } from './toReactFlow'
@@ -62,6 +62,8 @@ export interface FlowEditor {
   addNode: (item: PaletteItem, cx: number, cy: number, from?: string) => string
   /** 点角色徽章：自动 → 人审 → 人定 循环；受保护的人定节点不动，只提示 */
   cycleRole: (id: string) => void
+  /** 「应用建议」：把节点切到它的 target（target.ts），一步撤销 */
+  applyFix: (id: string) => void
   /** 节点右键菜单：屏幕坐标 */
   menu: { id: string; x: number; y: number } | null
   openMenu: (id: string, x: number, y: number) => void
@@ -206,6 +208,13 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     say(`谁来做 → ${ROLE_LABEL[next]}`)
   }, [updateNode, say])
 
+  const applyFix = useCallback((id: string) => {
+    const out = applyTarget(flowRef.current, id)
+    if (!out) return
+    commit(out.flow)
+    say(out.message)
+  }, [commit, say])
+
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null)
   const openMenu = useCallback((id: string, x: number, y: number) => setMenu({ id, x, y }), [])
   const closeMenu = useCallback(() => setMenu(null), [])
@@ -321,6 +330,6 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     undo, canUndo: depth > 0,
     isValidConnection, onConnect, onConnectEnd, connect, notice, say,
     quick, openQuick, closeQuick, addNode,
-    cycleRole, menu, openMenu, closeMenu,
+    cycleRole, applyFix, menu, openMenu, closeMenu,
   }
 }

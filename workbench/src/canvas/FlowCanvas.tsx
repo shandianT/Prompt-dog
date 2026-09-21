@@ -10,7 +10,8 @@ import { FlowEdgeRF } from './FlowEdgeRF'
 import { ConnectionLineRF } from './ConnectionLineRF'
 import { EdgeMarkers } from './EdgeMarkers'
 import { Lanes } from './Lanes'
-import { CanvasOptions } from './options'
+import { CanvasOptions, type CanvasView } from './options'
+import type { RunBadge } from '../flow'
 import { NODE_H, NODE_W } from '../flow'
 import type { FlowRFEdge, FlowRFNode } from './toReactFlow'
 import type { FlowEditor } from './useFlowEditor'
@@ -32,7 +33,7 @@ const edgeTypes: EdgeTypes = { flow: FlowEdgeRF }
  * Shift / Cmd / Ctrl + 点 = 加选。平移：按住空格拖、中键或右键拖；滚轮仍是缩放（S03 定的，等真人用过再议）。
  * Delete / Backspace 由 useFlowEditor 的快捷键处理（RF 自带的 deleteKeyCode 关掉：不然删两次，而且它那次不进撤销栈）；节点拖动 3px 起算，点一下不会抖成一步撤销。
  */
-export function FlowCanvas({ editor, labels = false, children }: { editor: FlowEditor; labels?: boolean; children?: ReactNode }) {
+export function FlowCanvas({ editor, labels = false, view = 'edit', runBadges, children }: { editor: FlowEditor; labels?: boolean; view?: CanvasView; runBadges?: Record<string, RunBadge>; children?: ReactNode }) {
   const { nodes, edges, onNodesChange, onEdgesChange, onNodeDragStop, onSelectionStart, onSelectionEnd, isValidConnection, onConnect, onConnectEnd, openQuick, closeQuick, openMenu, closeMenu, select, selectedIds, cycleRole } = editor
   const rf = useReactFlow()
   const onPaneClick = useCallback(() => { closeQuick(); closeMenu() }, [closeQuick, closeMenu])
@@ -66,7 +67,7 @@ export function FlowCanvas({ editor, labels = false, children }: { editor: FlowE
   const connecting = useConnection((c) => c.inProgress)
 
   return (
-    <CanvasOptions.Provider value={{ labels, flow: editor.flow, cycleRole }}>
+    <CanvasOptions.Provider value={{ labels, flow: editor.flow, cycleRole, view, runBadges }}>
     <ReactFlow
       className={`flow-canvas${connecting ? ' flow-canvas--connecting' : ''}`}
       nodes={nodes}

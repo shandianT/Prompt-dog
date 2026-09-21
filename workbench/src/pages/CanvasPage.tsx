@@ -1,7 +1,8 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Panel, ReactFlowProvider, useReactFlow, useViewport } from '@xyflow/react'
 import sample from '../../sample/投标流程.json'
 import paletteSample from '../../sample/组件库.json'
+import runSample from '../../sample/验收清单.json'
 import { FlowCanvas, ZOOM_MAX, ZOOM_MIN } from '../canvas/FlowCanvas'
 import { EdgeLegend } from '../canvas/EdgeLegend'
 import { fitFrame } from '../canvas/viewport'
@@ -11,8 +12,9 @@ import { Palette } from '../canvas/Palette'
 import { QuickAdd } from '../canvas/QuickAdd'
 import { PlacingLayer } from '../canvas/Placing'
 import { ContextMenu } from '../canvas/ContextMenu'
+import type { CanvasView } from '../canvas/options'
 import { useFlowEditor } from '../canvas/useFlowEditor'
-import { PLACEHOLDER_ITEM, edgeCounts, fiveNumbers, type Flow, type PaletteGroup, type PaletteItem } from '../flow'
+import { PLACEHOLDER_ITEM, edgeCounts, fiveNumbers, runBadges, runSummary, type Flow, type PaletteGroup, type PaletteItem, type RunList } from '../flow'
 
 /**
  * 07 流程画布：顶栏五个数字 + 左栏组件库（S08）+ 画布 + 右栏属性面板（S06）。示例数据来自 sample/投标流程.json 与 组件库.json。
@@ -21,6 +23,7 @@ import { PLACEHOLDER_ITEM, edgeCounts, fiveNumbers, type Flow, type PaletteGroup
 
 const flow = sample as unknown as Flow
 const groups = paletteSample as PaletteGroup[]
+const runList = runSample as RunList
 
 function Stat({ label, value, dot }: { label: string; value: number; dot?: string }) {
   return (
@@ -70,6 +73,16 @@ export default function CanvasPage() {
   const five = fiveNumbers(editor.flow)
   const counts = edgeCounts(editor.flow)
   const [labels, setLabels] = useState(false)
+  const [view, setView] = useState<CanvasView>('edit')
+  const badges = useMemo(() => runBadges(runList), [])
+  const toggleView = (which: CanvasView) => {
+    const next: CanvasView = view === which ? 'edit' : which
+    setView(next)
+    if (which === 'run') {
+      const s = runSummary(runList)
+      editor.say(next === 'run' ? `运行态：来自 验收清单.json（${s.title} · 验收 ${s.passed} / ${s.total}）；狗在上岗时跑，画布只把打钩数放回图上` : '已回到编辑态')
+    }
+  }
   const [placing, setPlacing] = useState<PaletteItem | null>(null)
   const { addNode } = editor
   const onDrop = useCallback((item: PaletteItem, at: { x: number; y: number }) => { addNode(item, at.x, at.y); setPlacing(null) }, [addNode])
@@ -91,14 +104,16 @@ export default function CanvasPage() {
           <ZoomReadout />
           <FitButton />
           <ToolButton onClick={editor.undo} disabled={!editor.canUndo} testId="undo">撤销</ToolButton>
+          <ToolButton on={view === 'diff'} onClick={() => toggleView('diff')} testId="toggle-diff">对照现状</ToolButton>
           <ToolButton on={labels} onClick={() => setLabels((v) => !v)} testId="toggle-labels">
             产物{labels ? ' · 全部' : ''}
           </ToolButton>
+          <ToolButton on={view === 'run'} onClick={() => toggleView('run')} testId="toggle-run">运行态</ToolButton>
         </header>
         <div className="flex min-h-0 flex-1">
           <Palette groups={groups} onGrab={setPlacing} onNewComponent={() => addNode(PLACEHOLDER_ITEM, 600, 330)} />
           <div className="min-w-0 flex-1">
-            <FlowCanvas editor={editor} labels={labels}>
+            <FlowCanvas editor={editor} labels={labels} view={view} runBadges={view === 'run' ? badges : undefined}>
               {quick && (
                 <QuickAdd
                   x={quick.x} y={quick.y} from={quick.from} flow={editor.flow} groups={groups}
@@ -120,7 +135,7 @@ export default function CanvasPage() {
               )}
             </FlowCanvas>
           </div>
-          <Inspector editor={editor} />
+          <Inspector editor={editor} view={view} initial={flow} run={runList} />
         </div>
       </div>
       {placing && <PlacingLayer item={placing} onDrop={onDrop} onCancel={cancelPlacing} />}

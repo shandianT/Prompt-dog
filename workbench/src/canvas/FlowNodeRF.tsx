@@ -2,7 +2,7 @@ import { useContext } from 'react'
 import { Handle, Position, useConnection, type NodeProps } from '@xyflow/react'
 import { CanvasOptions } from './options'
 import { FlowNodeCard } from '../components/FlowNode'
-import { OUTPUT_TYPE, PORT_COLOR, inputType } from '../flow'
+import { OUTPUT_TYPE, PORT_COLOR, WAS_LABEL, inputType } from '../flow'
 import type { FlowRFNode } from './toReactFlow'
 
 /**
@@ -15,7 +15,8 @@ import type { FlowRFNode } from './toReactFlow'
 export function FlowNodeRF({ id, data, selected }: NodeProps<FlowRFNode>) {
   const n = data.node
   const hovered = useConnection((c) => c.inProgress && c.toNode?.id === id)
-  const { cycleRole } = useContext(CanvasOptions)
+  const { cycleRole, view, runBadges } = useContext(CanvasOptions)
+  const badge = view === 'run' ? runBadges?.[id] : undefined
   return (
     <>
       <Handle
@@ -26,7 +27,12 @@ export function FlowNodeRF({ id, data, selected }: NodeProps<FlowRFNode>) {
         className="fnode__port fnode__port--in"
         style={{ borderColor: PORT_COLOR[inputType(n.kind)] }}
       />
-      <FlowNodeCard node={n} selected={selected} connecting={hovered} ports="none" interactive onRoleCycle={cycleRole ? () => cycleRole(id) : undefined} />
+      <FlowNodeCard
+        node={n} selected={selected} connecting={hovered} ports="none" interactive
+        dim={view === 'diff' && !n.was} diff={view === 'diff' ? WAS_LABEL[n.was ?? ''] : undefined}
+        run={badge} running={!!badge?.current}
+        onRoleCycle={cycleRole ? () => cycleRole(id) : undefined}
+      />
       <Handle
         type="source"
         id="out"
