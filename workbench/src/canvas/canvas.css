@@ -90,6 +90,21 @@
 /* 幽灵节点：跟着指针走，不接事件 */
 .ghost { position: fixed; z-index: 60; width: 150px; opacity: 0.92; pointer-events: none; filter: drop-shadow(0 10px 30px rgb(30 35 43 / 18%)); }
 
+/* 节点右键菜单（原型 .menu）：贴光标 */
+.menu {
+  position: fixed; z-index: 70; width: 190px; margin: 0; padding: 6px; list-style: none;
+  background: #fff; border: 1px solid var(--color-line); border-radius: 10px; box-shadow: 0 12px 32px rgb(30 35 43 / 18%);
+  display: flex; flex-direction: column; gap: 1px;
+}
+.menu__item {
+  display: flex; align-items: center; width: 100%; min-height: 32px; padding: 0 10px; border-radius: 7px;
+  border: 0; background: none; font: inherit; font-size: 13px; color: var(--color-ink); cursor: pointer; text-align: left;
+}
+.menu__item:hover, .menu__item:focus-visible { background: var(--color-amber-soft); }
+.menu__item:disabled { opacity: 0.4; cursor: not-allowed; }
+.menu__item--danger { color: var(--color-hi); }
+.menu__item--sep { border-top: 1px solid var(--color-line); margin-top: 4px; padding-top: 4px; border-radius: 0 0 7px 7px; }
+
 /* 短提示（原型 .toast）：画布底部中央，2.2 秒后消失 */
 .toast {
   background: var(--color-ink); color: #fff; padding: 10px 16px; border-radius: 10px;

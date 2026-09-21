@@ -3,7 +3,10 @@ import {
   useEdgesState, useNodesState,
   type IsValidConnection, type OnConnect, type OnConnectEnd, type OnEdgesChange, type OnNodeDrag, type OnNodesChange,
 } from '@xyflow/react'
-import { CANVAS_H, CANVAS_W, NODE_H, NODE_W, connectionProblem, laneExtent, newEdge, newNode, type Flow, type FlowEdge, type FlowNode, type PaletteItem } from '../flow'
+import {
+  CANVAS_H, CANVAS_W, NODE_H, NODE_W, ROLE_LABEL, applyLaneRule, borderMessage, connectionProblem, laneExtent, newEdge, newNode, nextRole,
+  type Flow, type FlowEdge, type FlowNode, type PaletteItem,
+} from '../flow'
 import { toRFEdges, toRFNodes, type FlowRFEdge, type FlowRFNode } from './toReactFlow'
 
 /** 撤销栈深度，SPEC §6.4：最多 40 步 */
@@ -57,6 +60,12 @@ export interface FlowEditor {
   closeQuick: () => void
   /** 从组件库的一项新建节点，中心尽量在 (cx, cy)；给了 from 就顺手连上（合规才连）。返回新节点 id */
   addNode: (item: PaletteItem, cx: number, cy: number, from?: string) => string
+  /** 点角色徽章：自动 → 人审 → 人定 循环；受保护的人定节点不动，只提示 */
+  cycleRole: (id: string) => void
+  /** 节点右键菜单：屏幕坐标 */
+  menu: { id: string; x: number; y: number } | null
+  openMenu: (id: string, x: number, y: number) => void
+  closeMenu: () => void
 }
 
 /**
@@ -107,17 +116,41 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     syncView(next)
   }, [syncView])
 
-  /** 把一批节点的新位置写回 flow（整数）；位置没变（或同一次松手已经写过）就什么都不做 */
-  const applyMoves = useCallback((moves: Map<string, Pt>) => {
+  const [notice, setNotice] = useState<{ text: string; n: number } | null>(null)
+  const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const say = useCallback((text: string) => {
+    setNotice((cur) => ({ text, n: (cur?.n ?? 0) + 1 }))
+    clearTimeout(noticeTimer.current)
+    noticeTimer.current = setTimeout(() => setNotice(null), 2200)
+  }, [])
+  useEffect(() => () => clearTimeout(noticeTimer.current), [])
+
+  /**
+   * 把一批节点的新位置写回 flow（整数），并按泳道语义改角色 / 类型 / 标记（laneRule.ts）；撞到边界的说一句为什么。
+   * 位置没变（或同一次松手已经写过）就什么都不做。一次松手 = 一步撤销，位置和语义一起回。
+   */
+  const moveNodes = useCallback((moves: Map<string, Pt>) => {
     const cur = flowRef.current
-    const changed = cur.nodes.some((n) => { const m = moves.get(n.id); return !!m && (m.x !== (n.x ?? 0) || m.y !== (n.y ?? 0)) })
+    const messages: string[] = []
+    let changed = false
+    const nodes = cur.nodes.map((n) => {
+      const m = moves.get(n.id)
+      if (!m || (m.x === (n.x ?? 0) && m.y === (n.y ?? 0))) return n
+      changed = true
+      const moved = { ...n, x: m.x, y: m.y }
+      const out = applyLaneRule(moved)
+      const msg = out.message ?? borderMessage(moved, n.y)
+      if (msg) messages.push(msg)
+      return out.node
+    })
     if (!changed) return
-    commit({ ...cur, nodes: cur.nodes.map((n) => { const m = moves.get(n.id); return m ? { ...n, x: m.x, y: m.y } : n }) })
-  }, [commit])
+    commit({ ...cur, nodes })
+    if (messages[0]) say(messages[0])
+  }, [commit, say])
 
   const onNodeDragStop: OnNodeDrag<FlowRFNode> = useCallback((_e, _node, dragged) => {
-    applyMoves(new Map(dragged.map((d) => [d.id, { x: Math.round(d.position.x), y: Math.round(d.position.y) }])))
-  }, [applyMoves])
+    moveNodes(new Map(dragged.map((d) => [d.id, { x: Math.round(d.position.x), y: Math.round(d.position.y) }])))
+  }, [moveNodes])
 
   const updateNode = useCallback((id: string, patch: Partial<FlowNode>) => {
     const cur = flowRef.current
@@ -164,14 +197,18 @@ export function useFlowEditor(initial: Flow): FlowEditor {
 
   const reset = useCallback(() => { commit(initial) }, [commit, initial])
 
-  const [notice, setNotice] = useState<{ text: string; n: number } | null>(null)
-  const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const say = useCallback((text: string) => {
-    setNotice((cur) => ({ text, n: (cur?.n ?? 0) + 1 }))
-    clearTimeout(noticeTimer.current)
-    noticeTimer.current = setTimeout(() => setNotice(null), 2200)
-  }, [])
-  useEffect(() => () => clearTimeout(noticeTimer.current), [])
+  const cycleRole = useCallback((id: string) => {
+    const n = flowRef.current.nodes.find((x) => x.id === id)
+    if (!n || n.kind === 'data') return
+    if (n.irreversible) { say(`「${n.name}」是不可逆动作前的人定节点，受保护，只能是人定`); return }
+    const next = nextRole(n.role)
+    updateNode(id, { role: next })
+    say(`谁来做 → ${ROLE_LABEL[next]}`)
+  }, [updateNode, say])
+
+  const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null)
+  const openMenu = useCallback((id: string, x: number, y: number) => setMenu({ id, x, y }), [])
+  const closeMenu = useCallback(() => setMenu(null), [])
 
   const [quick, setQuick] = useState<{ x: number; y: number; from?: string } | null>(null)
   const openQuick = useCallback((x: number, y: number, from?: string) => setQuick({ x, y, from }), [])
@@ -209,6 +246,7 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     setFlow(prev)
     syncView(prev)
     setQuick(null)
+    setMenu(null)
   }, [syncView])
 
   const select = useCallback((id: string) => {
@@ -244,15 +282,15 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     if (!picked.length) return false
     const moves = new Map<string, Pt>()
     for (const n of picked) {
-      const [[x0, y0], [x1, y1]] = laneExtent(n.position.y)
+      const [[x0, y0], [x1, y1]] = laneExtent(n.data.node.kind, !!n.data.node.irreversible)
       moves.set(n.id, {
         x: Math.min(Math.max(Math.round(n.position.x) + d[0] * step, x0), x1 - NODE_W),
         y: Math.min(Math.max(Math.round(n.position.y) + d[1] * step, y0), y1 - NODE_H),
       })
     }
-    applyMoves(moves)
+    moveNodes(moves)
     return true
-  }, [nodes, applyMoves])
+  }, [nodes, moveNodes])
 
   // 快捷键（SPEC §6.8）：Cmd/Ctrl+Z 撤销、Esc 取消选中、Delete / Backspace 删除、方向键微移。输入框里的按键不管。
   // 用 window 的捕获阶段：方向键要抢在 React Flow 自带的「焦点节点按方向键挪 1px」之前，否则一次按键挪两次、而且它那次不进撤销栈。
@@ -263,6 +301,7 @@ export function useFlowEditor(initial: Flow): FlowEditor {
       if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return }
       if (e.key === 'Escape') {
         setQuick(null)
+        setMenu(null)
         clearSelection()
         // 焦点在节点上时 React Flow 自己也接 Esc（反选那一个）。我们的清空先在微任务里落地，它再看那节点已不是选中态，就会把它重新选上——所以到它之前截住。
         if (t?.closest('.react-flow__node')) { e.stopPropagation(); t.blur() }
@@ -282,5 +321,6 @@ export function useFlowEditor(initial: Flow): FlowEditor {
     undo, canUndo: depth > 0,
     isValidConnection, onConnect, onConnectEnd, connect, notice, say,
     quick, openQuick, closeQuick, addNode,
+    cycleRole, menu, openMenu, closeMenu,
   }
 }

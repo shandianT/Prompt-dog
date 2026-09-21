@@ -10,6 +10,7 @@ import { Inspector } from '../canvas/Inspector'
 import { Palette } from '../canvas/Palette'
 import { QuickAdd } from '../canvas/QuickAdd'
 import { PlacingLayer } from '../canvas/Placing'
+import { ContextMenu } from '../canvas/ContextMenu'
 import { useFlowEditor } from '../canvas/useFlowEditor'
 import { PLACEHOLDER_ITEM, edgeCounts, fiveNumbers, type Flow, type PaletteGroup, type PaletteItem } from '../flow'
 
@@ -123,6 +124,7 @@ export default function CanvasPage() {
         </div>
       </div>
       {placing && <PlacingLayer item={placing} onDrop={onDrop} onCancel={cancelPlacing} />}
+      <ContextMenu editor={editor} />
     </ReactFlowProvider>
   )
 }

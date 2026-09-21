@@ -162,7 +162,7 @@ function NodeView({ node, editor }: { node: FlowNode; editor: FlowEditor }) {
         <CloseButton onClick={editor.clearSelection} />
       </div>
       <Field label="名称"><TextField key={node.name} value={node.name} onCommit={(v) => set({ name: v })} testId="f-name" /></Field>
-      <Field label="说明"><TextField key={node.sub ?? ''} value={node.sub ?? ''} onCommit={(v) => set({ sub: v })} placeholder="部门 / 来源 / 环节号" /></Field>
+      <Field label="说明"><TextField key={node.sub ?? ''} value={node.sub ?? ''} onCommit={(v) => set({ sub: v })} placeholder="部门 / 来源 / 环节号" testId="f-sub" /></Field>
       {!isData && <Field label="谁来做"><Seg options={roleOptions} value={node.role} onPick={(v) => set({ role: v })} testId="f-role" /></Field>}
       <Field label="状态"><Seg options={FLAG_OPTIONS} value={node.flag ?? 'ok'} onPick={(v) => set({ flag: v })} testId="f-flag" /></Field>
       {node.kind === 'human' && (

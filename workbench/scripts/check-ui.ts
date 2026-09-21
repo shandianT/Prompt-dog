@@ -140,6 +140,8 @@ const PD_INSTALL = `window.__pd = {
     toast: () => document.querySelector('[data-testid="toast"]')?.textContent ?? '',
     connLine: () => { const p = document.querySelector('.react-flow__connectionline path'); if (!p) return null; const s = getComputedStyle(p); return { stroke: s.stroke, dash: s.strokeDasharray, why: document.querySelector('.cl__why')?.textContent ?? '' } },
     attr: (sel, name) => document.querySelector(sel)?.getAttribute(name) ?? '',
+    at: (sel) => { const el = document.querySelector(sel); if (!el) return null; const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 } },
+    menuPick: (label) => [...document.querySelectorAll('[data-testid="context-menu"] button')].find((b) => b.textContent === label).click(),
     center: (sel) => { const el = document.querySelector(sel); if (!el) return null; el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 } },
     type: (sel, v) => { const el = document.querySelector(sel); el.focus(); Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, v); el.dispatchEvent(new Event('input', { bubbles: true })) },
   }; 'ok'`
@@ -754,6 +756,89 @@ try {
   check((await nodesN()) === 20 && (await pd<string>('nodeText("x1", "fnode__name")')) === '新组件（待定义）' && (await fiveText()).includes('缺口 2'), '「新组件（占位缺口）」：加一个标缺口的占位节点，缺口 1 → 2')
   await undoBtn()
   check((await nodesN()) === 19 && (await fiveText()) === fiveBase, '撤销：回到示例')
+
+  // ---- S09 泳道语义与角色切换：跨泳道改角色 / 类型 / 标记并提示；撞边提示；角色徽章循环；受保护；右键菜单
+  await cdp.navigate(`${BASE}/#/canvas`)
+  await cdp.evaluate(PD_INSTALL)
+  const rightClick = async (at: P) => {
+    await mouse('mouseMoved', at, { button: 'none' })
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: at.x, y: at.y, button: 'right', clickCount: 1 })
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: at.x, y: at.y, button: 'right', clickCount: 1 })
+    await sleep(250)
+  }
+  const menuOpen = () => count('[data-testid="context-menu"]')
+  const menuPick = async (label: string) => { await pd(`menuPick(${JSON.stringify(label)})`); await sleep(200) }
+  const badge = (id: string, cls: string) => pd<string>(`nodeText(${JSON.stringify(id)}, ${JSON.stringify(cls)})`)
+  const badgeAt = async (id: string) => { const r = await pd<P | null>(`at('.react-flow__node[data-id="${id}"] .fnode__role')`); if (!r) throw new Error(`${id} 没有角色徽章`); return r }
+  const baseFive = await fiveText()
+
+  await drag(center(360, 620), center(360, 200))
+  const l1 = await pos('n14')
+  check(!!l1 && l1.y < 440 && (await badge('n14', 'fnode__kind')) === '技能' && (await badge('n14', 'fnode__role')) === '自动' && (await badge('n14', 'fnode__flag')) === '缺口',
+    '把「不投 · 归档」拖进 AI 泳道：变技能、自动、标缺口', `${fmt(l1)} · ${await badge('n14', 'fnode__kind')} / ${await badge('n14', 'fnode__role')} / ${await badge('n14', 'fnode__flag')}`)
+  check((await toast()).includes('标为要自动化') && (await fiveText()).includes('自动 8') && (await fiveText()).includes('人 6') && (await fiveText()).includes('缺口 2'),
+    '提示「标为要自动化：还缺一个组件来做它」，自动 8 · 人 6 · 缺口 2', `${await toast()} · ${await fiveText()}`)
+  check((await pd<string>('value(\'[data-testid="f-sub"]\')')).startsWith('原：'), '面板说明记着「原：人做 · 待配组件」', await pd<string>('value(\'[data-testid="f-sub"]\')'))
+  await shot('s09-lane')
+  await undoBtn()
+  check((await badge('n14', 'fnode__kind')) === '人' && (await badge('n14', 'fnode__role')) === '人定' && (await count('.react-flow__node[data-id="n14"] .fnode__flag')) === 0 && (await fiveText()) === baseFive, '撤销：位置和语义一起回去')
+
+  await drag(center(530, 200), center(530, 560))
+  check((await badge('n6', 'fnode__role')) === '人审' && (await badge('n6', 'fnode__kind')) === '技能' && (await toast()) === '「素材检索」改为人审', '把技能「素材检索」拖进人泳道：改人审，类型不变', `${await badge('n6', 'fnode__role')} · ${await toast()}`)
+  await undoBtn()
+  check((await badge('n6', 'fnode__role')) === '自动', '撤销：回到自动')
+
+  await drag(center(1040, 500), center(1040, 200))
+  const l3 = await pos('n12')
+  check(!!l3 && l3.y === 440 && (await badge('n12', 'fnode__role')) === '人定' && (await toast()).includes('不能改成自动'), '受保护的「递交」往 AI 泳道拖：挡在人泳道顶，仍是人定，提示为什么', `${fmt(l3)} · ${await toast()}`)
+  await undoBtn()
+  await drag(center(20, 780), center(20, 300))
+  const l4 = await pos('s1')
+  check(!!l4 && l4.y === 720 && (await toast()) === '系统节点留在「数据与系统」泳道', '数据节点往上拖：挡在数据泳道顶并提示', `${fmt(l4)} · ${await toast()}`)
+  await undoBtn()
+  await drag(center(700, 500), center(700, 900))
+  const l5 = await pos('n9')
+  check(!!l5 && l5.y === 656 && (await toast()) === '步骤节点不能放进数据泳道', '步骤节点往数据泳道拖：挡在人泳道底并提示', `${fmt(l5)} · ${await toast()}`)
+  await undoBtn()
+
+  await click(await badgeAt('n9'))
+  check((await badge('n9', 'fnode__role')) === '自动' && (await toast()) === '谁来做 → 自动', '点「报价」的角色徽章：人定 → 自动', `${await badge('n9', 'fnode__role')} · ${await toast()}`)
+  await click(await badgeAt('n9'))
+  check((await badge('n9', 'fnode__role')) === '人审', '再点：自动 → 人审')
+  await undoBtn(2)
+  check((await badge('n9', 'fnode__role')) === '人定', '撤销两步：回到人定')
+  await click(await badgeAt('n12'))
+  check((await badge('n12', 'fnode__role')) === '人定' && (await toast()).includes('受保护'), '受保护的「递交」点徽章：不动，只提示', await toast())
+
+  await rightClick(await screen(190 + 75, 500 + 32))
+  const menuLabelsOf = async () => (await cdp.evaluate(`[...document.querySelectorAll('[data-testid="context-menu"] button')].map((b) => b.textContent)`)) as string[] | undefined
+  const menuLabels = (await menuLabelsOf()) ?? []
+  check((await menuOpen()) === 1 && menuLabels.join(',') === '改为自动,改为人审,改为人定,标为卡点,标为缺口,标为待打通,清除标记,删除', '右键「获取招标文件」：菜单贴光标，改谁来做 / 标记状态 / 删除', menuLabels.join(' · '))
+  await shot('s09-menu')
+  await menuPick('改为人审')
+  check((await badge('n2', 'fnode__role')) === '人审' && (await menuOpen()) === 0, '菜单「改为人审」：徽章变人审，菜单关')
+  await rightClick(await screen(190 + 75, 500 + 32))
+  await menuPick('标为缺口')
+  check((await badge('n2', 'fnode__flag')) === '缺口' && (await fiveText()).includes('卡点 1') && (await fiveText()).includes('缺口 2'), '菜单「标为缺口」：卡点 2 → 1，缺口 1 → 2')
+  await rightClick(await screen(190 + 75, 500 + 32))
+  await menuPick('删除')
+  check((await count('.react-flow__node')) === 18, '菜单「删除」：18 节点')
+  await undoBtn(3)
+  check((await count('.react-flow__node')) === 19 && (await badge('n2', 'fnode__role')) === '人定' && (await badge('n2', 'fnode__flag')) === '卡点' && (await fiveText()) === baseFive, '撤销三步：全部回去')
+  await rightClick(await screen(190 + 75, 500 + 32))
+  await key('Escape', 'Escape', 27)
+  check((await menuOpen()) === 0, 'Esc：菜单关')
+  await rightClick(await screen(1040 + 75, 500 + 32))
+  check((await count('[data-testid="context-menu"] button:disabled')) === 2, '受保护节点的菜单：改为自动 / 人审 灰掉')
+  await key('Escape', 'Escape', 27)
+  await drag({ x: 350, y: 50 }, { x: 690, y: 270 }, 300)
+  await rightClick(await screen(530 + 75, 60 + 32))
+  const multiLabel = ((await menuLabelsOf()) ?? []).find((l) => l.startsWith('删除所选'))
+  check(multiLabel === '删除所选（3）', '框选三个再右键：「删除所选（3）」', multiLabel ?? '')
+  await menuPick('删除所选（3）')
+  check((await count('.react-flow__node')) === 16, '删除所选：16 节点')
+  await undoBtn()
+  check((await count('.react-flow__node')) === 19 && (await fiveText()) === baseFive, '撤销：回到示例')
 
   check(cdp.errors.length === 0, '浏览器控制台没有报错', cdp.errors.slice(0, 2).join(' | '))
   cdp.close()

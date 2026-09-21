@@ -19,8 +19,8 @@ export function toRFNodes(flow: Flow): FlowRFNode[] {
     // 先告诉 RF 尺寸，fitView 首帧就能算对，不用等 DOM 量完
     width: NODE_W,
     height: NODE_H,
-    // 能动的范围：自己那条泳道 × 画布；RF 按节点整块裁，不是按中心
-    extent: laneExtent(node.y),
+    // 能动的范围（按种类 / 是否受保护）；RF 按节点整块裁，不是按中心
+    extent: laneExtent(node.kind, !!node.irreversible),
   }))
 }
 

@@ -1,6 +1,6 @@
 import type { CSSProperties, MouseEvent } from 'react'
 import type { FlowNode, NodeFlag, NodeRole } from '../flow'
-import { FLAG_LABEL, KIND_BADGE, NODE_H, NODE_W, OUTPUT_TYPE, PORT_COLOR, ROLE_LABEL, inputType } from '../flow'
+import { FLAG_LABEL, KIND_BADGE, NODE_H, NODE_W, OUTPUT_TYPE, PORT_COLOR, ROLE_LABEL, inputType, nextRole } from '../flow'
 import './FlowNode.css'
 
 /**
@@ -40,12 +40,7 @@ export interface FlowNodeCardProps {
   className?: string
 }
 
-const ROLE_CYCLE: NodeRole[] = ['auto', 'review', 'decide']
 
-function nextRole(role: NodeRole | undefined): NodeRole {
-  const i = ROLE_CYCLE.indexOf(role ?? 'auto')
-  return ROLE_CYCLE[(i + 1) % ROLE_CYCLE.length] ?? 'auto'
-}
 
 export function FlowNodeCard({
   node, selected, connecting, running, dim, diff, run,

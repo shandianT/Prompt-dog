@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { validateFlow } from '../src/flow/validate'
 import { checkCompat, checkRefs } from '../src/flow/compat'
 import { connectionProblem, newEdge } from '../src/flow/connect'
+import { applyLaneRule, borderMessage } from '../src/flow/laneRule'
 import type { Flow, FlowNode, FlowEdge } from '../src/flow/types'
 
 const samplePath = fileURLToPath(new URL('../sample/投标流程.json', import.meta.url))
@@ -107,5 +108,15 @@ const connects: { name: string; ok: boolean }[] = [
 console.log('')
 for (const c of connects) { console.log(`${c.ok ? '✓' : '✗'} ${c.name}`); if (!c.ok) failed += 1 }
 
-console.log(failed ? `\n${failed} 道检查形同虚设` : `\n${cases.length + connects.length} 道检查全部能抓到问题`)
+// 泳道语义（S09，SPEC §6.6）
+const lanes: { name: string; ok: boolean }[] = [
+  { name: '泳道 · 人的步骤拖进 AI 泳道：变技能、自动、标缺口、记原：人做', ok: (() => { const o = applyLaneRule({ ...node(good, 'n14'), y: 200 }); return o.node.kind === 'skill' && o.node.role === 'auto' && o.node.flag === 'missing' && o.node.was === 'human' && (o.node.sub ?? '').startsWith('原：') && !!o.message?.includes('要自动化') })() },
+  { name: '泳道 · AI 节点拖进人泳道：改人审，类型不变', ok: (() => { const o = applyLaneRule({ ...node(good, 'n6'), y: 560 }); return o.node.kind === 'skill' && o.node.role === 'review' && o.message === '「素材检索」改为人审' })() },
+  { name: '泳道 · 受保护的人定节点不会被改（就算 y 落在 AI 泳道）', ok: (() => { const o = applyLaneRule({ ...node(good, 'n12'), y: 200 }); return o.node.kind === 'human' && o.node.role === 'decide' && !o.message })() },
+  { name: '泳道 · 数据节点撞在数据泳道顶：只提示', ok: borderMessage({ ...node(good, 's1'), y: 720 }, 780) === '系统节点留在「数据与系统」泳道' && borderMessage({ ...node(good, 's1'), y: 720 }, 720) === undefined },
+  { name: '泳道 · 步骤节点撞在人泳道底：只提示', ok: borderMessage({ ...node(good, 'n9'), y: 656 }, 500) === '步骤节点不能放进数据泳道' },
+]
+for (const c of lanes) { console.log(`${c.ok ? '✓' : '✗'} ${c.name}`); if (!c.ok) failed += 1 }
+
+console.log(failed ? `\n${failed} 道检查形同虚设` : `\n${cases.length + connects.length + lanes.length} 道检查全部能抓到问题`)
 process.exit(failed ? 1 : 0)

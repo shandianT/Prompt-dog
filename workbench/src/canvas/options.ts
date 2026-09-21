@@ -7,6 +7,8 @@ export interface CanvasOptionsValue {
   labels: boolean
   /** 当前 flow：拖线时预判「松手会生成什么线 / 为什么连不上」要看全图 */
   flow: Flow
+  /** 点角色徽章：自动 → 人审 → 人定 循环（受保护的不动） */
+  cycleRole?: (id: string) => void
 }
 
 export const CanvasOptions = createContext<CanvasOptionsValue>({ labels: false, flow: { name: '', nodes: [], edges: [] } })

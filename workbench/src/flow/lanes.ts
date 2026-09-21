@@ -1,3 +1,5 @@
+import type { NodeKind } from './types'
+
 /**
  * 画布几何与泳道分带。数值来自 SPEC.md §6.1 与原型 design/workbench/flow.py，
  * 两边必须一致：节点 150 × 64，画布 1220 × 1024，人泳道从 y=440 起，数据泳道从 y=720 起。
@@ -23,14 +25,14 @@ export const LANES = [
 export type LaneId = (typeof LANES)[number]['id']
 
 /**
- * 节点能动的范围（S05）：整块留在自己那条泳道里、不出画布——拖完的图仍过 x-compat 规则 2（data 只能在数据泳道）。
- * 跨泳道的语义（人 → AI = 要自动化并标缺口，AI → 人 = 改人审，不可逆前的人定受保护）是 S09 的事，到那时再放开。
+ * 节点能动的范围（S09，SPEC §6.6 里三条「弹回」改成挡在边界上）：
+ *   数据节点只能在数据泳道；步骤节点在 AI + 人两条泳道之间自由跨（跨过去的含义见 laneRule.ts）；
+ *   不可逆动作前的人定节点受保护，只能在人泳道。整块留在带内，不出画布——拖完的图仍过 x-compat 规则 2 / 3。
  */
-export function laneExtent(y: number | undefined): [[number, number], [number, number]] {
-  const lane = laneOf(y)
-  const top = lane === 'ai' ? 0 : lane === 'human' ? LANE_HUMAN_TOP : LANE_DATA_TOP
-  const bottom = lane === 'ai' ? LANE_HUMAN_TOP : lane === 'human' ? LANE_DATA_TOP : CANVAS_H
-  return [[0, top], [CANVAS_W, bottom]]
+export function laneExtent(kind: NodeKind, guarded = false): [[number, number], [number, number]] {
+  if (kind === 'data') return [[0, LANE_DATA_TOP], [CANVAS_W, CANVAS_H]]
+  if (kind === 'human' && guarded) return [[0, LANE_HUMAN_TOP], [CANVAS_W, LANE_DATA_TOP]]
+  return [[0, 0], [CANVAS_W, LANE_DATA_TOP]]
 }
 
 /** 节点归哪条泳道：按节点中心的 y 判定，与原型 laneRule 同一套算法 */
